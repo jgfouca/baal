@@ -1,1 +1,9 @@
-Put thoughts about the game here.
+Put thoughts about the game, code convention, design, etc here.
+
+C++ source files that have a main function should end in .C, all others
+should end in .cpp.
+
+Please wrap all system-specific code in a macro. I've been using
+#ifndef WINDOWS
+// Linux code
+#endif
