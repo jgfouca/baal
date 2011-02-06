@@ -11,7 +11,7 @@ EXES = $(patsubst %.$(MAIN_FILE_EXT), $(BIN_DIR)/%.$(EXE_FILE_EXT),$(wildcard *.
 all : $(BIN_DIR) $(EXES)
 
 $(BIN_DIR):
-	mkdir $(BIN_DIR)
+	-mkdir $(BIN_DIR)
 
 $(EXES): $(BIN_DIR)/%.$(EXE_FILE_EXT) : %.$(MAIN_FILE_EXT) $(GAME_LIB_PATH)
 	$(CXX) $(CXXFLAGS) $< -o $@ $(ALL_GAME_FLAGS) $(GAME_LIB_FLAGS)
@@ -24,3 +24,4 @@ $(GAME_LIB_PATH) : $(OBJECTS)
 
 clean:
 	rm -f $(BIN_DIR)/*.$(ALL_EXE_FILE_EXT) $(BIN_DIR)/*.$(ALL_OBJ_FILE_EXT) $(BIN_DIR)/*.$(ALL_LIB_FILE_EXT)
+	-@rmdir $(BIN_DIR) 2> /dev/null

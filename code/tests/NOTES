@@ -1,1 +1,4 @@
 All new unit tests should have a name matching UnitTest*.cpp
+
+# To run tests:
+% make run_tests
