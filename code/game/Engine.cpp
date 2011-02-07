@@ -35,6 +35,7 @@ void Engine::play()
   // Game loop, each iteration of this loop is a full game turn
   while (true) {
     // Draw current game state
+    m_interface.draw(m_world);
 
     // Human player takes turn
 

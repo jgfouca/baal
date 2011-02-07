@@ -8,5 +8,5 @@ World* WorldFactoryGenerated::create()
 ///////////////////////////////////////////////////////////////////////////////
 {
   // TODO
-  return new World;
+  return new World(1, 1);
 }

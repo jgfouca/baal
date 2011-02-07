@@ -4,6 +4,8 @@
 #include "Configuration.hpp"
 #include "BaalExceptions.hpp"
 
+#include <iostream>
+
 using namespace baal;
 
 const std::string InterfaceFactory::TEXT_INTERFACE      = "t";
@@ -23,7 +25,7 @@ const Interface* InterfaceFactory::create()
 
   // Create and return the desired interface
   if (interface_config == TEXT_INTERFACE) {
-    return new InterfaceText;
+    return new InterfaceText(std::cout);
   }
   else if (interface_config == GRAPHICAL_INTERFACE) {
     return new InterfaceGraphical;

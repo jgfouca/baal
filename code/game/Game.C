@@ -2,25 +2,49 @@
 #include "BaalExceptions.hpp"
 #include "Engine.hpp"
 #include "Configuration.hpp"
+#include "InterfaceFactory.hpp"
+#include "WorldFactory.hpp"
+#include "WorldFactoryHardcoded.hpp"
 
 #include <iostream>
 #include <string>
+#include <sstream>
 
 namespace baal {
 
-static const std::string HELP =
-  "<baal-exe> [-i (t|g)] [-w (r|1|2|...)]\n"
-  "\n"
-  "  Use the -i option to choose interface\n"
-  "    t -> text (default)\n"
-  "    g -> graphical\n"
-  "\n"
-  "  Use the -w option to chose world\n"
-  "    1 -> hardcoded world 1 (default)\n"
-  "    2 -> hardcoded world 2\n"
-  "    ...\n"
-  "    r -> randomly generated world\n"
-  "";
+std::string get_help()
+{
+  // Grab config info from the various factories
+
+  const std::string text_interface    = InterfaceFactory::TEXT_INTERFACE;
+  const std::string gfx_interface     = InterfaceFactory::GRAPHICAL_INTERFACE;
+  const std::string default_interface = InterfaceFactory::DEFAULT_INTERFACE;
+  
+  const std::string generated_world   = WorldFactory::GENERATED_WORLD;
+  const unsigned num_hardcoded_worlds = WorldFactoryHardcoded::NUM_HARDCODED_WORLDS;
+  const std::string default_world     = WorldFactory::DEFAULT_WORLD;
+
+  std::ostringstream out;
+  out << "<baal-exe> [-i (t|g)] [-w (r|1|2|...)]\n"
+      << "\n"
+      << "  Use the -i option to choose interface\n"
+      << "    " << text_interface << " -> text" <<
+         (text_interface == default_interface ? "(default)" : "") << "\n"
+      << "    " << gfx_interface << " -> graphical" <<
+         (gfx_interface == default_interface ? "(default)" : "") << "\n"
+      << "\n"
+      << "  Use the -w option to chose world\n";
+  for (unsigned i = 1; i <= num_hardcoded_worlds; ++i) {
+    std::ostringstream temp;
+    temp << i;
+    std::string i_str = temp.str();
+    out << "    " << i << " -> Hardcoded world " << i <<
+      (i_str == default_interface ? "(default)" : "") << "\n";
+  }
+  out << "    " << generated_world << " -> randomly generated world" <<
+    (generated_world == default_interface ? "(default)" : "") << "\n";
+  return out.str();
+}
 
 /**
  * Parse args and configure Configuration singleton
@@ -29,29 +53,27 @@ static const std::string HELP =
  */
 bool parse_args(int argc, char** argv)
 {
-  // Default config
-  char interface = 't';
-  char world     = '1';
+  // Get handle to config
+  Configuration& config = Configuration::instance();
 
   // Parse args
   for (int i = 1; i < argc; ++i) {
     std::string arg(argv[i]);
 
     if (arg == "-h" || arg == "-help" || arg == "help" || arg == "--help") {
-      std::cout << HELP << std::endl;
+      std::cout << get_help() << std::endl;
       return false;
     }
     else if (arg == "-i" || arg == "-w") {
+      // These options take an argument, try to get it
       RequireUser(i+1 < argc, "Option " << arg << " requires argument");
       std::string opt_arg = argv[++i]; // note inc of i
-      RequireUser(opt_arg.size() == 1,
-                  "Arg '" << opt_arg << "' to option " << arg <<
-                  " is invalid, expect single character");
+
       if (arg == "-i") {
-        interface = opt_arg[0];
+        config.m_interface_config = opt_arg;
       }
       else if (arg == "-w") {
-        world = opt_arg[0];
+        config.m_world_config     = opt_arg;
       }
       else {
         Require(false, "Should never make it here");
@@ -61,11 +83,6 @@ bool parse_args(int argc, char** argv)
       RequireUser(false, "Unrecognized argument: " << arg);
     }
   }
-
-  // Set configuration
-  Configuration& config = Configuration::instance();
-  config.m_interface = interface;
-  config.m_world     = world;
 
   return true;
 }
@@ -95,7 +112,7 @@ int main(int argc, char** argv)
   if (baal::parse_args(argc, argv)) {
     // Begin game
     baal::Engine engine;
-    //engine.play();
+    engine.play();
   }
 
   return 0;

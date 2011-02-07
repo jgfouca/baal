@@ -3,11 +3,12 @@
 
 namespace baal {
 
+class World;
+
 class WorldFactoryGenerated
 {
  public:
-
- private:
+  static World* create();
 };
 
 }

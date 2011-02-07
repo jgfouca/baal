@@ -1,11 +1,15 @@
 #ifndef Configuration_hpp
 #define Configuration_hpp
 
+#include <string>
+
 namespace baal {
 
 /**
  * A singleton class, the global object will contain the user's configuration
  * choices for this execution of the game.
+ *
+ * Note, no knowledge of configuration semantics should be exposed here.
  */
 class Configuration
 {
@@ -17,34 +21,33 @@ class Configuration
    * It's OK to return a non-const since there are no non-const methods in the
    * public interface.
    */
-  static Configuration& instance()
-  {
-    static Configuration global_config;
-    return global_config;
-  }
-
-  ~Configuration() {}
+  static Configuration& instance();
 
   // Getters
   
-  char get_interface() const { return m_interface; }
+  std::string get_interface_config() const { return m_interface_config; }
 
-  char get_world() const { return m_world; }
+  std::string get_world_config() const { return m_world_config; }
+
+  static const std::string UNSET;
   
  private:
 
   /**
    * Private constructor. Use public instance method to get the Configuration.
+   *
+   * Unspecied configuration items will be left as '' so that it may be handled
+   * by the knowledgable party.
    */
-  Configuration() {}
+  Configuration();
 
   // Disallowed methods
   Configuration(const Configuration&);
   Configuration& operator=(const Configuration&);
 
   // Configuration items are all instance variables
-  char m_interface;
-  char m_world;
+  std::string m_interface_config;
+  std::string m_world_config;
 
   // Any modifier/setter of Configuration has to be a friend
   //friend baal::parse_args;
