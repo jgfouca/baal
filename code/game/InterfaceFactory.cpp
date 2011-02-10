@@ -3,6 +3,7 @@
 #include "InterfaceGraphical.hpp"
 #include "Configuration.hpp"
 #include "BaalExceptions.hpp"
+#include "Engine.hpp"
 
 #include <iostream>
 
@@ -13,7 +14,7 @@ const std::string InterfaceFactory::GRAPHICAL_INTERFACE = "g";
 const std::string InterfaceFactory::DEFAULT_INTERFACE   = TEXT_INTERFACE;
 
 ///////////////////////////////////////////////////////////////////////////////
-const Interface* InterfaceFactory::create()
+Interface* InterfaceFactory::create(Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
   // Get user's choice of interface
@@ -25,10 +26,10 @@ const Interface* InterfaceFactory::create()
 
   // Create and return the desired interface
   if (interface_config == TEXT_INTERFACE) {
-    return new InterfaceText(std::cout);
+    return new InterfaceText(engine, std::cout, std::cin);
   }
   else if (interface_config == GRAPHICAL_INTERFACE) {
-    return new InterfaceGraphical;
+    return new InterfaceGraphical(engine);
   }
   else {
     RequireUser(false, "Invalid choice of interface: " << interface_config);

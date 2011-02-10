@@ -7,15 +7,23 @@
 
 namespace baal {
 
+/**
+ * Text-based implementation of an interface
+ */
 class InterfaceText : public Interface
 {
  public:
-  InterfaceText(std::ostream& stream) : m_stream(stream) {}
+  InterfaceText(Engine& engine, std::ostream& out, std::istream& in);
   
-  virtual void draw(const World& world) const;
+  virtual void draw();
+
+  virtual void interact();
+
+  virtual void help(const std::string& helpmsg);
 
  private:
-  std::ostream& m_stream;
+  std::ostream& m_ostream;
+  std::istream& m_istream;
 };
 
 }

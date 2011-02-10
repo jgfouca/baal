@@ -7,8 +7,14 @@ namespace baal {
 class InterfaceGraphical : public Interface
 {
  public:
-  virtual void draw(const World& world) const { /*TODO*/ }
+  InterfaceGraphical(Engine& engine) : Interface(engine) {}
+  
+  virtual void draw() { /*TODO*/ }
 
+  virtual void interact() { /*TODO*/ }
+
+  virtual void help(const std::string& helpmsg) { /*TODO*/ }
+  
  private:
 };
 

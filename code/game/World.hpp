@@ -2,6 +2,7 @@
 #define World_hpp
 
 #include "WorldTile.hpp"
+#include "BaalCommon.hpp"
 
 #include <vector>
 
@@ -24,8 +25,8 @@ class World
   /**
    * Return a particular tile
    */
-  const WorldTile& get_tile(unsigned row, unsigned col) const {
-    return m_tiles[row][col];
+  const WorldTile& get_tile(const Location& location) const {
+    return m_tiles[location.row][location.col];
   }
 
   unsigned width() const { return m_width; }
@@ -37,7 +38,9 @@ class World
    * Return a non-const reference to a tile, this is private because it should
    * only be used by the world factories which are friends.
    */
-  WorldTile& get_tile(unsigned row, unsigned col) { return m_tiles[row][col]; }
+  WorldTile& get_tile(const Location& location) {
+    return m_tiles[location.row][location.col];
+  }
 
   // Members
   unsigned m_width;

@@ -1,26 +1,42 @@
 #include "InterfaceText.hpp"
+#include "Engine.hpp"
 #include "World.hpp"
 #include "BaalExceptions.hpp"
+#include "BaalCommon.hpp"
+#include "CommandFactory.hpp"
+#include "Command.hpp"
 
 #include <iostream>
+#include <string>
 
 using namespace baal;
 
 ///////////////////////////////////////////////////////////////////////////////
-void InterfaceText::draw(const World& world) const
+InterfaceText::InterfaceText(Engine& engine,
+                             std::ostream& out,
+                             std::istream& in)
+///////////////////////////////////////////////////////////////////////////////
+ : Interface(engine),
+   m_ostream(out),
+   m_istream(in)
+{}
+
+///////////////////////////////////////////////////////////////////////////////
+void InterfaceText::draw()
 ///////////////////////////////////////////////////////////////////////////////
 {
+  const World& world = m_engine.world();
   for (unsigned row = 0; row < world.height(); ++row) {
     for (unsigned col = 0; col < world.width(); ++col) {
-      switch (world.get_tile(row, col).type()) {
+      switch (world.get_tile(Location(row, col)).type()) {
       case MTN:
-        m_stream << "M ";
+        m_ostream << "M ";
         break;
       case PLAIN:
-        m_stream << "P ";
+        m_ostream << "P ";
         break;
       case OCEAN:
-        m_stream << "O ";
+        m_ostream << "O ";
         break;
       case UNDEFINED:
         Require(false, "World[" << row << "][" << col << "] is undefined");
@@ -29,7 +45,45 @@ void InterfaceText::draw(const World& world) const
         Require(false, "Should never make it here");
       }
     }
-    m_stream << "\n";
+    m_ostream << "\n";
   }
-  m_stream.flush();
+  m_ostream.flush();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void InterfaceText::help(const std::string& helpmsg)
+///////////////////////////////////////////////////////////////////////////////
+{
+  m_ostream << helpmsg << std::endl;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void InterfaceText::interact()
+///////////////////////////////////////////////////////////////////////////////
+{
+  // Reset state
+  m_end_turn = false;
+
+  // Enter loop for this turn
+  while(!m_end_turn) {
+    // Grab a line of text
+    m_ostream <<  "% ";
+    m_ostream.flush();
+    std::string command_str;
+    if (!std::getline(m_istream, command_str)) {
+      // Empty commands are not acceptable
+      m_ostream << "please enter command" << std::endl;
+      continue;
+    }
+
+    try {
+      const Command* command = CommandFactory::parse_command(command_str);
+      command->apply(m_engine);
+      delete command;
+    }
+    catch (UserError& error) {
+      m_ostream << "ERROR: " << error.what() << std::endl;
+      m_ostream << "\nType: 'help [command]' for assistence" << std::endl;
+    }
+  }
 }

@@ -11,10 +11,11 @@ using namespace baal;
 ///////////////////////////////////////////////////////////////////////////////
 Engine::Engine()
 ///////////////////////////////////////////////////////////////////////////////
-  : m_interface(*(InterfaceFactory::create())),
+  : m_interface(*(InterfaceFactory::create(*this))),
     m_world(*(WorldFactory::create())),
-    m_player(*(new Player)),
-    m_ai_player(*(new PlayerAI))
+    m_player(*(new Player)), // might come from factory in the future
+    m_ai_player(*(new PlayerAI)), // might come from factory in the future
+    m_quit(false)
 {
 
 }
@@ -33,13 +34,14 @@ void Engine::play()
 ///////////////////////////////////////////////////////////////////////////////
 {
   // Game loop, each iteration of this loop is a full game turn
-  while (true) {
+  while (!m_quit) {
     // Draw current game state
-    m_interface.draw(m_world);
+    m_interface.draw();
 
     // Human player takes turn
+    m_interface.interact();
 
     // AI player takes turn
-    return; //TODO - fill in this loop
+    // TODO
   }
 }

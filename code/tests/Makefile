@@ -10,6 +10,10 @@ EXES = $(patsubst %.$(MAIN_FILE_EXT), $(BIN_DIR)/%.$(EXE_FILE_EXT),$(wildcard *.
 
 all : lib $(BIN_DIR) $(EXES)
 
+# We need to implement the dependency on the game library in
+# this way. It's the only way to guarantee we get the most
+# up-to-date game code even if the library file already exists
+# (it may itself by out-of-date).
 lib:
 	cd $(GAME_PATH) && make $(MAKE_ARG) -j
 
