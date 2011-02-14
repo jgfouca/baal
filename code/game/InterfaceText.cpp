@@ -61,6 +61,9 @@ void InterfaceText::help(const std::string& helpmsg)
 void InterfaceText::interact()
 ///////////////////////////////////////////////////////////////////////////////
 {
+  // Get handle to command factory
+  const CommandFactory& cmd_factory = CommandFactory::instance();
+
   // Reset state
   m_end_turn = false;
 
@@ -76,10 +79,9 @@ void InterfaceText::interact()
       continue;
     }
 
-    try {
-      const Command* command = CommandFactory::parse_command(command_str);
-      command->apply(m_engine);
-      delete command;
+    try {      
+      const Command& command = cmd_factory.parse_command(command_str);
+      command.apply(m_engine);
     }
     catch (UserError& error) {
       m_ostream << "ERROR: " << error.what() << std::endl;

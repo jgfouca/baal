@@ -50,7 +50,6 @@ class Configuration
   std::string m_world_config;
 
   // Any modifier/setter of Configuration has to be a friend
-  //friend baal::parse_args;
   friend bool parse_args(int argc, char** argv);
 };
 

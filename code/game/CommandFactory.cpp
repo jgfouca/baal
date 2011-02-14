@@ -8,14 +8,46 @@
 using namespace baal;
 
 ///////////////////////////////////////////////////////////////////////////////
-const Command* CommandFactory::parse_command(const std::string& text)
+const CommandFactory& CommandFactory::instance()
+///////////////////////////////////////////////////////////////////////////////
+{
+  static CommandFactory global_cmd_factory;
+  return global_cmd_factory;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+CommandFactory::CommandFactory()
+///////////////////////////////////////////////////////////////////////////////
+{
+  // Populate command map, this is the only place where the list of all
+  // commands is exposed
+
+  m_cmd_map["help"] = new HelpCommand;
+  m_cmd_map["save"] = new SaveCommand;
+  m_cmd_map["end" ] = new EndTurnCommand;
+  m_cmd_map["quit"] = new QuitCommand;
+  m_cmd_map["cast"] = new SpellCommand;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+CommandFactory::~CommandFactory()
+///////////////////////////////////////////////////////////////////////////////
+{
+  for (std::map<std::string, Command*>::iterator
+       itr = m_cmd_map.begin(); itr != m_cmd_map.end(); ++itr) {
+    delete itr->second;
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+const Command& CommandFactory::parse_command(const std::string& text) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   std::istringstream iss(text);
 
   // Get first token of command
-  std::string command_name;
-  iss >> command_name;
+  std::string cmd_name;
+  iss >> cmd_name;
   RequireUser(!iss.fail(), "Failed while retrieving command name (first token)");
 
   // Get command args
@@ -27,26 +59,11 @@ const Command* CommandFactory::parse_command(const std::string& text)
     args.push_back(token);
   }
 
-  // Create command object
-  Command* rv;
-  if (command_name == "help") {
-    rv = new HelpCommand(args);
-  }
-  else if (command_name == "save") {
-    rv = new SaveCommand(args);
-  }
-  else if (command_name == "end") {
-    rv = new EndTurnCommand(args);
-  }
-  else if (command_name == "quit") {
-    rv = new QuitCommand(args);
-  }
-  else if (command_name == "cast") {
-    rv = new SpellCommand(args);
-  }
-  else {
-    RequireUser(false, "Unknown command: " << command_name);
-  }
-
-  return rv;
+  // Init and return command object
+  std::map<std::string, Command*>::const_iterator itr = m_cmd_map.find(cmd_name);
+  RequireUser(itr != m_cmd_map.end(),
+              "Unknown command: " << cmd_name << ". Type 'help' for help.");
+  Command& command = *(itr->second);
+  command.init(args);
+  return command;
 }

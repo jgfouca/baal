@@ -20,7 +20,11 @@ class Engine;
 class Command
 {
  public:
+  virtual void init(const std::vector<std::string>& args) = 0;
+  
   virtual void apply(Engine& engine) const = 0;
+
+  virtual std::string help() const = 0;
 };
 
 /**
@@ -31,9 +35,11 @@ class Command
 class HelpCommand : public Command
 {
  public:
-  HelpCommand(const std::vector<std::string>& args);
+  virtual void init(const std::vector<std::string>& args);
 
   virtual void apply(Engine& engine) const;
+
+  virtual std::string help() const;
 
  private:
   std::string m_arg;
@@ -47,10 +53,12 @@ class HelpCommand : public Command
 class SaveCommand : public Command
 {
  public:
-  SaveCommand(const std::vector<std::string>& args) { /*TODO*/ }
+  virtual void init(const std::vector<std::string>& args);
 
-  virtual void apply(Engine& engine) const { /*TODO*/ }
- 
+  virtual void apply(Engine& engine) const;
+
+  virtual std::string help() const;
+
  private:
   std::string m_arg;
 };
@@ -63,9 +71,11 @@ class SaveCommand : public Command
 class EndTurnCommand : public Command
 {
  public:
-  EndTurnCommand(const std::vector<std::string>& args);
+  virtual void init(const std::vector<std::string>& args);
 
   virtual void apply(Engine& engine) const;
+
+  virtual std::string help() const;
 };
 
 /**
@@ -76,27 +86,31 @@ class EndTurnCommand : public Command
 class QuitCommand : public Command
 {
  public:
-  QuitCommand(const std::vector<std::string>& args);
+  virtual void init(const std::vector<std::string>& args);
 
   virtual void apply(Engine& engine) const;
+
+  virtual std::string help() const;
 };
 
 /**
  * Cast a spell
  *
- * Syntax: cast <spell-name> <row>,<col> <level>
+ * Syntax: cast <spell-name> <level> <row>,<col>
  */
 class SpellCommand : public Command
 {
  public:
-  SpellCommand(const std::vector<std::string>& args) : m_spell_location(0, 0) { /*TODO*/ }
+  virtual void init(const std::vector<std::string>& args);
 
-  virtual void apply(Engine& engine) const { /*TODO*/ }
+  virtual void apply(Engine& engine) const;
+
+  virtual std::string help() const;
 
  private:
   std::string m_spell_name;
-  Location    m_spell_location;
   unsigned    m_spell_level;
+  Location    m_spell_location;
 };
 
 }
