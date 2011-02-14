@@ -21,7 +21,7 @@ class Command
 {
  public:
   virtual void init(const std::vector<std::string>& args) = 0;
-  
+
   virtual void apply(Engine& engine) const = 0;
 
   virtual std::string help() const = 0;

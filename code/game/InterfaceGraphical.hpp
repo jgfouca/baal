@@ -8,13 +8,13 @@ class InterfaceGraphical : public Interface
 {
  public:
   InterfaceGraphical(Engine& engine) : Interface(engine) {}
-  
+
   virtual void draw() { /*TODO*/ }
 
   virtual void interact() { /*TODO*/ }
 
   virtual void help(const std::string& helpmsg) { /*TODO*/ }
-  
+
  private:
 };
 

@@ -18,7 +18,7 @@ Location::Location(const std::string& str_location)
   iss >> comma;
   Require(!iss.fail(), "Parse failure while getting comma");
   Require(comma == ',', "Expected ',' after row");
-  
+
   iss >> col;
   Require(!iss.fail(), "Parse failure while getting column");
 

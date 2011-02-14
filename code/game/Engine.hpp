@@ -28,7 +28,7 @@ class Engine
   Interface& interface() { return m_interface; }
 
   void quit() { m_quit = true; }
-  
+
  private:
   Interface& m_interface;
   World&     m_world;

@@ -20,7 +20,7 @@ class Interface
     : m_engine(engine),
       m_end_turn(false)
   {}
-  
+
   virtual void draw() = 0;
 
   virtual void interact() = 0;

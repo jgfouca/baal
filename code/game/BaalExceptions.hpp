@@ -23,7 +23,7 @@ class ProgramError : public std::exception
   virtual ~ProgramError() throw() {}
 
   virtual const char* what() const throw();
-  
+
  private:
   std::string m_expr;
   std::string m_file;
@@ -43,7 +43,7 @@ class UserError : public std::exception
   virtual ~UserError() throw() {}
 
   virtual const char* what() const throw();
-  
+
  private:
   std::string m_message;
 };

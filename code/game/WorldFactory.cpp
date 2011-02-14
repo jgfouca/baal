@@ -30,7 +30,7 @@ World* WorldFactory::create()
       numeric = false;
     }
   }
-  
+
   // Create and return the desired world
   if (numeric) {
     return WorldFactoryHardcoded::create(world_config);

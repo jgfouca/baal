@@ -79,7 +79,7 @@ void InterfaceText::interact()
       continue;
     }
 
-    try {      
+    try {
       const Command& command = cmd_factory.parse_command(command_str);
       command.apply(m_engine);
     }

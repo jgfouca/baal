@@ -24,13 +24,13 @@ class Configuration
   static Configuration& instance();
 
   // Getters
-  
+
   std::string get_interface_config() const { return m_interface_config; }
 
   std::string get_world_config() const { return m_world_config; }
 
   static const std::string UNSET;
-  
+
  private:
 
   /**

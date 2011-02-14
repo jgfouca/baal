@@ -18,7 +18,7 @@ struct Location
   Location(unsigned r, unsigned c) : row(r), col(c) {}
 
   Location(const std::string& str_location);
-  
+
   unsigned row;
   unsigned col;
 };

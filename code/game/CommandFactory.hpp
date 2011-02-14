@@ -19,18 +19,18 @@ class CommandFactory
   static const CommandFactory& instance();
 
   ~CommandFactory();
-  
+
   // Does not need to be deleted
   const Command& parse_command(const std::string& text) const;
 
  private:
   // Private constructor since this is singleton class
   CommandFactory();
-  
+
   // Disallowed methods
   CommandFactory(const CommandFactory&);
   CommandFactory& operator=(const CommandFactory&);
-  
+
   // Members
   std::map<std::string, Command*> m_cmd_map;
 

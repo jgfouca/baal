@@ -21,7 +21,7 @@ class World
   unsigned apply_disaster(const Disaster& disaster);
 
   // Getters
-  
+
   /**
    * Return a particular tile
    */
