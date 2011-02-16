@@ -8,17 +8,10 @@
 
 namespace baal {
 
-class Disaster;
-
 class World
 {
  public:
   World(unsigned width, unsigned height);
-
-  /**
-   * Apply a disaster to the world, returns number of casualties.
-   */
-  unsigned apply_disaster(const Disaster& disaster);
 
   // Getters
 
@@ -29,18 +22,22 @@ class World
     return m_tiles[location.row][location.col];
   }
 
-  unsigned width() const { return m_width; }
-
-  unsigned height() const { return m_height; }
-
- private:
   /**
-   * Return a non-const reference to a tile, this is private because it should
-   * only be used by the world factories which are friends.
+   * Return a non-const tile
    */
   WorldTile& get_tile(const Location& location) {
     return m_tiles[location.row][location.col];
   }
+
+  unsigned width() const { return m_width; }
+
+  unsigned height() const { return m_height; }
+
+  bool in_bounds(const Location& location) const {
+    return location.row < m_height || location.col < m_width;
+  }
+
+ private:
 
   // Members
   unsigned m_width;

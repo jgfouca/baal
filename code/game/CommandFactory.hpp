@@ -10,8 +10,7 @@ class Command;
 
 /**
  * A CommandFactory creates commands. It encapsulates the knowledge of the
- * different commands, IE it encapsulates the fact that there are many
- * different types of commands. This class is a singleton.
+ * set of available commands. This class is a singleton.
  */
 class CommandFactory
 {

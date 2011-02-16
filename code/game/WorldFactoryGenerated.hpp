@@ -8,7 +8,7 @@ class World;
 class WorldFactoryGenerated
 {
  public:
-  static World* create();
+  static World& create();
 };
 
 }

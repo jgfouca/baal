@@ -3,9 +3,14 @@
 #include "Engine.hpp"
 #include "BaalExceptions.hpp"
 #include "Interface.hpp"
+#include "Spell.hpp"
+#include "SpellFactory.hpp"
+#include "World.hpp"
+#include "Player.hpp"
 
 #include <ctime>
 #include <sstream>
+#include <memory>
 
 using namespace baal;
 
@@ -173,7 +178,6 @@ void SpellCommand::init(const std::vector<std::string>& args)
 
   // Parse spell name
   m_spell_name = args[0];
-  // TODO: Require valid spell name
 
   // Parse spell level
   std::istringstream iss(args[1]);
@@ -194,7 +198,36 @@ void SpellCommand::init(const std::vector<std::string>& args)
 void SpellCommand::apply(Engine& engine) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // TODO
+  World&  world = engine.world();
+  Player& player = engine.player();
+  
+  // Ensure location is in-bounds
+  RequireUser(world.in_bounds(m_spell_location),
+              "Location " << m_spell_location << " out of bounds. " <<
+              "Max row is: " << world.height() - 1 <<
+              ", max col is: " << world.width() - 1);
+
+  // Create the spell. Use an auto_ptr to ensure deletion even if a throw
+  // happens. I'd rather use a reference here since spell cannot be NULL, but
+  // we need to auto_ptr since verify_cast can throw exceptions.
+  std::auto_ptr<const Spell> spell(
+    &(SpellFactory::create_spell(m_spell_name,
+                                 m_spell_level,
+                                 m_spell_location))
+                                   );
+
+  // Verify that player can cast this spell (can throw)
+  player.verify_cast(*spell);
+
+  // These last two operations need to be atomic, neither should ever throw
+  // a user error.
+  
+  // Let the player object know that the spell has been cast and to adjust
+  // it's state accordingly.
+  player.cast(*spell);
+
+  // Apply the spell to the world
+  spell->apply(world);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -204,5 +237,50 @@ std::string SpellCommand::help() const
   return std::string(
 "cast <spell-name> <level> <row>,<col>\n"
 "  Casts spell of type <spell-name> and level <level> at location <row>,<col>"
+                     );
+}
+
+/*****************************************************************************/
+
+///////////////////////////////////////////////////////////////////////////////
+void LearnCommand::init(const std::vector<std::string>& args)
+///////////////////////////////////////////////////////////////////////////////
+{
+  RequireUser(args.size() == 2, "The learn command takes 2 arguments");
+
+  // Parse spell name
+  m_spell_name = args[0];
+
+  // Parse spell level
+  std::istringstream iss(args[1]);
+  iss >> m_spell_level;
+  RequireUser(!iss.fail(), "Second argument not a valid integer");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void LearnCommand::apply(Engine& engine) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  Player& player = engine.player();
+  Location dummy;
+  
+  // We need to auto_ptr since learn can throw exceptions.
+  std::auto_ptr<const Spell> spell(
+    &(SpellFactory::create_spell(m_spell_name,
+                                 m_spell_level,
+                                 dummy))
+                                   );
+
+  // Try to have the player learn this spell, this can throw
+  player.learn(*spell);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+std::string LearnCommand::help() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  return std::string(
+"learn <spell-name> <level>\n"
+"  Player learns spell of type <spell-name> and level <level>"
                      );
 }

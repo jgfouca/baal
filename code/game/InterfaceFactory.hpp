@@ -17,7 +17,7 @@ class InterfaceFactory
 {
  public:
   // Note, client is responsible for deletion
-  static Interface* create(Engine& engine);
+  static Interface& create(Engine& engine);
 
   static const std::string TEXT_INTERFACE;
   static const std::string GRAPHICAL_INTERFACE;

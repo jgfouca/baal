@@ -22,11 +22,12 @@ CommandFactory::CommandFactory()
   // Populate command map, this is the only place where the list of all
   // commands is exposed
 
-  m_cmd_map["help"] = new HelpCommand;
-  m_cmd_map["save"] = new SaveCommand;
-  m_cmd_map["end" ] = new EndTurnCommand;
-  m_cmd_map["quit"] = new QuitCommand;
-  m_cmd_map["cast"] = new SpellCommand;
+  m_cmd_map["help"]  = new HelpCommand;
+  m_cmd_map["save"]  = new SaveCommand;
+  m_cmd_map["end" ]  = new EndTurnCommand;
+  m_cmd_map["quit"]  = new QuitCommand;
+  m_cmd_map["cast"]  = new SpellCommand;
+  m_cmd_map["learn"] = new LearnCommand;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -59,7 +60,9 @@ const Command& CommandFactory::parse_command(const std::string& text) const
     args.push_back(token);
   }
 
-  // Init and return command object
+  // Init and return command object. Note that command objects are recycled.
+  // I would have much rather stored a map to Command classes, but that's not
+  // possible in C++. The command map is necessary for the HelpCommand.
   std::map<std::string, Command*>::const_iterator itr = m_cmd_map.find(cmd_name);
   RequireUser(itr != m_cmd_map.end(),
               "Unknown command: " << cmd_name << ". Type 'help' for help.");

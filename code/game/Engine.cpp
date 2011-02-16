@@ -11,8 +11,8 @@ using namespace baal;
 ///////////////////////////////////////////////////////////////////////////////
 Engine::Engine()
 ///////////////////////////////////////////////////////////////////////////////
-  : m_interface(*(InterfaceFactory::create(*this))),
-    m_world(*(WorldFactory::create())),
+  : m_interface(InterfaceFactory::create(*this)),
+    m_world(WorldFactory::create()),
     m_player(*(new Player)), // might come from factory in the future
     m_ai_player(*(new PlayerAI)), // might come from factory in the future
     m_quit(false)
@@ -29,6 +29,7 @@ Engine::~Engine()
   delete &m_player;
   delete &m_ai_player;
 }
+
 ///////////////////////////////////////////////////////////////////////////////
 void Engine::play()
 ///////////////////////////////////////////////////////////////////////////////

@@ -6,7 +6,7 @@
 
 #include "BaalCommon.hpp"
 
-// We use this class to define all the commands. This will avoid
+// We use this file to define all the commands. This will avoid
 // creation of lots of very small hpp/cpp files.
 
 namespace baal {
@@ -111,6 +111,25 @@ class SpellCommand : public Command
   std::string m_spell_name;
   unsigned    m_spell_level;
   Location    m_spell_location;
+};
+
+/**
+ * Learn a spell
+ *
+ * Syntax: learn <spell-name> <level>
+ */
+class LearnCommand : public Command
+{
+ public:
+  virtual void init(const std::vector<std::string>& args);
+
+  virtual void apply(Engine& engine) const;
+
+  virtual std::string help() const;
+
+ private:
+  std::string m_spell_name;
+  unsigned    m_spell_level;
 };
 
 }

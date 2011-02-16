@@ -3,6 +3,7 @@
 
 #include <climits>
 #include <string>
+#include <iosfwd>
 
 // Put simple, generic free functions in this file
 
@@ -19,6 +20,8 @@ struct Location
 
   Location(const std::string& str_location);
 
+  std::ostream& operator<<(std::ostream& out) const;
+
   unsigned row;
   unsigned col;
 };
@@ -29,6 +32,8 @@ struct Location
  * Used for sanity-checking build system.
  */
 bool is_opt();
+
+std::ostream& operator<<(std::ostream& out, const Location& location);
 
 }
 

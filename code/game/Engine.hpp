@@ -27,6 +27,8 @@ class Engine
 
   Interface& interface() { return m_interface; }
 
+  Player& player() { return m_player; }
+
   void quit() { m_quit = true; }
 
  private:

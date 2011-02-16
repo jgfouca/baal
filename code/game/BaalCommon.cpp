@@ -2,6 +2,9 @@
 #include "BaalExceptions.hpp"
 
 #include <sstream>
+#include <iostream>
+
+using std::ostream;
 
 namespace baal {
 
@@ -25,7 +28,14 @@ Location::Location(const std::string& str_location)
   Require(iss.eof(), "Leftover text in str location");
 }
 
+///////////////////////////////////////////////////////////////////////////////
+ostream& Location::operator<<(ostream& out) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  return out << row << ',' << col;
 }
+
+} // namespace baal
 
 ///////////////////////////////////////////////////////////////////////////////
 bool baal::is_opt()
@@ -36,4 +46,11 @@ bool baal::is_opt()
 #else
   return true;
 #endif
+}
+
+///////////////////////////////////////////////////////////////////////////////
+ostream& baal::operator<<(ostream& out, const Location& location)
+///////////////////////////////////////////////////////////////////////////////
+{
+  return location.operator<<(out);
 }

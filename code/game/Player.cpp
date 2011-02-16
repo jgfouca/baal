@@ -1,0 +1,22 @@
+#include "Player.hpp"
+#include "BaalExceptions.hpp"
+#include "Spell.hpp"
+
+using namespace baal;
+
+///////////////////////////////////////////////////////////////////////////////
+void Player::verify_cast(const Spell& spell)
+///////////////////////////////////////////////////////////////////////////////
+{
+  RequireUser(spell.cost() <= m_mana,
+              "Spell requires " << spell.cost() <<
+              " mana, player only has " << m_mana << " mana");
+  RequireUser(m_talent_tree.has(spell), "Player cannot cast spell " << spell);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Player::cast(const Spell& spell) throw()
+///////////////////////////////////////////////////////////////////////////////
+{
+  m_mana -= spell.cost();
+}
