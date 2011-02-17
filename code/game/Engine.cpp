@@ -46,5 +46,8 @@ void Engine::play()
 
     // AI player takes turn
     // TODO
+
+    // Cycle world
+    m_world.cycle_turn();
   }
 }

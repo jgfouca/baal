@@ -26,6 +26,9 @@ InterfaceText::InterfaceText(Engine& engine,
 void InterfaceText::draw()
 ///////////////////////////////////////////////////////////////////////////////
 {
+  // DESIGN: Should "drawable" items know how to draw themselves? That might
+  // reduce coupling between those classes and the interface classes.
+
   // Draw world
   const World& world = m_engine.world();
   for (unsigned row = 0; row < world.height(); ++row) {

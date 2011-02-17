@@ -7,3 +7,8 @@ Please wrap all system-specific code in a macro. I've been using
 #ifndef WINDOWS
 // Linux code
 #endif
+
+TPLs:
+* gtest
+* sge
+* boost

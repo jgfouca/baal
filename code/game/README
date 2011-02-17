@@ -1,0 +1,102 @@
+- High Level -
+
+-- Game philosophy --
+
+The game would be a cross between Sim Ant (automated
+growth), Populus (disasters), and Civilization. It would be a
+turn-based strategy in which a malevolent higher power (Baal?) is
+trying to inhibit and eventually exterminate a developing
+civilization. The human player would play as Baal and the AI would
+play the civilization. The twist to the game, what would make it
+unique, would be the focus on keeping things somewhat scientifically
+accurate. As a simple example, you would not be able to cast
+hurricanes during winter or create volcanic eruptions in geologically
+inactive locations.
+
+-- Game mechanics --
+
+A map consisting of discrete tiles/hexes would be generated. Each tile
+would have a number of key properties:
+* Food
+* Production
+* Damage – Damaged tiles would have reduced yield but recover over time
+
+Tiles would "vulnerable" to various disasters based on a wide range of
+tile attributes (climate, current weather, proximity to fault lines
+etc).
+
+-- Cities --
+
+As a city grows, it works the nearby tiles. Food contributes to
+population growth and production contributes to city hit-points, tile
+infrastructure (enhances yield, but is susceptible to being damaged or
+destroyed), or settlers (can found new cities). The goal here would be
+to keep things simple so that the AI would not have to be too complex.
+
+Cities would have different vulnerabilities based on their size and
+location. Tropical cities would be more vulnerable to disease (and
+hurricanes if they were near the coast). Larger cities would be more
+vulnerable to earthquakes and fires. Cold-climate cities would be more
+vulnerable to blizzards.
+
+-- Civilization --
+
+The civilization's total population contributes to tech growth, with
+tech growth acting as a multiplier on production and probably having
+other impacts as well (maybe making the civ more resistant to smaller
+disasters or increasing population growth).
+
+-- Gameplay --
+
+In between turns, the civilization will grow and develop. During
+Baal's turn, he will be presented with a current layout of the
+land. The seasons will alternate between winter and summer. The state
+of all geological, biological, and climatological properties would be
+somewhat randomized. Based on the current state, the player may see
+opportunities to hit the civilization with various
+disasters. Disasters cost mana; total mana and mana regeneration will
+depend on your "level". Levels are gained by killing people, just like
+an RPG. There may even be room for some kind of talent tree here where
+you could focus on different categories of disasters.
+
+-- Multiplayer --
+
+An open question is whether the game should be symmetric or simply
+Baal vs humans. A symmetric game, where both player control a
+civilization and can cast disasters on each others civilizations,
+would easy to adapt to multiplayer. This would also open up the
+possibility of being able to cast beneficial spells on your own civ,
+perhaps making the game feel less sadistic.
+
+-- Game goals --
+
+Present the player with interesting choices, simple game mechanics,
+but deep strategy. Give the player the satisfaction and thrill of
+unleashing successful combinations of disasters. The game should have
+a strong problem-solving element; IE decisions on what disasters to
+cast should be non-trivial.
+
+- Details -
+
+-- World --
+
+--- Atmosphere ---
+
+--- Land ---
+
+---- Yields ----
+
+--- Ocean ---
+
+--- Geologic ---
+
+-- AI --
+
+--- City Growth ---
+
+--- City Build Possibilities ---
+
+---- Infrastructure ----
+
+---- Settling New Cities ----
+

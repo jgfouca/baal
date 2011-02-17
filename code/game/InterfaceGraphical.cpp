@@ -23,7 +23,7 @@ extern "C" void doDraw(SGEGAMESTATE *state)
 extern "C" void launchGraphicThread()
 {
   sgeInit(NOAUDIO, NOJOYSTICK);
- 
+
   // now that the graphics are initialized...we can initalize the sprite information of the engine
   InterfaceGraphical::singleton()->initEngine();
 
@@ -71,7 +71,7 @@ void InterfaceGraphical::initEngine()
 ///////////////////////////////////////////////////////////////////////////////
 {
     SGEFILE *file = sgeOpenFile("../../data/data.d", "asdf");
-  
+
   World& world = m_engine.world();
   for (unsigned row = 0; row < world.height(); ++row) {
     for (unsigned col = 0; col < world.width(); ++col) {
@@ -112,7 +112,7 @@ void InterfaceGraphical::initEngine()
 InterfaceGraphical* InterfaceGraphical::singleton()
 ///////////////////////////////////////////////////////////////////////////////
 {
-    Require(INSTANCE != NULL, "Tried to use Graphical Interface before it was initalized"); 
+    Require(INSTANCE != NULL, "Tried to use Graphical Interface before it was initalized");
     return INSTANCE;
 }
 
@@ -146,18 +146,18 @@ void InterfaceGraphical::redraw(SGEGAMESTATE *state)
                 return;
         }
 
-  sgeLock(screen); 
+  sgeLock(screen);
 
   // Draw world
   const World& world = m_engine.world();
   for (unsigned row = 0; row < world.height(); ++row) {
     for (unsigned col = 0; col < world.width(); ++col) {
 
-        
+
 	SGESPRITE* sprite = world.get_tile(Location(row,col)).sprite();
 //        sgeSpriteAddFileRange(sprite, file, "mountain%d.jpg", 1, 2);
 //        if (sprite == NULL)
-  //         continue;        
+  //         continue;
 
         // TODO: not hardcode these numbers
         sprite->x = 100 + col * 101;

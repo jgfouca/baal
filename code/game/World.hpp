@@ -13,6 +13,12 @@ class World
  public:
   World(unsigned width, unsigned height);
 
+  void cycle_turn() { /* TODO */ }
+
+  bool in_bounds(const Location& location) const {
+    return location.row < m_height || location.col < m_width;
+  }
+
   // Getters
 
   /**
@@ -32,10 +38,6 @@ class World
   unsigned width() const { return m_width; }
 
   unsigned height() const { return m_height; }
-
-  bool in_bounds(const Location& location) const {
-    return location.row < m_height || location.col < m_width;
-  }
 
  private:
 
