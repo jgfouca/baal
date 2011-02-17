@@ -12,7 +12,9 @@
 
 namespace baal {
 
+///////////////////////////////////////////////////////////////////////////////
 std::string get_help()
+///////////////////////////////////////////////////////////////////////////////
 {
   // Grab config info from the various factories
 
@@ -25,7 +27,7 @@ std::string get_help()
   const std::string default_world     = WorldFactory::DEFAULT_WORLD;
 
   std::ostringstream out;
-  out << "<baal-exe> [-i (t|g)] [-w (r|1|2|...)]\n"
+  out << "<baal-exe> [-i (t|g)] [-w (r|1|2|...)] [-p <name>]\n"
       << "\n"
       << "  Use the -i option to choose interface\n"
       << "    " << text_interface << " -> text" <<
@@ -42,7 +44,9 @@ std::string get_help()
       (i_str == default_interface ? "(default)" : "") << "\n";
   }
   out << "    " << generated_world << " -> randomly generated world" <<
-    (generated_world == default_interface ? "(default)" : "") << "\n";
+    (generated_world == default_interface ? "(default)" : "") << "\n"
+      << "\n"
+      << "  Use the -p option to chose player name\n";
   return out.str();
 }
 
@@ -51,7 +55,9 @@ std::string get_help()
  *
  * Returns true if program should continue
  */
+///////////////////////////////////////////////////////////////////////////////
 bool parse_args(int argc, char** argv)
+///////////////////////////////////////////////////////////////////////////////
 {
   // Get handle to config
   Configuration& config = Configuration::instance();
@@ -64,7 +70,7 @@ bool parse_args(int argc, char** argv)
       std::cout << get_help() << std::endl;
       return false;
     }
-    else if (arg == "-i" || arg == "-w") {
+    else if (arg == "-i" || arg == "-w" || arg == "-p") {
       // These options take an argument, try to get it
       RequireUser(i+1 < argc, "Option " << arg << " requires argument");
       std::string opt_arg = argv[++i]; // note inc of i
@@ -74,6 +80,9 @@ bool parse_args(int argc, char** argv)
       }
       else if (arg == "-w") {
         config.m_world_config     = opt_arg;
+      }
+      else if (arg == "-p") {
+        config.m_player_name      = opt_arg;
       }
       else {
         Require(false, "Should never make it here");
@@ -89,7 +98,9 @@ bool parse_args(int argc, char** argv)
 
 } // namespace baal
 
+///////////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
+///////////////////////////////////////////////////////////////////////////////
 {
   // Sanity check build system
 

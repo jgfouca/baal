@@ -22,6 +22,8 @@ void TalentTree::add(const Spell& spell)
                 "Must learn level " << spell_level - 1 << " first");
     m_spell_level_map[spell_name] += 1;
   }
+
+  ++m_num_learned;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

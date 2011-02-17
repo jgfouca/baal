@@ -5,6 +5,7 @@
 #include "BaalCommon.hpp"
 #include "CommandFactory.hpp"
 #include "Command.hpp"
+#include "Player.hpp"
 
 #include <iostream>
 #include <string>
@@ -25,6 +26,7 @@ InterfaceText::InterfaceText(Engine& engine,
 void InterfaceText::draw()
 ///////////////////////////////////////////////////////////////////////////////
 {
+  // Draw world
   const World& world = m_engine.world();
   for (unsigned row = 0; row < world.height(); ++row) {
     for (unsigned col = 0; col < world.width(); ++col) {
@@ -47,6 +49,16 @@ void InterfaceText::draw()
     }
     m_ostream << "\n";
   }
+  m_ostream << "\n";
+
+  // Draw Player
+  const Player& player = m_engine.player();
+  m_ostream << "PLAYER STATS:\n"
+            << "  name: " << player.name() << "\n"
+            << "  level: " << player.level() << "\n"
+            << "  mana: " << player.mana() << "/" << player.max_mana() << "\n"
+            << "  exp: " << player.exp() << "\n";
+
   m_ostream.flush();
 }
 

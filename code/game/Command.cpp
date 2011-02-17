@@ -200,7 +200,7 @@ void SpellCommand::apply(Engine& engine) const
 {
   World&  world = engine.world();
   Player& player = engine.player();
-  
+
   // Ensure location is in-bounds
   RequireUser(world.in_bounds(m_spell_location),
               "Location " << m_spell_location << " out of bounds. " <<
@@ -221,7 +221,7 @@ void SpellCommand::apply(Engine& engine) const
 
   // These last two operations need to be atomic, neither should ever throw
   // a user error.
-  
+
   // Let the player object know that the spell has been cast and to adjust
   // it's state accordingly.
   player.cast(*spell);
@@ -263,7 +263,7 @@ void LearnCommand::apply(Engine& engine) const
 {
   Player& player = engine.player();
   Location dummy;
-  
+
   // We need to auto_ptr since learn can throw exceptions.
   std::auto_ptr<const Spell> spell(
     &(SpellFactory::create_spell(m_spell_name,

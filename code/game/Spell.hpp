@@ -32,7 +32,7 @@ class Spell
   unsigned level() const { return m_spell_level; }
 
   std::ostream& operator<<(std::ostream& out) const;
-  
+
  protected:
   std::string m_name;
   unsigned    m_spell_level;
@@ -56,9 +56,9 @@ class FireSpell : public Spell
   virtual void apply(World& world) const;
 
   virtual unsigned cost() const { return m_spell_level * BASE_COST; }
-  
+
  private:
-  static const unsigned BASE_COST = 1;
+  static const unsigned BASE_COST = 50;
 };
 
 // TODO - Need many more disasters

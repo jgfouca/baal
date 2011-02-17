@@ -41,6 +41,7 @@ void Engine::play()
 
     // Human player takes turn
     m_interface.interact();
+    m_player.cycle_turn();
 
     // AI player takes turn
     // TODO

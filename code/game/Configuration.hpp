@@ -25,9 +25,14 @@ class Configuration
 
   // Getters
 
-  std::string get_interface_config() const { return m_interface_config; }
+  const std::string& get_interface_config() const
+  { return m_interface_config; }
 
-  std::string get_world_config() const { return m_world_config; }
+  const std::string& get_world_config() const
+  { return m_world_config; }
+
+  const std::string& get_player_name() const
+  { return m_player_name; }
 
   static const std::string UNSET;
 
@@ -48,6 +53,7 @@ class Configuration
   // Configuration items are all instance variables
   std::string m_interface_config;
   std::string m_world_config;
+  std::string m_player_name;
 
   // Any modifier/setter of Configuration has to be a friend
   friend bool parse_args(int argc, char** argv);

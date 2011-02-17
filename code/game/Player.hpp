@@ -3,6 +3,8 @@
 
 #include "TalentTree.hpp"
 
+#include <string>
+
 namespace baal {
 
 class Spell;
@@ -13,27 +15,53 @@ class Spell;
 class Player
 {
  public:
-  Player()
-    : m_mana(10),
-      m_talent_tree()
-  {}
+  Player();
 
-  void learn(const Spell& spell)
-  {
-    m_talent_tree.add(spell);
-  }
+  void learn(const Spell& spell);
 
   void verify_cast(const Spell& spell);
 
-  void cast(const Spell& spell) throw();
+  void cast(const Spell& spell);
+
+  void gain_exp(unsigned exp);
+
+  void cycle_turn();
+
+  // Getters
+
+  const std::string& name() const { return m_name; }
+
+  unsigned mana() const { return m_mana; }
+
+  unsigned max_mana() const { return m_max_mana; }
+
+  unsigned exp() const { return m_exp; }
+
+  unsigned level() const { return m_level; }
 
  private:
   // Forbidden
   Player(const Player&);
   Player& operator=(const Player&);
 
-  unsigned   m_mana;
-  TalentTree m_talent_tree;
+  // Instance members
+  std::string m_name;
+  unsigned    m_mana;
+  unsigned    m_max_mana;
+  unsigned    m_mana_regen_rate;
+  unsigned    m_exp;
+  unsigned    m_level;
+  unsigned    m_next_level_cost;
+  TalentTree  m_talent_tree;
+
+  // Class members
+  static const unsigned STARTING_MANA            = 100;
+  static const unsigned FIRST_LEVELUP_EXP_COST   = 100;
+  static const unsigned STARTING_MANA_REGEN_RATE = STARTING_MANA / 5;
+  static const float    MANA_INCREASE_PER_LEVEL  = 1.2;
+  static const float    EXP_LEVEL_COST_INCREASE  = 2.0;
+
+  static const std::string DEFAULT_PLAYER_NAME;
 };
 
 }
