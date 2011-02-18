@@ -17,6 +17,8 @@ class InterfaceGraphical : public Interface
 
   virtual void draw();
 
+  void initEngine();
+
   void redraw(SGEGAMESTATE* state);
 
   virtual void interact();

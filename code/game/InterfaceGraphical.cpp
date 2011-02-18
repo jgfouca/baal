@@ -22,32 +22,31 @@ extern "C" void doDraw(SGEGAMESTATE *state)
 
 extern "C" void launchGraphicThread()
 {
+  sgeInit(NOAUDIO, NOJOYSTICK);
+ 
+  // now that the graphics are initialized...we can initalize the sprite information of the engine
+  InterfaceGraphical::singleton()->initEngine();
 
-        sgeInit(NOAUDIO,NOJOYSTICK);
-        sgeOpenScreen("Baal",800,800,32, NOFULLSCREEN);
-//      sgeHideMouse();
+   sgeOpenScreen("Baal",800,800,32, NOFULLSCREEN);
 
-        SGEGAMESTATEMANAGER *manager;
-        SGEGAMESTATE *mainstate;
+   SGEGAMESTATEMANAGER *manager;
+   SGEGAMESTATE *mainstate;
 
-        /*
-         * create the main state and set the C (!) function stateMain
-         * (from statemain.h/cpp) as onRedraw
-         */
-        mainstate = sgeGameStateNew();
-        mainstate->onRedraw = &doDraw;
+   mainstate = sgeGameStateNew();
+   mainstate->onRedraw = &doDraw;
 
-        // add the state to the state manager
-        manager = sgeGameStateManagerNew();
-        sgeGameStateManagerChange(manager, mainstate);
+   // add the state to the state manager
+   manager = sgeGameStateManagerNew();
+   sgeGameStateManagerChange(manager, mainstate);
 
-        // start the game manager on another thread
-        sgeGameStateManagerRun(manager, 30);
+   // Run the Manager loop
+   sgeGameStateManagerRun(manager, 30);
 
-       sgeCloseScreen();
+   // we are done...close
+   sgeCloseScreen();
 
-       // tell the engine to quit
-       InterfaceGraphical::singleton()->quit();
+   // tell the engine to quit
+   InterfaceGraphical::singleton()->quit();
 }
 
 InterfaceGraphical* InterfaceGraphical::INSTANCE=NULL;
@@ -67,12 +66,53 @@ InterfaceGraphical::~InterfaceGraphical()
 {
 }
 
+///////////////////////////////////////////////////////////////////////////////
+void InterfaceGraphical::initEngine()
+///////////////////////////////////////////////////////////////////////////////
+{
+    SGEFILE *file = sgeOpenFile("../../data/data.d", "asdf");
+  
+  World& world = m_engine.world();
+  for (unsigned row = 0; row < world.height(); ++row) {
+    for (unsigned col = 0; col < world.width(); ++col) {
+    // get the sprite information out of the data file
+    // TODO: not hardcode data location?
+
+    // create the sprite
+    SGESPRITE* sprite = sgeSpriteNew();
+
+    // load in correct sprite animation
+    switch (world.get_tile(Location(row,col)).type())
+    {
+      case MTN:
+           sgeSpriteAddFileRange(sprite, file, "mountain%d.jpg", 1, 2);
+           break;
+      case PLAIN:
+           sgeSpriteAddFileRange(sprite, file, "plains%d.jpg", 1, 2);
+           break;
+      case OCEAN:
+           sgeSpriteAddFileRange(sprite, file, "ocean%d.jpg", 1, 2);
+           break;
+      default:
+           break;
+    }
+
+    // set the frame rate of the sprite animation
+    sgeSpriteSetFPS(sprite, 1);
+
+     world.get_tile(Location(row,col)).setSprite(sprite);
+    }
+   }
+
+    //close the file
+    sgeCloseFile(file);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 InterfaceGraphical* InterfaceGraphical::singleton()
 ///////////////////////////////////////////////////////////////////////////////
 {
-    //TODO: should this assert if create not called??
+    Require(INSTANCE != NULL, "Tried to use Graphical Interface before it was initalized"); 
     return INSTANCE;
 }
 
@@ -106,40 +146,25 @@ void InterfaceGraphical::redraw(SGEGAMESTATE *state)
                 return;
         }
 
-  SGEFILE* file=sgeOpenFile("../../data/data.d", "asdf");
-  sgeLock(screen);  
-
-	SGESPRITE* sprite= sgeSpriteNew();
+  sgeLock(screen); 
 
   // Draw world
   const World& world = m_engine.world();
   for (unsigned row = 0; row < world.height(); ++row) {
     for (unsigned col = 0; col < world.width(); ++col) {
-      switch (world.get_tile(Location(row, col)).type()) {
-      case MTN:
-        sgeSpriteAddFileRange(sprite, file, "grass%d.jpg", 1,2);
-	sprite->x = 100 + row * 101;
-        sprite->y = 100 + col * 101;
-        sgeSpriteSetFPS(sprite, 1);
+
+        
+	SGESPRITE* sprite = world.get_tile(Location(row,col)).sprite();
+//        sgeSpriteAddFileRange(sprite, file, "mountain%d.jpg", 1, 2);
+//        if (sprite == NULL)
+  //         continue;        
+
+        // TODO: not hardcode these numbers
+        sprite->x = 100 + col * 101;
+        sprite->y = 100 + row * 101;
         sgeSpriteDraw(sprite, screen);
-      //  m_ostream << "M ";
-        break;
-      case PLAIN:
-    //    m_ostream << "P ";
-        break;
-      case OCEAN:
-  //      m_ostream << "O ";
-        break;
-      case UNDEFINED:
-        Require(false, "World[" << row << "][" << col << "] is undefined");
-        break;
-      default:
-        Require(false, "Should never make it here");
-      }
     }
-//    m_ostream << "\n";
   }
-//  m_ostream << "\n";
 
   // Draw Player
   const Player& player = m_engine.player();
@@ -166,8 +191,9 @@ void InterfaceGraphical::help(const std::string& helpmsg)
 void InterfaceGraphical::interact()
 ///////////////////////////////////////////////////////////////////////////////
 {
-	char choice;
-	std::cin >> choice;
+  while (!m_end_turn)
+  {
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
