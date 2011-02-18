@@ -1,6 +1,12 @@
 include ../common.mk
 
+include $(GAME_ENGINE_PATH)/setup.project
+include $(GAME_ENGINE_PATH)/setup.$(PLATFORM)
+
 ALL_GAME_FLAGS := $(CXXFLAGS)
+CFLAGS=-Wall $(SGECFLAGS) -I.
+LDFLAGS=$(SGELDFLAGS) -lboost_thread
+
 
 .PHONY: clean
 
@@ -14,10 +20,10 @@ $(BIN_DIR):
 	-mkdir $(BIN_DIR)
 
 $(EXES): $(BIN_DIR)/%.$(EXE_FILE_EXT) : %.$(MAIN_FILE_EXT) $(GAME_LIB_PATH)
-	$(CXX) $(CXXFLAGS) $< -o $@ $(ALL_GAME_FLAGS) $(GAME_LIB_FLAGS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $< -o $@ ${OBJECTS} $(GAME_ENGINE_PATH)/libsge.a $(ALL_GAME_FLAGS) $(GAME_LIB_FLAGS) $(STATICLIBS)
 
 $(OBJECTS) : $(BIN_DIR)/%.$(OBJ_FILE_EXT): %.$(SOURCE_FILE_EXT) *.$(HEADER_FILE_EXT)
-	$(CXX) $(ALL_GAME_FLAGS) -o $@ -c $<
+	$(CXX) $(ALL_GAME_FLAGS) -o $@ $(CFLAGS) -c $<
 
 $(GAME_LIB_PATH) : $(OBJECTS)
 	ar -rsc $@ $(OBJECTS)

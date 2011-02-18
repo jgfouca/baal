@@ -2,20 +2,33 @@
 #define InterfaceGraphical_hpp
 
 #include "Interface.hpp"
+#include <sge.h>
+
 namespace baal {
 
 class InterfaceGraphical : public Interface
 {
  public:
-  InterfaceGraphical(Engine& engine) : Interface(engine) {}
+  static InterfaceGraphical* create(Engine& engine);
 
-  virtual void draw() { /*TODO*/ }
+  static InterfaceGraphical* singleton();
 
-  virtual void interact() { /*TODO*/ }
+ ~InterfaceGraphical();
 
-  virtual void help(const std::string& helpmsg) { /*TODO*/ }
+  virtual void draw();
+
+  void redraw(SGEGAMESTATE* state);
+
+  virtual void interact();
+
+  virtual void help(const std::string& helpmsg);
+
+  void quit();
 
  private:
+	InterfaceGraphical(Engine& engine);
+
+	static InterfaceGraphical* INSTANCE;
 };
 
 }

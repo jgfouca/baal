@@ -36,6 +36,7 @@ void Engine::play()
 {
   // Game loop, each iteration of this loop is a full game turn
   while (!m_quit) {
+
     // Draw current game state
     m_interface.draw();
 

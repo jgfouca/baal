@@ -29,7 +29,7 @@ Interface& InterfaceFactory::create(Engine& engine)
     return *(new InterfaceText(engine, std::cout, std::cin));
   }
   else if (interface_config == GRAPHICAL_INTERFACE) {
-    return *(new InterfaceGraphical(engine));
+    return *(InterfaceGraphical::create(engine));
   }
   else {
     RequireUser(false, "Invalid choice of interface: " << interface_config);

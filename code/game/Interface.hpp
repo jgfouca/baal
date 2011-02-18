@@ -16,10 +16,10 @@ class Engine;
 class Interface
 {
  public:
-  Interface(Engine& engine)
-    : m_engine(engine),
-      m_end_turn(false)
-  {}
+	Interface(Engine& engine)
+	: m_engine(engine),
+	  m_end_turn(false)
+  	{}
 
   virtual void draw() = 0;
 
@@ -32,6 +32,7 @@ class Interface
  protected:
   Engine& m_engine;
   bool m_end_turn;
+
 };
 
 }

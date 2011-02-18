@@ -18,7 +18,7 @@ CXX_PROF_FLAGS := -O2 -DNDEBUG -g $(WARNING_FLAGS)
 # done with:
 # % make (opt|prof|dbg)
 ifeq ($(BUILD), opt)
-CXXFLAGS := $(CXX_OPT_FLAGS)
+CXXFLAGS := $(CFLAGS) $(CXX_OPT_FLAGS)
 FILE_TAG := $(OPT_BUILD_TAG)
 MAKE_ARG := BUILD=opt
 else ifeq ($(BUILD), prof)
@@ -47,8 +47,10 @@ UTEST_PREFIX     := UnitTest
 ROOT           := $(dir $(lastword $(MAKEFILE_LIST)))
 BIN_DIR        := bin
 GAME           := game
+GAME_ENGINE    := sge2d
 TEST_DIR       := tests
 GAME_PATH      := $(ROOT)$(GAME)
+GAME_ENGINE_PATH :=$(ROOT)$(GAME_ENGINE)
 TEST_PATH      := $(ROOT)$(TEST_DIR)
 GAME_LIB_FILE  := lib$(GAME).$(LIB_FILE_EXT)
 GAME_LIB_PATH  := $(GAME_PATH)/$(BIN_DIR)/$(GAME_LIB_FILE)
