@@ -80,15 +80,50 @@ cast should be non-trivial.
 
 -- World --
 
+A collection of tiles.
+
 --- Atmosphere ---
+
+Every tile has atmosphere above it. Atmosphere has dewpoint, temperature, 
+wind vector, and pressure.
+
+--- Climate ---
+
+Averate temp, average rainfall, and prevailing wind.
 
 --- Land ---
 
----- Yields ----
+Whatever civ has built here.
+
+---- Plains/Grassland/Hills/Desert ----
+
+Soil moisture level (surface): reflects long-term rainfall 
+
+---- Mountains ----
+
+Elevation
+Snowpack
 
 --- Ocean ---
 
---- Geologic ---
+Ocean temp (surface).
+Depth.
+
+--- Geology ---
+
+Plate boundaries always fall between tiles. Boundaries can be:
+Divergent
+Convergent(ocean/land)
+Convergent(ocean/ocean)
+Convergent(land/land)
+Transform
+
+Every tile builds up plate tension and magma based on geology.
+
+--- Yields ---
+
+Similar to civ except give mountains very strong production and less
+for hills.
 
 -- AI --
 
@@ -100,3 +135,77 @@ cast should be non-trivial.
 
 ---- Settling New Cities ----
 
+-- Spells --
+
+--- Avalanches ---
+
+Affected by snowpack/elevation. Can be caused by earthquakes or blizzards.
+
+--- Blizzards ---
+
+Affected by nearby atmosphere. Enhanced by cold temps, low pressure, and
+high dewpoints.
+
+--- Disease ---
+
+Enhanced by extreme temperatures, enhanced by food shortages, enhanced by
+loss of infrastucture.
+
+--- Hurricanes ---
+
+Affected by nearby atmosphere; enhanced by warm oceans, high dewpoints,
+and high pressure.
+
+--- Earthquakes ---
+
+Affected by nearby geology. Tranform boundaries make for the best
+earthquakes; divergent and land/land convergent are not good for quakes.
+
+Enhanced by plate tension.
+
+Can cause tsunamis if performed on ocean tile.
+
+--- Famines ---
+
+Baal cannot cause these directly, but can cause them indirectly by focussing
+attacks on nearby farms.
+
+Maybe disasters that hit cities have a chance of destroying food-stores?
+
+--- Floods ---
+
+Affected by nearby atmosphere; enhanced by high dewpoints and high levels
+of soil moisture.
+
+--- Drought ---
+
+Affected by nearby atmosphere; enhanced by low dewpoints, high temps, and
+low levels of soil moisture.
+
+--- Heat/cold waves ---
+
+Affected by nearby atmosphere; heat waves enhanced by high temps, opposite for
+cold waves.
+
+--- Thunderstorm ---
+
+Affected by nearby atmosphere; enhanced by high dewpoints, low pressure.
+
+Can cause flood, tornado.
+
+--- Tornadoes ---
+
+Affected by nearby atmosphere; enhanced by high dewpoints, low pressure.
+
+--- Tsunami ---
+
+Baal cannot cast these directly. Can only be caused by other disasters
+happening on ocean tiles.
+
+--- Volcanoes ---
+
+Affected by nearby geology. Enhanced by high magma build-up.
+
+--- Wildfires ---
+
+Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
