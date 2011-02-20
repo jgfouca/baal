@@ -1,7 +1,7 @@
 #ifndef WorldTile_hpp
 #define WorldTile_hpp
 
-#include <sge.h>
+//#include <SDL/sge.h>
 
 namespace baal {
 
@@ -18,15 +18,15 @@ class WorldTile
 
   TileType type() const { return m_type; }
 
-  void setSprite(SGESPRITE *sprite) { m_sprite = sprite; }
+  //void setSprite(SGESPRITE *sprite) { m_sprite = sprite; }
 
-  SGESPRITE * sprite() const { return m_sprite; }
+  //SGESPRITE * sprite() const { return m_sprite; }
 
   void damage(float dmg) { m_hp *= dmg; }
  private:
   TileType m_type;
   float    m_hp;
-  SGESPRITE* m_sprite;
+  //SGESPRITE* m_sprite;
 };
 
 }

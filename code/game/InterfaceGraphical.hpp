@@ -1,10 +1,13 @@
 #ifndef InterfaceGraphical_hpp
 #define InterfaceGraphical_hpp
 
+#ifndef NO_GRAPHICS
+
 #include "Interface.hpp"
-#include <sge.h>
 
 namespace baal {
+
+class SGEGAMESTATE;
 
 class InterfaceGraphical : public Interface
 {
@@ -13,7 +16,7 @@ class InterfaceGraphical : public Interface
 
   static InterfaceGraphical* singleton();
 
- ~InterfaceGraphical();
+  ~InterfaceGraphical();
 
   virtual void draw();
 
@@ -28,11 +31,12 @@ class InterfaceGraphical : public Interface
   void quit();
 
  private:
-	InterfaceGraphical(Engine& engine);
+  InterfaceGraphical(Engine& engine);
 
-	static InterfaceGraphical* INSTANCE;
+  static InterfaceGraphical* INSTANCE;
 };
 
 }
 
+#endif
 #endif

@@ -28,9 +28,9 @@ Interface& InterfaceFactory::create(Engine& engine)
   if (interface_config == TEXT_INTERFACE) {
     return *(new InterfaceText(engine, std::cout, std::cin));
   }
-  else if (interface_config == GRAPHICAL_INTERFACE) {
-    return *(InterfaceGraphical::create(engine));
-  }
+  //else if (interface_config == GRAPHICAL_INTERFACE) {
+  //  return *(InterfaceGraphical::create(engine));
+  //}
   else {
     RequireUser(false, "Invalid choice of interface: " << interface_config);
   }
