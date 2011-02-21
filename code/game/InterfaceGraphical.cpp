@@ -23,7 +23,7 @@ using namespace baal;
 extern "C" void doDraw(SGEGAMESTATE *state)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  InterfaceGraphical::singleton()->redraw(state);
+  InterfaceGraphical::singleton()->draw(state);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -31,10 +31,9 @@ extern "C" void launchGraphicThread()
 ///////////////////////////////////////////////////////////////////////////////
 {
   sgeInit(NOAUDIO, NOJOYSTICK);
-
-  // now that the graphics are initialized...we can initalize the
-  // sprite information of the engine
-  InterfaceGraphical::singleton()->initEngine();
+ 
+  // now that the graphics are initialized...we can initalize the sprite information of the engine
+  InterfaceGraphical::singleton()->init();
 
   sgeOpenScreen("Baal", 800, 800, 32, NOFULLSCREEN);
 
@@ -63,9 +62,13 @@ InterfaceGraphical* InterfaceGraphical::INSTANCE=NULL;
 ///////////////////////////////////////////////////////////////////////////////
 InterfaceGraphical::InterfaceGraphical(Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
-  : Interface(engine)
+ : Interface(engine),
+   m_player_interface(*(new InterfacePlayer(engine.player())))
 {
-  boost::thread game_thread(launchGraphicThread);
+  // TODO: put thread call in the Factory
+  // launch the new thread
+   boost::thread game_thread(launchGraphicThread);
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -75,7 +78,7 @@ InterfaceGraphical::~InterfaceGraphical()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void InterfaceGraphical::initEngine()
+void InterfaceGraphical::init()
 ///////////////////////////////////////////////////////////////////////////////
 {
   SGEFILE *file = sgeOpenFile("../../data/data.d", "asdf");
@@ -85,7 +88,6 @@ void InterfaceGraphical::initEngine()
     for (unsigned col = 0; col < world.width(); ++col) {
       // get the sprite information out of the data file
       // TODO: not hardcode data location?
-
       // create the sprite
       SGESPRITE* sprite = sgeSpriteNew();
 
@@ -93,14 +95,14 @@ void InterfaceGraphical::initEngine()
       switch (world.get_tile(Location(row,col)).type())
       {
       case MTN:
-        sgeSpriteAddFileRange(sprite, file, "mountain%d.jpg", 1, 2);
-        break;
+           sgeSpriteAddFileRange(sprite, file, "tiles/mountain%d.jpg", 1, 2);
+           break;
       case PLAIN:
-        sgeSpriteAddFileRange(sprite, file, "plains%d.jpg", 1, 2);
-        break;
+           sgeSpriteAddFileRange(sprite, file, "tiles/plains%d.jpg", 1, 2);
+           break;
       case OCEAN:
-        sgeSpriteAddFileRange(sprite, file, "ocean%d.jpg", 1, 2);
-        break;
+           sgeSpriteAddFileRange(sprite, file, "tiles/ocean%d.jpg", 1, 2);
+           break;
       default:
         break;
       }
@@ -112,8 +114,11 @@ void InterfaceGraphical::initEngine()
     }
   }
 
-  //close the file
-  sgeCloseFile(file);
+    //close the file
+    sgeCloseFile(file);
+
+    // now init the player
+    m_player_interface.init();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -143,7 +148,7 @@ void InterfaceGraphical::draw()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void InterfaceGraphical::redraw(SGEGAMESTATE *state)
+void InterfaceGraphical::draw(SGEGAMESTATE *state)
 ///////////////////////////////////////////////////////////////////////////////
 {
   SGEEVENTSTATE es = state->manager->event_state;
@@ -165,10 +170,10 @@ void InterfaceGraphical::redraw(SGEGAMESTATE *state)
       // if (sprite == NULL)
       //   continue;
 
-      // TODO: not hardcode these numbers
-      sprite->x = 100 + col * 101;
-      sprite->y = 100 + row * 101;
-      sgeSpriteDraw(sprite, screen);
+        // TODO: not hardcode these numbers
+        sprite->x = 175 + col * 101;
+        sprite->y = 175 + row * 101;
+        sgeSpriteDraw(sprite, screen);
     }
   }
 
@@ -182,6 +187,11 @@ void InterfaceGraphical::redraw(SGEGAMESTATE *state)
   // m_ostream.flush();
 
   sgeUnlock(screen);
+ 
+  //TODO: pass screen around too?
+  // now draw the player interface
+  m_player_interface.draw(state);
+
   sgeFlip();
 }
 

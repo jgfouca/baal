@@ -3,7 +3,8 @@
 
 #ifndef NO_GRAPHICS
 
-#include "Interface.hpp"
+#include "InterfacePlayer.hpp"
+#include <sge.h>
 
 namespace baal {
 
@@ -20,9 +21,9 @@ class InterfaceGraphical : public Interface
 
   virtual void draw();
 
-  void initEngine();
+  void init();
 
-  void redraw(SGEGAMESTATE* state);
+  void draw(SGEGAMESTATE* state);
 
   virtual void interact();
 
@@ -33,10 +34,10 @@ class InterfaceGraphical : public Interface
  private:
   InterfaceGraphical(Engine& engine);
 
-  static InterfaceGraphical* INSTANCE;
+	static InterfaceGraphical* INSTANCE;
+        InterfacePlayer& m_player_interface;
 };
 
 }
 
-#endif
 #endif
