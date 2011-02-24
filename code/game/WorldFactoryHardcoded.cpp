@@ -34,56 +34,56 @@ World& WorldFactoryHardcoded::generate_world_1()
   /*
     This is the world that will be generated:
 
-    P P M M P O
-    P P M P P O
-    P M P P O O
-    M M P P O O
-    P P P O O O
+    T P H M L O
+    D D M H L O
+    D M H L O O
+    H M L L O O
+    P P L O O O
     O O O O O O
    */
   World& world = *(new World(6, 6));
 
-  world.get_tile(Location(0, 0)) = WorldTile(PLAIN);
-  world.get_tile(Location(0, 1)) = WorldTile(PLAIN);
-  world.get_tile(Location(0, 2)) = WorldTile(MTN);
-  world.get_tile(Location(0, 3)) = WorldTile(MTN);
-  world.get_tile(Location(0, 4)) = WorldTile(PLAIN);
-  world.get_tile(Location(0, 5)) = WorldTile(OCEAN);
+  world.m_tiles[0][0] = new TundraTile();
+  world.m_tiles[0][1] = new PlainsTile();
+  world.m_tiles[0][2] = new HillsTile();
+  world.m_tiles[0][3] = new MountainTile(5000);
+  world.m_tiles[0][4] = new LushTile();
+  world.m_tiles[0][5] = new OceanTile(1000);
 
-  world.get_tile(Location(1, 0)) = WorldTile(PLAIN);
-  world.get_tile(Location(1, 1)) = WorldTile(PLAIN);
-  world.get_tile(Location(1, 2)) = WorldTile(MTN);
-  world.get_tile(Location(1, 3)) = WorldTile(PLAIN);
-  world.get_tile(Location(1, 4)) = WorldTile(PLAIN);
-  world.get_tile(Location(1, 5)) = WorldTile(OCEAN);
+  world.m_tiles[1][0] = new DesertTile();
+  world.m_tiles[1][1] = new DesertTile();
+  world.m_tiles[1][2] = new MountainTile(5000);
+  world.m_tiles[1][3] = new HillsTile();
+  world.m_tiles[1][4] = new LushTile();
+  world.m_tiles[1][5] = new OceanTile(1000);
 
-  world.get_tile(Location(2, 0)) = WorldTile(PLAIN);
-  world.get_tile(Location(2, 1)) = WorldTile(MTN);
-  world.get_tile(Location(2, 2)) = WorldTile(PLAIN);
-  world.get_tile(Location(2, 3)) = WorldTile(PLAIN);
-  world.get_tile(Location(2, 4)) = WorldTile(OCEAN);
-  world.get_tile(Location(2, 5)) = WorldTile(OCEAN);
+  world.m_tiles[2][0] = new DesertTile();
+  world.m_tiles[2][1] = new MountainTile(5000);
+  world.m_tiles[2][2] = new HillsTile();
+  world.m_tiles[2][3] = new LushTile();
+  world.m_tiles[2][4] = new OceanTile(1000);
+  world.m_tiles[2][5] = new OceanTile(1000);
 
-  world.get_tile(Location(3, 0)) = WorldTile(MTN);
-  world.get_tile(Location(3, 1)) = WorldTile(MTN);
-  world.get_tile(Location(3, 2)) = WorldTile(PLAIN);
-  world.get_tile(Location(3, 3)) = WorldTile(PLAIN);
-  world.get_tile(Location(3, 4)) = WorldTile(OCEAN);
-  world.get_tile(Location(3, 5)) = WorldTile(OCEAN);
+  world.m_tiles[3][0] = new HillsTile();
+  world.m_tiles[3][1] = new MountainTile(5000);
+  world.m_tiles[3][2] = new LushTile();
+  world.m_tiles[3][3] = new LushTile();
+  world.m_tiles[3][4] = new OceanTile(1000);
+  world.m_tiles[3][5] = new OceanTile(1000);
 
-  world.get_tile(Location(4, 0)) = WorldTile(PLAIN);
-  world.get_tile(Location(4, 1)) = WorldTile(PLAIN);
-  world.get_tile(Location(4, 2)) = WorldTile(PLAIN);
-  world.get_tile(Location(4, 3)) = WorldTile(OCEAN);
-  world.get_tile(Location(4, 4)) = WorldTile(OCEAN);
-  world.get_tile(Location(4, 5)) = WorldTile(OCEAN);
+  world.m_tiles[4][0] = new PlainsTile();
+  world.m_tiles[4][1] = new LushTile();
+  world.m_tiles[4][2] = new LushTile();
+  world.m_tiles[4][3] = new OceanTile(1000);
+  world.m_tiles[4][4] = new OceanTile(1000);
+  world.m_tiles[4][5] = new OceanTile(1000);
 
-  world.get_tile(Location(5, 0)) = WorldTile(OCEAN);
-  world.get_tile(Location(5, 1)) = WorldTile(OCEAN);
-  world.get_tile(Location(5, 2)) = WorldTile(OCEAN);
-  world.get_tile(Location(5, 3)) = WorldTile(OCEAN);
-  world.get_tile(Location(5, 4)) = WorldTile(OCEAN);
-  world.get_tile(Location(5, 5)) = WorldTile(OCEAN);
+  world.m_tiles[5][0] = new OceanTile(1000);
+  world.m_tiles[5][1] = new OceanTile(1000);
+  world.m_tiles[5][2] = new OceanTile(1000);
+  world.m_tiles[5][3] = new OceanTile(1000);
+  world.m_tiles[5][4] = new OceanTile(1000);
+  world.m_tiles[5][5] = new OceanTile(1000);
 
   return world;
 }

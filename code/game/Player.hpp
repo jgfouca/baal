@@ -2,6 +2,7 @@
 #define Player_hpp
 
 #include "TalentTree.hpp"
+#include "Drawable.hpp"
 
 #include <string>
 
@@ -12,7 +13,7 @@ class Spell;
 /**
  * Encapsulates player state.
  */
-class Player
+class Player : public Drawable
 {
  public:
   Player();
@@ -27,17 +28,11 @@ class Player
 
   void cycle_turn();
 
-  // Getters
+  // Drawing methods
 
-  const std::string& name() const { return m_name; }
+  virtual void draw_text(std::ostream& out) const;
 
-  unsigned mana() const { return m_mana; }
-
-  unsigned max_mana() const { return m_max_mana; }
-
-  unsigned exp() const { return m_exp; }
-
-  unsigned level() const { return m_level; }
+  virtual void draw_graphics() const { /*TODO*/ }
 
  private:
   // Forbidden

@@ -2,16 +2,21 @@
 #define World_hpp
 
 #include "WorldTile.hpp"
+#include "BaalExceptions.hpp"
 #include "BaalCommon.hpp"
+#include "Drawable.hpp"
 
 #include <vector>
+#include <iosfwd>
 
 namespace baal {
 
-class World
+class World : public Drawable
 {
  public:
   World(unsigned width, unsigned height);
+
+  ~World();
 
   void cycle_turn() { /* TODO */ }
 
@@ -25,15 +30,23 @@ class World
    * Return a particular tile
    */
   const WorldTile& get_tile(const Location& location) const {
-    return m_tiles[location.row][location.col];
+    Assert(in_bounds(location), "Out of bounds");
+    Assert(m_tiles[location.row][location.col] != NULL, "Null");
+    return *(m_tiles[location.row][location.col]);
   }
 
   /**
    * Return a non-const tile
    */
   WorldTile& get_tile(const Location& location) {
-    return m_tiles[location.row][location.col];
+    Assert(in_bounds(location), "Out of bounds");
+    Assert(m_tiles[location.row][location.col] != NULL, "Null");
+    return *(m_tiles[location.row][location.col]);
   }
+
+  virtual void draw_text(std::ostream& out) const;
+
+  virtual void draw_graphics() const { /* TODO */ }
 
   unsigned width() const { return m_width; }
 
@@ -44,7 +57,7 @@ class World
   // Members
   unsigned m_width;
   unsigned m_height;
-  std::vector<std::vector<WorldTile> > m_tiles;
+  std::vector<std::vector<WorldTile*> > m_tiles;
 
   // Friend factories
   friend class WorldFactoryGenerated;

@@ -82,34 +82,38 @@ cast should be non-trivial.
 
 A collection of tiles.
 
---- Atmosphere ---
+--- Tile ---
+
+Every tile has an atmosphere, climate, geology, and yield.
+
+---- Atmosphere ----
 
 Every tile has atmosphere above it. Atmosphere has dewpoint, temperature, 
 wind vector, and pressure.
 
---- Climate ---
+---- Climate ----
 
 Averate temp, average rainfall, and prevailing wind.
 
---- Land ---
+---- Land ----
 
-Whatever civ has built here.
+Whatever civ has built here. Hitpoints.
 
----- Plains/Grassland/Hills/Desert ----
+----- Plains/Grassland/Hills/Desert -----
 
 Soil moisture level (surface): reflects long-term rainfall 
 
----- Mountains ----
+----- Mountains -----
 
 Elevation
 Snowpack
 
---- Ocean ---
+---- Ocean ----
 
 Ocean temp (surface).
 Depth.
 
---- Geology ---
+---- Geology ----
 
 Plate boundaries always fall between tiles. Boundaries can be:
 Divergent
@@ -120,20 +124,51 @@ Transform
 
 Every tile builds up plate tension and magma based on geology.
 
---- Yields ---
+---- Yields ----
 
 Similar to civ except give mountains very strong production and less
 for hills.
 
+--- Weather ---
+
+---- Long term ----
+
+Every turn, the weather since the last turn will be randomly simulated.
+There will be random abnormal areas, with the epicenter of the abnormality
+having the most extreme deviations from the normal climate and peripheral
+tiles having smaller deviations from normal.
+
+Abnormalilty types are: drought, moist, cold, hot.
+
+---- Short term ----
+
+Each turn has a "current" weather setup. This setup is also defined by
+areas of abnormality.
+
+Abnormality types are: high pressure, low pressure; more?
+
+Wind direction is defined by looking at both the prevailing wind and
+the current pressure situation.
+
 -- AI --
 
 --- City Growth ---
+
+Cities have a base growth rate that can be accelerated by gathering
+surplus food. Cities with a food deficit will stop growing and may
+become more succeptible to certain disasters.
 
 --- City Build Possibilities ---
 
 ---- Infrastructure ----
 
 ---- Settling New Cities ----
+
+--- Citizens ---
+
+Citizens can either work tiles or stay in the city (contributes extra
+to production and science). Citizens can only work tiles within a certain
+range of the city.
 
 -- Spells --
 

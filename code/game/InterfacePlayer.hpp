@@ -1,8 +1,10 @@
 #ifndef InterfacePlayer_hpp
 #define InterfacePlayer_hpp
 
+#ifndef NO_GRAPHICS
+
 #include "Player.hpp"
-#include <sge.h>
+#include <SDL/sge.h>
 
 namespace baal {
 
@@ -27,4 +29,5 @@ class InterfacePlayer
 
 }
 
+#endif
 #endif

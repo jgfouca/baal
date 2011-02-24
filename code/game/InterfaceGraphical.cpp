@@ -31,7 +31,7 @@ extern "C" void launchGraphicThread()
 ///////////////////////////////////////////////////////////////////////////////
 {
   sgeInit(NOAUDIO, NOJOYSTICK);
- 
+
   // now that the graphics are initialized...we can initalize the sprite information of the engine
   InterfaceGraphical::singleton()->init();
 
@@ -187,7 +187,7 @@ void InterfaceGraphical::draw(SGEGAMESTATE *state)
   // m_ostream.flush();
 
   sgeUnlock(screen);
- 
+
   //TODO: pass screen around too?
   // now draw the player interface
   m_player_interface.draw(state);

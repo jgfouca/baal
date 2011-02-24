@@ -89,3 +89,14 @@ void Player::cycle_turn()
   Require(m_mana <= m_max_mana,
           "m_mana(" << m_mana << ") > m_max_mana(" << m_max_mana << ")");
 }
+
+///////////////////////////////////////////////////////////////////////////////
+void Player::draw_text(std::ostream& out) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  out << "PLAYER STATS:\n"
+      << "  name: " << m_name << "\n"
+      << "  level: \033[1;32m" << m_level << "\033[0m \n"
+      << "  mana: \033[1;34m" << m_mana << "/" << m_max_mana << "\033[0m \n"
+      << "  exp: \033[1;33m" << m_exp << "\033[0m \n";
+}

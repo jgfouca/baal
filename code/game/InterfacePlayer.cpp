@@ -1,3 +1,5 @@
+#ifndef NO_GRAPHICS
+
 #include "InterfacePlayer.hpp"
 #include "BaalExceptions.hpp"
 #include "BaalCommon.hpp"
@@ -5,8 +7,6 @@
 #include "Command.hpp"
 #include "Player.hpp"
 #include "InterfaceConstants.hpp"
-
-#include <sge.h>
 
 using namespace baal;
 
@@ -45,7 +45,7 @@ void InterfacePlayer::draw(SGEGAMESTATE *state)
 
   sgeLock(screen);
 
-  const int fontHeight = sgeFontGetLineHeight(m_font); 
+  const int fontHeight = sgeFontGetLineHeight(m_font);
 
   // keep track of the current x,y to print stuff out
   int cur_x = PLAYER_INTERFACE_X;
@@ -66,7 +66,7 @@ void InterfacePlayer::draw(SGEGAMESTATE *state)
   // translate down
   // TODO: dont hardcode
   cur_y += fontHeight;
- 
+
   // printout the level
   char * level = new char[m_player.level()/10 + 1];
   sprintf(level, "%s %d", "level", m_player.level());
@@ -76,7 +76,7 @@ void InterfacePlayer::draw(SGEGAMESTATE *state)
   // translate down
   // TODO: dont hardcode
   cur_y += fontHeight;
- 
+
   // printout the mana
   sgeFontPrintBitmap(m_font, screen, cur_x, cur_y, "2");
 
@@ -89,3 +89,5 @@ void InterfacePlayer::draw(SGEGAMESTATE *state)
 */
   sgeUnlock(screen);
 }
+
+#endif

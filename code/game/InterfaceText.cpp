@@ -30,37 +30,12 @@ void InterfaceText::draw()
   // reduce coupling between those classes and the interface classes.
 
   // Draw world
-  const World& world = m_engine.world();
-  for (unsigned row = 0; row < world.height(); ++row) {
-    for (unsigned col = 0; col < world.width(); ++col) {
-      switch (world.get_tile(Location(row, col)).type()) {
-      case MTN:
-        m_ostream << "M ";
-        break;
-      case PLAIN:
-        m_ostream << "P ";
-        break;
-      case OCEAN:
-        m_ostream << "O ";
-        break;
-      case UNDEFINED:
-        Require(false, "World[" << row << "][" << col << "] is undefined");
-        break;
-      default:
-        Require(false, "Should never make it here");
-      }
-    }
-    m_ostream << "\n";
-  }
+  m_engine.world().draw_text(m_ostream);
+
   m_ostream << "\n";
 
   // Draw Player
-  const Player& player = m_engine.player();
-  m_ostream << "PLAYER STATS:\n"
-            << "  name: " << player.name() << "\n"
-            << "  level: " << player.level() << "\n"
-            << "  mana: " << player.mana() << "/" << player.max_mana() << "\n"
-            << "  exp: " << player.exp() << "\n";
+  m_engine.player().draw_text(m_ostream);
 
   m_ostream.flush();
 }

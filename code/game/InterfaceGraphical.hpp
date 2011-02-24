@@ -41,3 +41,4 @@ class InterfaceGraphical : public Interface
 }
 
 #endif
+#endif

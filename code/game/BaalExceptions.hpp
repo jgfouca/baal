@@ -72,8 +72,8 @@ class UserError : public std::exception
 #define RequireAttach(expr, msg) ThrowGeneric(expr, msg, ProgramError, true)
 #define RequireUser(expr, msg)   ThrowGeneric(expr, msg, UserError, false)
 #ifndef NDEBUG
-#define Assert(expr, msg)       ThrowRequire(expr, msg)
-#define AssertAttach(expr, msg) ThrowRequireAttach(expr, msg)
+#define Assert(expr, msg)       Require(expr, msg)
+#define AssertAttach(expr, msg) RequireAttach(expr, msg)
 #else
 #define Assert(expr, msg)       ((void) (0))
 #define AssertAttach(expr, msg) ((void) (0))
