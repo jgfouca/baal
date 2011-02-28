@@ -121,7 +121,7 @@ int main(int argc, char** argv)
 
   // Parse args
   if (baal::parse_args(argc, argv)) {
-    // Begin game
+    // Begin game, errors during construction are probably user-errors
     baal::Engine engine;
     engine.play();
   }

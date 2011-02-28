@@ -16,6 +16,9 @@
 namespace baal {
 
 class City;
+class Climate;
+class Geology;
+class Atmosphere;
 
 /**
  * A simple structure that specifies yields for tiles.
@@ -41,12 +44,14 @@ struct Yield
  * are generally passive containers of data but they do know
  * how to draw themselves.
  *
- * Every tile has an atmosphere, climate, geology, and yield.
+ * TODO: Every tile has an atmosphere, climate, geology, and yield.
  */
 class WorldTile : public Drawable
 {
  public:
-  WorldTile(Yield yield) : m_base_yield(yield) {}
+  WorldTile(Yield yield, Climate& climate, Geology& geology);
+
+  ~WorldTile();
 
   virtual Yield yield() const = 0;
 
@@ -66,7 +71,10 @@ class WorldTile : public Drawable
 
   virtual char symbol() const = 0;
 
-  Yield m_base_yield;
+  Yield        m_base_yield;
+  Climate&     m_climate;
+  Geology&     m_geology;
+  Atmosphere&  m_atmosphere;
 
 #ifndef NO_GRAPHICS
   SGESPRITE* m_sprite;
@@ -87,8 +95,8 @@ class WorldTile : public Drawable
 class OceanTile : public WorldTile
 {
  public:
-  OceanTile(unsigned depth)
-    : WorldTile(Yield(3,0)),
+  OceanTile(unsigned depth, Climate& climate, Geology& geology)
+    : WorldTile(Yield(3,0), climate, geology),
       m_depth(depth)
   {}
 
@@ -100,6 +108,7 @@ class OceanTile : public WorldTile
 
  protected:
   unsigned m_depth;
+  // TODO: Surface temp
 };
 
 /**
@@ -108,7 +117,7 @@ class OceanTile : public WorldTile
 class LandTile: public WorldTile
 {
  public:
-  LandTile(Yield yield);
+  LandTile(Yield yield, Climate& climate, Geology& geology);
 
   void damage(float dmg);
 
@@ -142,8 +151,8 @@ class LandTile: public WorldTile
 class MountainTile : public LandTile
 {
  public:
-  MountainTile(unsigned elevation)
-    : LandTile(Yield(0, 2)),
+  MountainTile(unsigned elevation, Climate& climate, Geology& geology)
+    : LandTile(Yield(0, 2), climate, geology),
       m_elevation(elevation)
   {}
 
@@ -161,7 +170,9 @@ class MountainTile : public LandTile
 class DesertTile : public LandTile
 {
  public:
-  DesertTile() : LandTile(Yield(0, 0)) {}
+  DesertTile(Climate& climate, Geology& geology)
+    : LandTile(Yield(0, 0.5), climate, geology)
+  {}
 
   virtual int color() const { return 33; } // yellow
 
@@ -174,7 +185,9 @@ class DesertTile : public LandTile
 class TundraTile : public LandTile
 {
  public:
-  TundraTile() : LandTile(Yield(0, 0)) {}
+  TundraTile(Climate& climate, Geology& geology)
+    : LandTile(Yield(0, 0.5), climate, geology)
+  {}
 
   virtual int color() const { return 37; } // white
 
@@ -187,8 +200,8 @@ class TundraTile : public LandTile
 class TileWithPlantGrowth : public LandTile
 {
  public:
-  TileWithPlantGrowth(Yield yield)
-    : LandTile(yield),
+  TileWithPlantGrowth(Yield yield, Climate& climate, Geology& geology)
+    : LandTile(yield, climate, geology),
       m_soil_moisture(1.0)
   {}
 
@@ -204,7 +217,9 @@ class TileWithPlantGrowth : public LandTile
 class PlainsTile : public LandTile
 {
  public:
-  PlainsTile() : LandTile(Yield(1, 0)) {}
+  PlainsTile(Climate& climate, Geology& geology)
+    : LandTile(Yield(1, 0), climate, geology)
+  {}
 
   virtual int color() const { return 32; } // green
 
@@ -217,7 +232,9 @@ class PlainsTile : public LandTile
 class LushTile : public LandTile
 {
  public:
-  LushTile() : LandTile(Yield(2, 0)) {}
+  LushTile(Climate& climate, Geology& geology)
+    : LandTile(Yield(2, 0), climate, geology)
+  {}
 
   virtual int color() const { return 32; } // green
 
@@ -230,7 +247,9 @@ class LushTile : public LandTile
 class HillsTile : public LandTile
 {
  public:
-  HillsTile() : LandTile(Yield(0, 1)) {}
+  HillsTile(Climate& climate, Geology& geology)
+    : LandTile(Yield(0, 1), climate, geology)
+  {}
 
   virtual int color() const { return 32; } // green
 

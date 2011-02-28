@@ -28,6 +28,7 @@ CommandFactory::CommandFactory()
   m_cmd_map["quit"]  = new QuitCommand;
   m_cmd_map["cast"]  = new SpellCommand;
   m_cmd_map["learn"] = new LearnCommand;
+  m_cmd_map["draw"]  = new DrawCommand;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -49,7 +50,8 @@ const Command& CommandFactory::parse_command(const std::string& text) const
   // Get first token of command
   std::string cmd_name;
   iss >> cmd_name;
-  RequireUser(!iss.fail(), "Failed while retrieving command name (first token)");
+  RequireUser(!iss.fail(),
+              "Failed while retrieving command name (first token)");
 
   // Get command args
   std::vector<std::string> args;

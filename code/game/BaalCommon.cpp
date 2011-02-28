@@ -15,17 +15,17 @@ Location::Location(const std::string& str_location)
   std::istringstream iss(str_location);
 
   iss >> row;
-  Require(!iss.fail(), "Parse failure while getting row");
+  RequireUser(!iss.fail(), "Parse failure while getting row");
 
   char comma;
   iss >> comma;
-  Require(!iss.fail(), "Parse failure while getting comma");
-  Require(comma == ',', "Expected ',' after row");
+  RequireUser(!iss.fail(), "Parse failure while getting comma");
+  RequireUser(comma == ',', "Expected ',' after row");
 
   iss >> col;
-  Require(!iss.fail(), "Parse failure while getting column");
+  RequireUser(!iss.fail(), "Parse failure while getting column");
 
-  Require(iss.eof(), "Leftover text in str location");
+  RequireUser(iss.eof(), "Leftover text in str location");
 }
 
 ///////////////////////////////////////////////////////////////////////////////

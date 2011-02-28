@@ -1,6 +1,8 @@
 #include "WorldTile.hpp"
 #include "City.hpp"
 #include "BaalExceptions.hpp"
+#include "Geology.hpp"
+#include "Weather.hpp"
 
 using namespace baal;
 
@@ -12,22 +14,59 @@ Yield::Yield(float food, float prod)
 {
   // Tiles should either be food-yielding or production-yielding, not both
   Require(food == 0 || prod == 0, "Tile cannot yield food and production");
+  Require(food >= 0, "Cannot have negative yields");
+  Require(prod >= 0, "Cannot have negative yields");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+WorldTile::WorldTile(Yield yield, Climate& climate, Geology& geology)
+///////////////////////////////////////////////////////////////////////////////
+  : m_base_yield(yield),
+    m_climate(climate),
+    m_geology(geology),
+    m_atmosphere(*new Atmosphere(climate))
+{}
+
+///////////////////////////////////////////////////////////////////////////////
+WorldTile::~WorldTile()
+///////////////////////////////////////////////////////////////////////////////
+{
+  delete &m_climate;
+  delete &m_geology;
+  delete &m_atmosphere;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void WorldTile::draw_text(std::ostream& out) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  out << "\033[1;" << color() << "m" // set color and bold text
-      << symbol()                    // print symbol
-      << "\033[0m"                   // clear color and boldness
-      << " ";                        // separator
+  switch (m_draw_mode) {
+  case NORMAL:
+    out << "\033[1;" << color() << "m" // set color and bold text
+        << symbol()                    // print symbol
+        << "\033[0m"                   // clear color and boldness
+        << " ";                        // separator
+    break;
+  case GEOLOGY:
+  case MAGMA:
+  case TENSION:
+    m_geology.draw_text(out);
+    break;
+  case WIND:
+  case TEMPERATURE:
+  case PRESSURE:
+  case DEWPOINT:
+    m_atmosphere.draw_text(out);
+    break;
+  default:
+    Require(false, "Unrecognized mode");
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-LandTile::LandTile(Yield yield)
+LandTile::LandTile(Yield yield, Climate& climate, Geology& geology)
 ///////////////////////////////////////////////////////////////////////////////
-  : WorldTile(yield),
+  : WorldTile(yield, climate, geology),
     m_hp(1.0),
     m_infra_level(0),
     m_city(NULL)
@@ -60,7 +99,7 @@ void LandTile::recover()
 void LandTile::build_infra()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Require(m_infra_level < LAND_TILE_MAX_INFRA, "Infra is maxed");
+  RequireUser(m_infra_level < LAND_TILE_MAX_INFRA, "Infra is maxed");
 
   m_infra_level++;
 }
@@ -90,16 +129,16 @@ Yield LandTile::yield() const
     }
   }
   return
-    m_base_yield *
-    ( m_infra_level ? (2 * m_infra_level) : 1 ) *
-    m_hp *
-    moisture_multiplier;
+    m_base_yield * // base
+    ( m_infra_level ? (2 * m_infra_level) : 1 ) * // infra multiplier
+    m_hp * // damaged tiles yield less
+    moisture_multiplier; //tiles with favorable moisture levels yield more food
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void LandTile::place_city(City* city)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Require(m_city == NULL, "Tile already had city: " << city->name());
+  RequireUser(m_city == NULL, "Tile already had city: " << city->name());
   m_city = city;
 }

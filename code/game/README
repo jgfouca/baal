@@ -21,7 +21,7 @@ would have a number of key properties:
 * Production
 * Damage – Damaged tiles would have reduced yield but recover over time
 
-Tiles would "vulnerable" to various disasters based on a wide range of
+Tiles would be "vulnerable" to various disasters based on a wide range of
 tile attributes (climate, current weather, proximity to fault lines
 etc).
 
@@ -149,6 +149,10 @@ Abnormality types are: high pressure, low pressure; more?
 
 Wind direction is defined by looking at both the prevailing wind and
 the current pressure situation.
+
+--- Time ---
+
+Time advances by seasons.
 
 -- AI --
 

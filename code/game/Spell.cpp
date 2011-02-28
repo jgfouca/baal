@@ -36,7 +36,7 @@ void FireSpell::apply(World& world) const
 
   WorldTile& tile = world.get_tile(m_location);
   LandTile* tile_ptr = dynamic_cast<LandTile*>(&tile);
-  RequireUser(tile_ptr != NULL, "Can only cast fire on land tiles");
+  Require(tile_ptr != NULL, "Can only cast fire on land tiles");
   LandTile& affected_tile = *tile_ptr;
 
   // TODO: check for city, soil moisture, wind, temp, etc

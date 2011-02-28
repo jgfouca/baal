@@ -7,6 +7,7 @@
 #include "SpellFactory.hpp"
 #include "World.hpp"
 #include "Player.hpp"
+#include "Drawable.hpp"
 
 #include <ctime>
 #include <sstream>
@@ -282,5 +283,35 @@ std::string LearnCommand::help() const
   return std::string(
 "learn <spell-name> <level>\n"
 "  Player learns spell of type <spell-name> and level <level>"
+                     );
+}
+
+/*****************************************************************************/
+
+///////////////////////////////////////////////////////////////////////////////
+void DrawCommand::init(const std::vector<std::string>& args)
+///////////////////////////////////////////////////////////////////////////////
+{
+  RequireUser(args.size() == 1, "The draw command takes 1 argument");
+
+  // Parse draw mode
+  m_draw_mode = args[0];
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void DrawCommand::apply(Engine& engine) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  DrawMode new_draw_mode = Drawable::parse_draw_mode(m_draw_mode);
+  Drawable::set_draw_mode(new_draw_mode);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+std::string DrawCommand::help() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  return std::string(
+"draw <draw-mode>\n"
+"  Changes how the world is drawn"
                      );
 }

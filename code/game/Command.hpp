@@ -132,6 +132,24 @@ class LearnCommand : public Command
   unsigned    m_spell_level;
 };
 
+/**
+ * Change draw mode
+ *
+ * Syntax: draw <mode>
+ */
+class DrawCommand : public Command
+{
+ public:
+  virtual void init(const std::vector<std::string>& args);
+
+  virtual void apply(Engine& engine) const;
+
+  virtual std::string help() const;
+
+ private:
+  std::string m_draw_mode;
+};
+
 }
 
 #endif

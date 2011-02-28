@@ -18,7 +18,7 @@ class World : public Drawable
 
   ~World();
 
-  void cycle_turn() { /* TODO */ }
+  void cycle_turn();
 
   bool in_bounds(const Location& location) const {
     return location.row < m_height || location.col < m_width;

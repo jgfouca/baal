@@ -38,3 +38,19 @@ void World::draw_text(std::ostream& out) const
     out << "\n";
   }
 }
+
+///////////////////////////////////////////////////////////////////////////////
+void World::cycle_turn()
+///////////////////////////////////////////////////////////////////////////////
+{
+  // Every turn, the weather since the last turn will be randomly simulated.
+  // There will be random abnormal areas, with the epicenter of the abnormality
+  // having the most extreme deviations from the normal climate and peripheral
+  // tiles having smaller deviations from normal.
+
+  // Abnormalilty types are: drought, moist, cold, hot.
+
+  // Generate long-term anomalies
+
+  // TODO
+}

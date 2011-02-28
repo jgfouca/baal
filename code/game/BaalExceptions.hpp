@@ -24,6 +24,8 @@ class ProgramError : public std::exception
 
   virtual const char* what() const throw();
 
+  const std::string& message() const { return m_message; }
+
  private:
   std::string m_expr;
   std::string m_file;
