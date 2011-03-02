@@ -4,8 +4,7 @@
 #include <iostream>
 
 using std::ostream;
-
-namespace baal {
+using namespace baal;
 
 ///////////////////////////////////////////////////////////////////////////////
 Spell::Spell(const std::string& name,
@@ -41,8 +40,6 @@ void FireSpell::apply(World& world) const
 
   // TODO: check for city, soil moisture, wind, temp, etc
   affected_tile.damage(.5);
-}
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////

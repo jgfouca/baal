@@ -5,6 +5,7 @@
 #include "BaalExceptions.hpp"
 #include "BaalCommon.hpp"
 #include "Drawable.hpp"
+#include "Time.hpp"
 
 #include <vector>
 #include <iosfwd>
@@ -58,6 +59,7 @@ class World : public Drawable
   unsigned m_width;
   unsigned m_height;
   std::vector<std::vector<WorldTile*> > m_tiles;
+  Time m_time;
 
   // Friend factories
   friend class WorldFactoryGenerated;

@@ -29,6 +29,8 @@ void InterfaceText::draw()
   // DESIGN: Should "drawable" items know how to draw themselves? That might
   // reduce coupling between those classes and the interface classes.
 
+  clear_screen();
+
   // Draw world
   m_engine.world().draw_text(m_ostream);
 

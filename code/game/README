@@ -251,6 +251,7 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 
 - TODO List -
 
+* Need to introduce the notion of time into the game
 * Get climate simulation (anomaly-based) working
 * Start to fill in more disasters
 * Need at least rudimentary PlayerAI so that real games can be tested.

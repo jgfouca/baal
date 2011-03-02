@@ -2,6 +2,7 @@
 #define WorldTile_hpp
 
 #include "Drawable.hpp"
+#include "Weather.hpp"
 
 #include <vector>
 #include <iosfwd>
@@ -16,9 +17,7 @@
 namespace baal {
 
 class City;
-class Climate;
 class Geology;
-class Atmosphere;
 
 /**
  * A simple structure that specifies yields for tiles.
@@ -74,7 +73,7 @@ class WorldTile : public Drawable
   Yield        m_base_yield;
   Climate&     m_climate;
   Geology&     m_geology;
-  Atmosphere&  m_atmosphere;
+  Atmosphere   m_atmosphere;
 
 #ifndef NO_GRAPHICS
   SGESPRITE* m_sprite;
@@ -139,7 +138,7 @@ class LandTile: public WorldTile
  protected:
   float m_hp; // 0..1
   unsigned m_infra_level; // 0..MAX
-  City* m_city;
+  City* m_city; // valid to have no (NULL) city, so use ptr
 
   static const float LAND_TILE_RECOVERY_RATE = 0.30;
   static const unsigned LAND_TILE_MAX_INFRA  = 5;

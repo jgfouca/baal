@@ -35,6 +35,8 @@ bool is_opt();
 
 std::ostream& operator<<(std::ostream& out, const Location& location);
 
+void clear_screen();
+
 }
 
 #endif

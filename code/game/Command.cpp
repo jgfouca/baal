@@ -304,6 +304,7 @@ void DrawCommand::apply(Engine& engine) const
 {
   DrawMode new_draw_mode = Drawable::parse_draw_mode(m_draw_mode);
   Drawable::set_draw_mode(new_draw_mode);
+  engine.interface().draw(); // redraw
 }
 
 ///////////////////////////////////////////////////////////////////////////////

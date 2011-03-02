@@ -8,7 +8,8 @@ using namespace baal;
 World::World(unsigned width, unsigned height)
 ///////////////////////////////////////////////////////////////////////////////
   : m_width(width),
-    m_height(height)
+    m_height(height),
+    m_time()
 {
   for (unsigned i = 0; i < height; ++i) {
     std::vector<WorldTile*> row(width, NULL);
@@ -31,6 +32,7 @@ World::~World()
 void World::draw_text(std::ostream& out) const
 ///////////////////////////////////////////////////////////////////////////////
 {
+  m_time.draw_text(out);
   for (unsigned row = 0; row < height(); ++row) {
     for (unsigned col = 0; col < width(); ++col) {
       m_tiles[row][col]->draw_text(out);
@@ -53,4 +55,6 @@ void World::cycle_turn()
   // Generate long-term anomalies
 
   // TODO
+
+  ++m_time;
 }

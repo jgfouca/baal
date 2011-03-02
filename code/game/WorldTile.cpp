@@ -2,7 +2,6 @@
 #include "City.hpp"
 #include "BaalExceptions.hpp"
 #include "Geology.hpp"
-#include "Weather.hpp"
 
 using namespace baal;
 
@@ -24,7 +23,7 @@ WorldTile::WorldTile(Yield yield, Climate& climate, Geology& geology)
   : m_base_yield(yield),
     m_climate(climate),
     m_geology(geology),
-    m_atmosphere(*new Atmosphere(climate))
+    m_atmosphere(climate)
 {}
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -33,7 +32,6 @@ WorldTile::~WorldTile()
 {
   delete &m_climate;
   delete &m_geology;
-  delete &m_atmosphere;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
