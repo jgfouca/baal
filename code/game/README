@@ -248,3 +248,10 @@ Affected by nearby geology. Enhanced by high magma build-up.
 --- Wildfires ---
 
 Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
+
+- TODO List -
+
+* Get climate simulation (anomaly-based) working
+* Start to fill in more disasters
+* Need at least rudimentary PlayerAI so that real games can be tested.
+* See code TODOs
