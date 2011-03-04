@@ -14,7 +14,7 @@ Engine::Engine()
   : m_interface(InterfaceFactory::create(*this)),
     m_world(WorldFactory::create()),
     m_player(*(new Player)), // might come from factory in the future
-    m_ai_player(*(new PlayerAI)), // might come from factory in the future
+    m_ai_player(*(new PlayerAI(*this))), // might come from factory in the future
     m_quit(false)
 {
 
@@ -45,7 +45,7 @@ void Engine::play()
     m_player.cycle_turn();
 
     // AI player takes turn
-    // TODO
+    m_ai_player.cycle_turn();
 
     // Cycle world
     m_world.cycle_turn();

@@ -29,6 +29,8 @@ class Engine
 
   Player& player() { return m_player; }
 
+  PlayerAI& ai_player() { return m_ai_player; }
+
   void quit() { m_quit = true; }
 
  private:

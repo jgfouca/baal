@@ -50,13 +50,19 @@ class WorldTile : public Drawable
  public:
   WorldTile(Yield yield, Climate& climate, Geology& geology);
 
-  ~WorldTile();
+  virtual ~WorldTile();
 
   virtual Yield yield() const = 0;
 
   virtual void draw_text(std::ostream& out) const;
 
   virtual void draw_graphics() const { /*TODO*/ }
+
+  virtual City* city() const { return NULL; }
+
+  virtual void cycle_turn() {}
+
+  virtual void place_city(City& city);
 
 #ifndef NO_GRAPHICS
   void setSprite(SGESPRITE *sprite) { m_sprite = sprite; }
@@ -94,10 +100,7 @@ class WorldTile : public Drawable
 class OceanTile : public WorldTile
 {
  public:
-  OceanTile(unsigned depth, Climate& climate, Geology& geology)
-    : WorldTile(Yield(3,0), climate, geology),
-      m_depth(depth)
-  {}
+  OceanTile(unsigned depth, Climate& climate, Geology& geology);
 
   virtual Yield yield() const { return m_base_yield; }
 
@@ -107,7 +110,7 @@ class OceanTile : public WorldTile
 
  protected:
   unsigned m_depth;
-  // TODO: Surface temp
+  int m_surface_temp; // in farenheit
 };
 
 /**
@@ -118,9 +121,9 @@ class LandTile: public WorldTile
  public:
   LandTile(Yield yield, Climate& climate, Geology& geology);
 
-  void damage(float dmg);
+  ~LandTile();
 
-  void recover();
+  void damage(float dmg);
 
   void build_infra();
 
@@ -128,14 +131,18 @@ class LandTile: public WorldTile
 
   virtual Yield yield() const;
 
-  City* city() const { return m_city; }
+  virtual City* city() const { return m_city; }
 
-  void place_city(City* city);
+  virtual void place_city(City& city);
 
   // By default, tiles have no moisture
   virtual float soil_moisture() const { return 0.0; }
 
+  virtual void cycle_turn();
+
  protected:
+  void recover();
+
   float m_hp; // 0..1
   unsigned m_infra_level; // 0..MAX
   City* m_city; // valid to have no (NULL) city, so use ptr

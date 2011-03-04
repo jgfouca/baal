@@ -15,15 +15,19 @@ class City
 
   const std::string& name() const { return m_name; }
 
-  void cycle_turn(float food_gathered);
+  void cycle_turn();
+
+  unsigned population() const { return m_population; }
 
  private:
   std::string m_name;
-  unsigned m_rank;
-  unsigned m_population;
-  unsigned m_next_rank_pop;
+  unsigned    m_rank;
+  unsigned    m_population;
+  unsigned    m_next_rank_pop;
+  float       m_production;
 
-  static const float CITY_BASE_GROWTH_RATE = 1.05; // 5%
+  static const float CITY_BASE_GROWTH_RATE = 0.01; // 1%
+  static const float MAX_GROWTH_MODIFIER   = 4.0;
   static const unsigned CITY_RANK_UP_MULTIPLIER = 2;
   static const unsigned CITY_STARTING_POP = 1000;
   static const unsigned POP_THAT_EATS_ONE_FOOD = 1000;

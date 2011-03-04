@@ -12,6 +12,9 @@
 
 namespace baal {
 
+/**
+ * Represents the world.
+ */
 class World : public Drawable
 {
  public:

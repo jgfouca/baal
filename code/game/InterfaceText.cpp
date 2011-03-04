@@ -6,6 +6,7 @@
 #include "CommandFactory.hpp"
 #include "Command.hpp"
 #include "Player.hpp"
+#include "PlayerAI.hpp"
 
 #include <iostream>
 #include <string>
@@ -38,6 +39,11 @@ void InterfaceText::draw()
 
   // Draw Player
   m_engine.player().draw_text(m_ostream);
+
+  m_ostream << "\n";
+
+  // Draw AI Player
+  m_engine.ai_player().draw_text(m_ostream);
 
   m_ostream.flush();
 }
