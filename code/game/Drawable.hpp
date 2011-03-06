@@ -10,7 +10,8 @@ namespace baal {
 // TODO: Support all the DrawModes below.
 enum DrawMode
 {
-  NORMAL,
+  CIV,
+  LAND,
   GEOLOGY,
   MAGMA,
   TENSION,

@@ -3,6 +3,8 @@
 #include "BaalExceptions.hpp"
 #include "Geology.hpp"
 
+#include <iomanip>
+
 using namespace baal;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -40,12 +42,28 @@ WorldTile::~WorldTile()
 void WorldTile::draw_text(std::ostream& out) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  if (s_draw_mode == NORMAL) {
-    out << "\033[1;" << color() << "m"; // set color and bold text
+  if (s_draw_mode == LAND) {
+    out << "\033[1;" << color() << "m"; // bold text and set color
     for (unsigned w = 0; w < TILE_TEXT_WIDTH; ++w) {
       out << symbol();                  // print symbol
     }
-    out << "\033[0m";                   // clear color and boldness
+    out << "\033[0m";    // clear color and boldness
+  }
+  else if (s_draw_mode == CIV) {
+    out << "\033[1;"; // bold text
+    if (city() != NULL) {
+      out << "31m C:" << std::setw(2) << city()->rank(); // red city
+    }
+    else if (infra_level() > 0) {
+      out << "33m I:" << std::setw(2) << infra_level(); // yellow infra
+    }
+    else {
+      out << color() << "m";
+      for (unsigned w = 0; w < TILE_TEXT_WIDTH; ++w) {
+        out << symbol();                  // print symbol
+      }
+    }
+    out << "\033[0m";    // clear color and boldness
   }
   else if (Geology::is_geological(s_draw_mode)) {
     m_geology.draw_text(out);

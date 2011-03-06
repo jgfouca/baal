@@ -19,6 +19,7 @@ class City
 
   unsigned population() const { return m_population; }
 
+  unsigned rank() const { return m_rank; }
  private:
   std::string m_name;
   unsigned    m_rank;

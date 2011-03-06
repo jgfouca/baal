@@ -60,6 +60,8 @@ class WorldTile : public Drawable
 
   virtual City* city() const { return NULL; }
 
+  virtual unsigned infra_level() const { return 0; }
+
   virtual void cycle_turn();
 
   virtual void place_city(City& city);
@@ -129,7 +131,7 @@ class LandTile: public WorldTile
 
   void build_infra();
 
-  unsigned get_infra() const { return m_infra_level; }
+  virtual unsigned infra_level() const { return m_infra_level; }
 
   virtual Yield yield() const;
 

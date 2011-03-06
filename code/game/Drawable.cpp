@@ -3,14 +3,17 @@
 
 using namespace baal;
 
-DrawMode Drawable::s_draw_mode = NORMAL;
+DrawMode Drawable::s_draw_mode = CIV;
 
 ///////////////////////////////////////////////////////////////////////////////
 DrawMode Drawable::parse_draw_mode(const std::string& draw_mode_str)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  if (draw_mode_str == "normal") {
-    return NORMAL;
+  if (draw_mode_str == "civ") {
+    return CIV;
+  }
+  else if (draw_mode_str == "land") {
+    return LAND;
   }
   else if (draw_mode_str == "geology") {
     return GEOLOGY;
