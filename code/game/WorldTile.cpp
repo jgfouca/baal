@@ -40,26 +40,21 @@ WorldTile::~WorldTile()
 void WorldTile::draw_text(std::ostream& out) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  switch (m_draw_mode) {
-  case NORMAL:
-    out << "\033[1;" << color() << "m" // set color and bold text
-        << symbol()                    // print symbol
-        << "\033[0m"                   // clear color and boldness
-        << " ";                        // separator
-    break;
-  case GEOLOGY:
-  case MAGMA:
-  case TENSION:
+  if (s_draw_mode == NORMAL) {
+    out << "\033[1;" << color() << "m"; // set color and bold text
+    for (unsigned w = 0; w < TILE_TEXT_WIDTH; ++w) {
+      out << symbol();                  // print symbol
+    }
+    out << "\033[0m";                   // clear color and boldness
+  }
+  else if (Geology::is_geological(s_draw_mode)) {
     m_geology.draw_text(out);
-    break;
-  case WIND:
-  case TEMPERATURE:
-  case PRESSURE:
-  case DEWPOINT:
+  }
+  else if (Atmosphere::is_atmospheric(s_draw_mode)) {
     m_atmosphere.draw_text(out);
-    break;
-  default:
-    Require(false, "Unrecognized mode");
+  }
+  else {
+    Require(false, "Unhandled mode: " << s_draw_mode);
   }
 }
 
@@ -68,6 +63,14 @@ void WorldTile::place_city(City& city)
 ///////////////////////////////////////////////////////////////////////////////
 {
   RequireUser(false, "Can only place cities on land tiles");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void WorldTile::cycle_turn()
+///////////////////////////////////////////////////////////////////////////////
+{
+  m_geology.cycle_turn();
+  m_atmosphere.cycle_turn();
 }
 
 /*****************************************************************************/

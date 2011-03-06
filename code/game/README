@@ -251,6 +251,8 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 
 - TODO List -
 
+* Use more typedefs for scalar properties?
+* Need major upgrades to text interface to give more information
 * Change some Require(...) to RequireAttach(...)
 * Map editor, map-file format defined, map-file loader
 * Need to introduce the notion of time into and throughout the game

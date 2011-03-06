@@ -295,14 +295,14 @@ void DrawCommand::init(const std::vector<std::string>& args)
   RequireUser(args.size() == 1, "The draw command takes 1 argument");
 
   // Parse draw mode
-  m_draw_mode = args[0];
+  s_draw_mode = args[0];
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void DrawCommand::apply(Engine& engine) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  DrawMode new_draw_mode = Drawable::parse_draw_mode(m_draw_mode);
+  DrawMode new_draw_mode = Drawable::parse_draw_mode(s_draw_mode);
   Drawable::set_draw_mode(new_draw_mode);
   engine.interface().draw(); // redraw
 }

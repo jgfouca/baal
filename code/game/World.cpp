@@ -33,13 +33,25 @@ World::~World()
 void World::draw_text(std::ostream& out) const
 ///////////////////////////////////////////////////////////////////////////////
 {
+  DrawMode real_draw_mode = s_draw_mode;
   m_time.draw_text(out);
   for (unsigned row = 0; row < height(); ++row) {
-    for (unsigned col = 0; col < width(); ++col) {
-      m_tiles[row][col]->draw_text(out);
+    for (unsigned height = 0; height < TILE_TEXT_HEIGHT; ++height) {
+      if (height == 2) { // middle of tile displays "overlay" info
+        s_draw_mode = real_draw_mode;
+      }
+      else {
+        s_draw_mode = NORMAL;
+      }
+      for (unsigned col = 0; col < width(); ++col) {
+        m_tiles[row][col]->draw_text(out);
+        out << " ";
+      }
+      out << "\n";
     }
     out << "\n";
   }
+  s_draw_mode = real_draw_mode;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

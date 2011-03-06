@@ -32,10 +32,10 @@ class Drawable
   static DrawMode parse_draw_mode(const std::string& draw_mode_str);
 
  protected:
-  static DrawMode m_draw_mode;
+  static DrawMode s_draw_mode;
 
  private:
-  static void set_draw_mode(DrawMode mode) { m_draw_mode = mode; }
+  static void set_draw_mode(DrawMode mode) { s_draw_mode = mode; }
 
   // only friends can change draw mode
   friend class DrawCommand;

@@ -76,17 +76,11 @@ class Climate
 class Atmosphere : public Drawable
 {
  public:
-  Atmosphere(const Climate& climate)
-    : m_temperature(climate.temperature()),
-      m_pressure(NORMAL_PRESSURE),
-      m_wind(climate.wind())
-  {}
+  Atmosphere(const Climate& climate);
 
   int temperature() const { return m_temperature; }
 
-  // TODO: dewpoint modelling is significantly more complex, save
-  // this for later
-  //int dewpoint() const { return m_dewpoint; }
+  int dewpoint() const { return m_dewpoint; }
 
   unsigned pressure() const { return m_pressure; }
 
@@ -96,9 +90,16 @@ class Atmosphere : public Drawable
 
   virtual void draw_graphics() const { /*TODO*/ }
 
+  static bool is_atmospheric(DrawMode mode);
+
+  // TODO: Based on season and anomalies, initialize self
+  void cycle_turn() {}
+
  private:
-  int m_temperature; // in farenheit
-  //int m_dewpoint; // in farenheit
+  int compute_dewpoint() const;
+
+  int m_temperature;   // in farenheit
+  int m_dewpoint;      // in farenheit
   unsigned m_pressure; // in millibars
   Wind m_wind;
 

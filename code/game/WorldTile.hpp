@@ -60,7 +60,7 @@ class WorldTile : public Drawable
 
   virtual City* city() const { return NULL; }
 
-  virtual void cycle_turn() {}
+  virtual void cycle_turn();
 
   virtual void place_city(City& city);
 
@@ -69,6 +69,8 @@ class WorldTile : public Drawable
 
   SGESPRITE * sprite() const { return m_sprite; }
 #endif
+
+  static const unsigned TILE_TEXT_WIDTH = 5;
 
  protected:
 

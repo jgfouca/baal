@@ -3,6 +3,7 @@
 
 #include "Drawable.hpp"
 
+#include <string>
 #include <iosfwd>
 
 // This file contains the classes having to do with Geology. The
@@ -29,7 +30,7 @@ class Geology : public Drawable
  public:
   Geology(float base_tension_buildup,
           float base_magma_buildup,
-          float plate_movement);
+          float plate_movement); // cm/year
 
   void cycle_turn();
 
@@ -41,11 +42,13 @@ class Geology : public Drawable
 
   virtual void draw_graphics() const { /*TODO*/ }
 
+  static bool is_geological(DrawMode mode);
+
  protected:
 
   virtual int color() const = 0;
 
-  virtual char symbol() const = 0;
+  virtual std::string symbol() const = 0;
 
   float m_tension;
   float m_magma;
@@ -69,11 +72,11 @@ class Divergent : public Geology
  protected:
   virtual int color() const { return 34; } // blue
 
-  virtual char symbol() const { return 'D'; }
+  virtual std::string symbol() const { return " <-->"; }
 
  private:
-  static const float DIVERGENT_MAGMA_BUILDUP   = 0.01;
-  static const float DIVERGENT_TENSION_BUILDUP = 0.00;
+  static const float DIVERGENT_MAGMA_BUILDUP   = 0.001;
+  static const float DIVERGENT_TENSION_BUILDUP = 0.000;
 };
 
 /**
@@ -92,11 +95,11 @@ class Subducting : public Geology
  protected:
   virtual int color() const { return 31; } // red
 
-  virtual char symbol() const { return 'S'; }
+  virtual std::string symbol() const { return " -v<-"; }
 
  private:
-  static const float SUBDUCTING_MAGMA_BUILDUP   = 0.02;
-  static const float SUBDUCTING_TENSION_BUILDUP = 0.02;
+  static const float SUBDUCTING_MAGMA_BUILDUP   = 0.002;
+  static const float SUBDUCTING_TENSION_BUILDUP = 0.002;
 };
 
 /**
@@ -114,11 +117,11 @@ class Orogenic : public Geology
  protected:
   virtual int color() const { return 32; } // green
 
-  virtual char symbol() const { return 'O'; }
+  virtual std::string symbol() const { return " -><-"; }
 
  private:
-  static const float OROGENIC_MAGMA_BUILDUP   = 0.02;
-  static const float OROGENIC_TENSION_BUILDUP = 0.02;
+  static const float OROGENIC_MAGMA_BUILDUP   = 0.002;
+  static const float OROGENIC_TENSION_BUILDUP = 0.002;
 };
 
 /**
@@ -136,11 +139,11 @@ class Transform : public Geology
  protected:
   virtual int color() const { return 33; } // yellow
 
-  virtual char symbol() const { return 'T'; }
+  virtual std::string symbol() const { return " vv^^"; }
 
  private:
-  static const float TRANSFORM_MAGMA_BUILDUP   = 0.00;
-  static const float TRANSFORM_TENSION_BUILDUP = 0.03;
+  static const float TRANSFORM_MAGMA_BUILDUP   = 0.000;
+  static const float TRANSFORM_TENSION_BUILDUP = 0.003;
 };
 
 /**
@@ -158,11 +161,11 @@ class Inactive : public Geology
  protected:
   virtual int color() const { return 37; } // white
 
-  virtual char symbol() const { return 'I'; }
+  virtual std::string symbol() const { return "     "; }
 
  private:
-  static const float INACTIVE_MAGMA_BUILDUP   = 0.00;
-  static const float INACTIVE_TENSION_BUILDUP = 0.00;
+  static const float INACTIVE_MAGMA_BUILDUP   = 0.000;
+  static const float INACTIVE_TENSION_BUILDUP = 0.000;
 };
 
 }

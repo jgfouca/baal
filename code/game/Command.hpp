@@ -147,7 +147,7 @@ class DrawCommand : public Command
   virtual std::string help() const;
 
  private:
-  std::string m_draw_mode;
+  std::string s_draw_mode;
 };
 
 }
