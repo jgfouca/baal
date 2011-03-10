@@ -313,6 +313,16 @@ std::string DrawCommand::help() const
 {
   return std::string(
 "draw <draw-mode>\n"
-"  Changes how the world is drawn"
+"  Changes how the world is drawn.\n"
+"  Available draw modes:\n"
+"      civ\n"
+"      land\n"
+"      geology\n"
+"      magma\n"
+"      tension\n"
+"      wind\n"
+"      temperature\n"
+"      pressure\n"
+"      dewpoint"
                      );
 }
