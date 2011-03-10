@@ -34,7 +34,13 @@ class Player : public Drawable
 
   virtual void draw_graphics() const { /*TODO*/ }
 
- private:
+  // Getters
+
+  unsigned level() const { return m_level; }
+
+  const TalentTree& talents() const { return m_talents; }
+
+private:
   // Forbidden
   Player(const Player&);
   Player& operator=(const Player&);
@@ -47,12 +53,12 @@ class Player : public Drawable
   unsigned    m_exp;
   unsigned    m_level;
   unsigned    m_next_level_cost;
-  TalentTree  m_talent_tree;
+  TalentTree  m_talents;
 
   // Class members
   static const unsigned STARTING_MANA            = 100;
   static const unsigned FIRST_LEVELUP_EXP_COST   = 100;
-  static const unsigned STARTING_MANA_REGEN_RATE = STARTING_MANA / 5;
+  static const unsigned STARTING_MANA_REGEN_RATE = STARTING_MANA / 20;
   static const float    MANA_INCREASE_PER_LEVEL  = 1.2;
   static const float    EXP_LEVEL_COST_INCREASE  = 2.0;
 

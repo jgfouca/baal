@@ -19,7 +19,7 @@ Player::Player()
     m_exp(0),
     m_level(1),
     m_next_level_cost(FIRST_LEVELUP_EXP_COST),
-    m_talent_tree()
+    m_talents()
 {
   if (m_name == Configuration::UNSET) {
     m_name = DEFAULT_PLAYER_NAME;
@@ -30,9 +30,10 @@ Player::Player()
 void Player::learn(const Spell& spell)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  RequireUser(m_level > m_talent_tree.num_learned(),
+  RequireUser(m_level > m_talents.num_learned(),
               "You cannot learn any more spells until you level-up");
-  m_talent_tree.add(spell);
+  spell.verify_prereqs(*this);
+  m_talents.add(spell);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -42,7 +43,7 @@ void Player::verify_cast(const Spell& spell)
   RequireUser(spell.cost() <= m_mana,
               "Spell requires " << spell.cost() <<
               " mana, player only has " << m_mana << " mana");
-  RequireUser(m_talent_tree.has(spell), "Player cannot cast spell " << spell);
+  RequireUser(m_talents.has(spell), "Player cannot cast spell " << spell);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
