@@ -66,6 +66,6 @@ void PlayerAI::draw_text(std::ostream& out) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   out << "AI PLAYER STATS:\n"
-      << "  tech level: \033[1;32m" << m_tech_level << "\033[0m \n"
-      << "  population: \033[1;34m" << m_population << "\033[0m \n";
+      << "  tech level: " << BOLD_COLOR << GREEN << m_tech_level << CLEAR_ALL << "\n"
+      << "  population: " << BOLD_COLOR << BLUE << m_population << CLEAR_ALL << "\n";
 }

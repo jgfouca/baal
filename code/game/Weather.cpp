@@ -42,20 +42,20 @@ void draw_wind(std::ostream& out, const Wind& wind)
   out << std::right;
 
   unsigned speed = wind.m_speed;
-  int color = -1; // init to invalid
+  const char* color = "";
   if (speed < 10) {
-    color = 32; // green
+    color = GREEN;
   }
   else if (speed < 20) {
-    color = 33; // yellow
+    color = YELLOW;
   }
   else {
-    color = 31; // red
+    color = RED;
   }
 
-  out << "\033[1;" << color << "m" // set color and bold text
+  out << BOLD_COLOR << color       // set color and bold text
       << std::setw(2) << speed     // print value
-      << "\033[0m";                // clear color and boldness
+      << CLEAR_ALL;                // clear color and boldness
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -64,20 +64,20 @@ void draw_dewpoint(std::ostream& out, int dewpoint)
 {
   out << " ";
 
-  int color = -1; // init to invalid
+  const char* color = "";
   if (dewpoint < 32) {
-    color = 31; // red (dry)
+    color = RED;
   }
   else if (dewpoint < 55) {
-    color = 33; // yellow
+    color = YELLOW;
   }
   else {
-    color = 32; // green (moist)
+    color = GREEN;
   }
 
-  out << "\033[1;" << color << "m" // set color and bold text
+  out << BOLD_COLOR << color       // set color and bold text
       << std::left << std::setw(3) << dewpoint  // print value
-      << "\033[0m";                // clear color and boldness
+      << CLEAR_ALL;                // clear color and boldness
   out << std::right << " ";
 }
 
@@ -87,22 +87,21 @@ void draw_temperature(std::ostream& out, int temperature)
 {
   out << " ";
 
-  int color = -1; // init to invalid
+  const char* color = "";
   if (temperature < 32) {
-    color = 34; // blue
+    color = BLUE;
   }
   else if (temperature < 80) {
-    color = 33; // yellow
+    color = YELLOW;
   }
   else {
-    color = 31; // red
+    color = RED;
   }
 
-  out << "\033[1;" << color << "m" // set color and bold text
+  out << BOLD_COLOR << color       // set color and bold text
       << std::left << std::setw(3) << temperature  // print value
-      << "\033[0m";                // clear color and boldness
+      << CLEAR_ALL;                // clear color and boldness
   out << std::right << " ";
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -111,20 +110,20 @@ void draw_pressure(std::ostream& out, unsigned pressure)
 {
   out << " ";
 
-  int color = -1;
+  const char* color = "";
   if (pressure < 975) {
-    color = 32; // green
+    color = GREEN;
   }
   else if (pressure < 1025) {
-    color = 33; // yellow
+    color = YELLOW;
   }
   else {
-    color = 31; // red
+    color = RED;
   }
 
-  out << "\033[1;" << color << "m" // set color and bold text
+  out << BOLD_COLOR << color   // set color and bold text
       << std::left << std::setw(4) << pressure  // print value
-      << "\033[0m";                // clear color and boldness
+      << CLEAR_ALL;            // clear color and boldness
   out << std::right;
 }
 

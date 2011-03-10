@@ -3,6 +3,7 @@
 
 #include "Drawable.hpp"
 #include "Weather.hpp"
+#include "BaalCommon.hpp"
 
 #include <vector>
 #include <iosfwd>
@@ -76,7 +77,7 @@ class WorldTile : public Drawable
 
  protected:
 
-  virtual int color() const = 0;
+  virtual const char* color() const = 0;
 
   virtual char symbol() const = 0;
 
@@ -108,7 +109,7 @@ class OceanTile : public WorldTile
 
   virtual Yield yield() const { return m_base_yield; }
 
-  virtual int color() const { return 34; } // blue
+  virtual const char* color() const { return BLUE; }
 
   virtual char symbol() const { return '~'; }
 
@@ -166,7 +167,7 @@ class MountainTile : public LandTile
       m_elevation(elevation)
   {}
 
-  virtual int color() const { return 37; } // white
+  virtual const char* color() const { return WHITE; }
 
   virtual char symbol() const { return '^'; }
 
@@ -184,7 +185,7 @@ class DesertTile : public LandTile
     : LandTile(Yield(0, 0.5), climate, geology)
   {}
 
-  virtual int color() const { return 33; } // yellow
+  virtual const char* color() const { return YELLOW; }
 
   virtual char symbol() const { return '-'; }
 };
@@ -199,7 +200,7 @@ class TundraTile : public LandTile
     : LandTile(Yield(0, 0.5), climate, geology)
   {}
 
-  virtual int color() const { return 37; } // white
+  virtual const char* color() const { return WHITE; }
 
   virtual char symbol() const { return '-'; }
 };
@@ -231,7 +232,7 @@ class PlainsTile : public LandTile
     : LandTile(Yield(1, 0), climate, geology)
   {}
 
-  virtual int color() const { return 32; } // green
+  virtual const char* color() const { return GREEN; }
 
   virtual char symbol() const { return '_'; }
 };
@@ -246,7 +247,7 @@ class LushTile : public LandTile
     : LandTile(Yield(2, 0), climate, geology)
   {}
 
-  virtual int color() const { return 32; } // green
+  virtual const char* color() const { return GREEN; }
 
   virtual char symbol() const { return '='; }
 };
@@ -261,7 +262,7 @@ class HillsTile : public LandTile
     : LandTile(Yield(0, 1), climate, geology)
   {}
 
-  virtual int color() const { return 32; } // green
+  virtual const char* color() const { return GREEN; }
 
   virtual char symbol() const { return '^'; }
 };

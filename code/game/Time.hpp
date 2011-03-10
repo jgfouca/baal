@@ -5,6 +5,7 @@
 
 #include <string>
 #include <iosfwd>
+#include <utility>
 
 namespace baal {
 
@@ -30,7 +31,7 @@ class Time : public Drawable
 
   virtual void draw_graphics() const { /* TODO */ }
 
-  static std::string season_id_to_str(Season season);
+  static std::pair<std::string, const char*> season_info(Season season);
 
   // Constants
   static const unsigned STARTING_YEAR         = 0;
@@ -41,8 +42,6 @@ private:
   unsigned m_curr_year;
   Season   m_curr_season;
 };
-
-std::ostream& operator<<(std::ostream& out, Season season);
 
 void operator++(Season& season);
 

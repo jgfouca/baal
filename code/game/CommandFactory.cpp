@@ -22,13 +22,13 @@ CommandFactory::CommandFactory()
   // Populate command map, this is the only place where the list of all
   // commands is exposed
 
-  m_cmd_map["help"]  = new HelpCommand;
-  m_cmd_map["save"]  = new SaveCommand;
-  m_cmd_map["end" ]  = new EndTurnCommand;
-  m_cmd_map["quit"]  = new QuitCommand;
-  m_cmd_map["cast"]  = new SpellCommand;
+  m_cmd_map["help" ] = new HelpCommand;
+  m_cmd_map["save" ] = new SaveCommand;
+  m_cmd_map["n"    ] = new EndTurnCommand;
+  m_cmd_map["quit" ] = new QuitCommand;
+  m_cmd_map["cast" ] = new SpellCommand;
   m_cmd_map["learn"] = new LearnCommand;
-  m_cmd_map["draw"]  = new DrawCommand;
+  m_cmd_map["draw" ] = new DrawCommand;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -37,8 +37,8 @@ void Geology::cycle_turn()
 void Geology::draw_text(std::ostream& out) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  int invalid_color = -1;
-  int color = invalid_color;
+  const char* invalid_color = "";
+  const char* color = invalid_color;
   std::string invalid_symbol = "????";
   std::string symbol = invalid_symbol;
   float property;
@@ -53,13 +53,13 @@ void Geology::draw_text(std::ostream& out) const
   case MAGMA:
     property = s_draw_mode == TENSION ? m_tension : m_magma;
     if (property < .333) {
-      color = 32; // green
+      color = GREEN;
     }
     else if (property < .666) {
-      color = 33; // yellow
+      color = YELLOW;
     }
     else {
-      color = 31; //red
+      color = RED;
     }
     oss << std::setprecision(3) << std::fixed << property;
     symbol = oss.str();
@@ -71,9 +71,9 @@ void Geology::draw_text(std::ostream& out) const
   Require(color  != invalid_color , "Color was not set");
   Require(symbol != invalid_symbol, "Symbol was not set");
 
-  out << "\033[1;" << color << "m" // set color and bold text
-      << symbol                    // print symbol
-      << "\033[0m";                // clear color and boldness
+  out << BOLD_COLOR << color    // set color and bold text
+      << symbol                 // print symbol
+      << CLEAR_ALL;             // clear color and boldness
 }
 
 ///////////////////////////////////////////////////////////////////////////////

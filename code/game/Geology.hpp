@@ -2,6 +2,7 @@
 #define Geology_hpp
 
 #include "Drawable.hpp"
+#include "BaalCommon.hpp"
 
 #include <string>
 #include <iosfwd>
@@ -46,7 +47,7 @@ class Geology : public Drawable
 
  protected:
 
-  virtual int color() const = 0;
+  virtual const char* color() const = 0;
 
   virtual std::string symbol() const = 0;
 
@@ -70,7 +71,7 @@ class Divergent : public Geology
   {}
 
  protected:
-  virtual int color() const { return 34; } // blue
+  virtual const char* color() const { return BLUE; }
 
   virtual std::string symbol() const { return " <-->"; }
 
@@ -93,7 +94,7 @@ class Subducting : public Geology
   {}
 
  protected:
-  virtual int color() const { return 31; } // red
+  virtual const char* color() const { return RED; }
 
   virtual std::string symbol() const { return " -v<-"; }
 
@@ -115,7 +116,7 @@ class Orogenic : public Geology
   {}
 
  protected:
-  virtual int color() const { return 32; } // green
+  virtual const char* color() const { return GREEN; }
 
   virtual std::string symbol() const { return " -><-"; }
 
@@ -137,7 +138,7 @@ class Transform : public Geology
   {}
 
  protected:
-  virtual int color() const { return 33; } // yellow
+  virtual const char* color() const { return YELLOW; }
 
   virtual std::string symbol() const { return " vv^^"; }
 
@@ -159,7 +160,7 @@ class Inactive : public Geology
   {}
 
  protected:
-  virtual int color() const { return 37; } // white
+  virtual const char* color() const { return WHITE; }
 
   virtual std::string symbol() const { return "     "; }
 

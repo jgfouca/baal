@@ -1,5 +1,6 @@
 #include "Time.hpp"
 #include "BaalExceptions.hpp"
+#include "BaalCommon.hpp"
 
 using namespace baal;
 
@@ -27,36 +28,32 @@ void Time::operator++()
 void Time::draw_text(std::ostream& out) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  out << m_curr_season << ", " << m_curr_year << "\n";
+  std::pair<std::string, const char*> info = season_info(m_curr_season);
+  std::string name = info.first;
+  const char* color = info.second;
+  out << BOLD_COLOR << color << name << ", Year " << m_curr_year << CLEAR_ALL << "\n";
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string Time::season_id_to_str(Season season)
+std::pair<std::string, const char*> Time::season_info(Season season)
 ///////////////////////////////////////////////////////////////////////////////
 {
   switch(season) {
   case WINTER:
-    return "Winter";
+    return std::pair<std::string, const char*>("Winter", BLUE);
     break;
   case SPRING:
-    return "Spring";
+    return std::pair<std::string, const char*>("Spring", GREEN);
     break;
   case SUMMER:
-    return "Summer";
+    return std::pair<std::string, const char*>("Summer", RED);
     break;
   case FALL:
-    return "Fall";
+    return std::pair<std::string, const char*>("Fall", YELLOW);
     break;
   default:
     Require(false, "Unknown season: " << season);
   }
-}
-
-///////////////////////////////////////////////////////////////////////////////
-std::ostream& baal::operator<<(std::ostream& out, Season season)
-///////////////////////////////////////////////////////////////////////////////
-{
-  return out << Time::season_id_to_str(season);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
