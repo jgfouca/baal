@@ -24,11 +24,16 @@ CommandFactory::CommandFactory()
 
   m_cmd_map["help" ] = new HelpCommand;
   m_cmd_map["save" ] = new SaveCommand;
+  m_cmd_map["s"    ] = new SaveCommand;
   m_cmd_map["n"    ] = new EndTurnCommand;
   m_cmd_map["quit" ] = new QuitCommand;
+  m_cmd_map["q"    ] = new QuitCommand;
   m_cmd_map["cast" ] = new SpellCommand;
+  m_cmd_map["c"    ] = new SpellCommand;
   m_cmd_map["learn"] = new LearnCommand;
+  m_cmd_map["l"    ] = new LearnCommand;
   m_cmd_map["draw" ] = new DrawCommand;
+  m_cmd_map["d"    ] = new DrawCommand;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

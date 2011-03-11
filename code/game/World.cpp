@@ -35,16 +35,24 @@ void World::draw_text(std::ostream& out) const
 {
   DrawMode real_draw_mode = s_draw_mode;
   m_time.draw_text(out);
+  out << "  ";
+  for (unsigned col = 0; col < width(); ++col) {
+    out << "  " << col << "   "; // column labels
+  }
+  out << "\n";
   for (unsigned row = 0; row < height(); ++row) {
     for (unsigned height = 0; height < TILE_TEXT_HEIGHT; ++height) {
       // Middle of tile displays "overlay" info, for the rest of the tile,
       // just draw the land.
       if (height == 2) {
         s_draw_mode = real_draw_mode;
+		out << row << " ";  // row labels
       }
       else {
         s_draw_mode = LAND;
+		out << "  ";
       }
+	  
       for (unsigned col = 0; col < width(); ++col) {
         m_tiles[row][col]->draw_text(out);
         out << " ";
