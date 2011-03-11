@@ -8,10 +8,6 @@
 #include <vector>
 #include <iosfwd>
 
-#ifndef NO_GRAPHICS
-#include <SDL/sge.h>
-#endif
-
 // We put all WorldTile classes in this header to avoid
 // generating a ton of header files.
 
@@ -67,12 +63,6 @@ class WorldTile : public Drawable
 
   virtual void place_city(City& city);
 
-#ifndef NO_GRAPHICS
-  void setSprite(SGESPRITE *sprite) { m_sprite = sprite; }
-
-  SGESPRITE * sprite() const { return m_sprite; }
-#endif
-
   static const unsigned TILE_TEXT_WIDTH = 5;
 
  protected:
@@ -85,10 +75,6 @@ class WorldTile : public Drawable
   Climate&     m_climate;
   Geology&     m_geology;
   Atmosphere   m_atmosphere;
-
-#ifndef NO_GRAPHICS
-  SGESPRITE* m_sprite;
-#endif
 
  private:
   // forbidden methods
@@ -152,7 +138,7 @@ class LandTile: public WorldTile
   unsigned m_infra_level; // 0..MAX
   City* m_city; // valid to have no (NULL) city, so use ptr
 
-  static const float LAND_TILE_RECOVERY_RATE = 0.30;
+  static const float LAND_TILE_RECOVERY_RATE = 0.10;
   static const unsigned LAND_TILE_MAX_INFRA  = 5;
 };
 

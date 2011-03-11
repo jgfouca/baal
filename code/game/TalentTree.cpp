@@ -14,12 +14,13 @@ void TalentTree::add(const Spell& spell)
   std::map<std::string, unsigned>::iterator
     find_iter = m_spell_level_map.find(spell_name);
   if (find_iter == m_spell_level_map.end()) {
-    RequireUser(spell_level == 1, "Must learn level 1 first");
+    Require(spell_level == 1, "Prereq checking failed for " << spell);
     m_spell_level_map[spell_name] = 1;
   }
   else {
-    RequireUser(find_iter->second == spell_level - 1,
-                "Must learn level " << spell_level - 1 << " first");
+    RequireUser(!has(spell), "You already know " << spell);
+    Require(find_iter->second == spell_level - 1,
+            "Prereq checking failed for " << spell);
     m_spell_level_map[spell_name] += 1;
   }
 
@@ -30,9 +31,13 @@ void TalentTree::add(const Spell& spell)
 bool TalentTree::has(const Spell& spell) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  std::string spell_name  = spell.name();
-  unsigned    spell_level = spell.level();
+  return has(spell.name(), spell.level());
+}
 
+///////////////////////////////////////////////////////////////////////////////
+bool TalentTree::has(const std::string& spell_name, unsigned spell_level) const
+///////////////////////////////////////////////////////////////////////////////
+{
   std::map<std::string, unsigned>::const_iterator
     find_iter = m_spell_level_map.find(spell_name);
   if (find_iter == m_spell_level_map.end()) {

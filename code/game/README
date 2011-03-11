@@ -251,12 +251,14 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 
 - TODO List -
 
-* Need to introduce the notion of time into and throughout the game
+* Need much better help dumps
+* Seasons need to affect atmosphere
 * Get climate simulation (anomaly-based) working
+* Need to get real talent trees working
 * Start to fill in more disasters
 * Need at least rudimentary PlayerAI so that real games can be tested.
+* Map editor, map-file format defined, map-file loader
 * Need much more unit-testing
 * Use more typedefs for scalar properties?
 * Change some Require(...) to RequireAttach(...)
-* Map editor, map-file format defined, map-file loader
 * See code TODOs
