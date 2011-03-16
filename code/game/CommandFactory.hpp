@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 
 namespace baal {
 
@@ -22,6 +23,10 @@ class CommandFactory
   // Does not need to be deleted
   const Command& parse_command(const std::string& text) const;
 
+  const std::string& name(const Command* command) const;
+
+  void aliases(const std::string& name, std::vector<std::string>& alias_rv) const;
+
  private:
   // Private constructor since this is singleton class
   CommandFactory();
@@ -32,6 +37,7 @@ class CommandFactory
 
   // Members
   std::map<std::string, Command*> m_cmd_map;
+  std::map<std::string, std::string> m_aliases;
 
   // Friends
   friend class HelpCommand;

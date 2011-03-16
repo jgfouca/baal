@@ -15,6 +15,41 @@
 
 using namespace baal;
 
+namespace {
+
+///////////////////////////////////////////////////////////////////////////////
+std::string create_help_str(const Command* command,
+                            const std::string& usage)
+///////////////////////////////////////////////////////////////////////////////
+{
+  const CommandFactory& factory = CommandFactory::instance();
+
+  // Get command name
+  std::string command_name = factory.name(command);
+
+  // Get command aliases
+  std::vector<std::string> aliases;
+  factory.aliases(command_name, aliases);
+
+  // Transform aliases into string
+  std::string alias_str;
+  if (!aliases.empty()) {
+    for (std::vector<std::string>::const_iterator
+         itr = aliases.begin(); itr != aliases.end(); ++itr) {
+      alias_str += *itr + " ";
+    }
+  }
+
+  // Formulate and return full help string
+  std::string help_str = command_name + " " + usage;
+  if (!aliases.empty()) {
+    help_str += "\n  Aliases: " + alias_str;
+  }
+  return help_str;
+}
+
+} // empty namespace
+
 ///////////////////////////////////////////////////////////////////////////////
 void HelpCommand::init(const std::vector<std::string>& args)
 ///////////////////////////////////////////////////////////////////////////////
@@ -59,10 +94,10 @@ void HelpCommand::apply(Engine& engine) const
 std::string HelpCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  return std::string(
-"help [command]\n"
+  return create_help_str(this,
+"[command]\n"
 "  Returns info/syntax help for a command"
-                     );
+                         );
 }
 
 /*****************************************************************************/
@@ -85,10 +120,10 @@ void EndTurnCommand::apply(Engine& engine) const
 std::string EndTurnCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  return std::string(
-"end\n"
+  return create_help_str(this,
+"\n"
 "  Ends the current turn"
-                     );
+                         );
 }
 
 /*****************************************************************************/
@@ -112,10 +147,10 @@ void QuitCommand::apply(Engine& engine) const
 std::string QuitCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  return std::string(
-"quit\n"
+  return create_help_str(this,
+"\n"
 "  Ends the game"
-                     );
+                         );
 }
 
 /*****************************************************************************/
@@ -163,8 +198,8 @@ void SaveCommand::apply(Engine& engine) const
 std::string SaveCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  return std::string(
-"save [save filename]\n"
+  return create_help_str(this,
+"[save filename]\n"
 "  Saves the game; if no name provided, a name based on data/time will be used"
                      );
 }
@@ -235,10 +270,11 @@ void SpellCommand::apply(Engine& engine) const
 std::string SpellCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  return std::string(
-"cast <spell-name> <level> <row>,<col>\n"
+  // TODO - Needs to be better, what spells can this player cast?
+  return create_help_str(this,
+"<spell-name> <level> <row>,<col>\n"
 "  Casts spell of type <spell-name> and level <level> at location <row>,<col>"
-                     );
+                         );
 }
 
 /*****************************************************************************/
@@ -280,10 +316,11 @@ void LearnCommand::apply(Engine& engine) const
 std::string LearnCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  return std::string(
-"learn <spell-name> <level>\n"
+  // TODO - Needs to be better, what spells can this player learn?
+  return create_help_str(this,
+"<spell-name> <level>\n"
 "  Player learns spell of type <spell-name> and level <level>"
-                     );
+                         );
 }
 
 /*****************************************************************************/
@@ -311,8 +348,10 @@ void DrawCommand::apply(Engine& engine) const
 std::string DrawCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  return std::string(
-"draw <draw-mode>\n"
+  // TODO - Needs to be decoupled from exact contents of drawable enum. IE
+  //        this help messages needs to auto-update when draw-modes change.
+  std::string usage =
+"<draw-mode>\n"
 "  Changes how the world is drawn.\n"
 "  Available draw modes:\n"
 "      civ\n"
@@ -323,6 +362,7 @@ std::string DrawCommand::help() const
 "      wind\n"
 "      temperature\n"
 "      pressure\n"
-"      dewpoint"
-                     );
+"      dewpoint";
+
+  return create_help_str(this, usage);
 }

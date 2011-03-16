@@ -24,16 +24,19 @@ CommandFactory::CommandFactory()
 
   m_cmd_map["help" ] = new HelpCommand;
   m_cmd_map["save" ] = new SaveCommand;
-  m_cmd_map["s"    ] = new SaveCommand;
-  m_cmd_map["n"    ] = new EndTurnCommand;
+  m_cmd_map["end"  ] = new EndTurnCommand;
   m_cmd_map["quit" ] = new QuitCommand;
-  m_cmd_map["q"    ] = new QuitCommand;
   m_cmd_map["cast" ] = new SpellCommand;
-  m_cmd_map["c"    ] = new SpellCommand;
   m_cmd_map["learn"] = new LearnCommand;
-  m_cmd_map["l"    ] = new LearnCommand;
   m_cmd_map["draw" ] = new DrawCommand;
-  m_cmd_map["d"    ] = new DrawCommand;
+
+  // Set up aliases
+  m_aliases["s"] = "save";
+  m_aliases["n"] = "end";
+  m_aliases["q"] = "quit";
+  m_aliases["c"] = "cast";
+  m_aliases["l"] = "learn";
+  m_aliases["d"] = "draw";
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -71,9 +74,41 @@ const Command& CommandFactory::parse_command(const std::string& text) const
   // I would have much rather stored a map to Command classes, but that's not
   // possible in C++. The command map is necessary for the HelpCommand.
   std::map<std::string, Command*>::const_iterator itr = m_cmd_map.find(cmd_name);
-  RequireUser(itr != m_cmd_map.end(),
-              "Unknown command: " << cmd_name << ". Type 'help' for help.");
+  if (itr == m_cmd_map.end()) {
+    std::map<std::string, std::string>::const_iterator alias_itr = m_aliases.find(cmd_name);
+    RequireUser(alias_itr != m_aliases.end(),
+                "Unknown command: " << cmd_name << ". Type 'help' for help.");
+    itr = m_cmd_map.find(alias_itr->second);
+    Require(itr != m_cmd_map.end(), "Broken alias: " << alias_itr->second);
+  }
+
   Command& command = *(itr->second);
   command.init(args);
   return command;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+const std::string& CommandFactory::name(const Command* command) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  for (std::map<std::string, Command*>::const_iterator
+       itr = m_cmd_map.begin(); itr != m_cmd_map.end(); ++itr) {
+    if (itr->second == command) {
+      return itr->first;
+    }
+  }
+  Require(false, "Never found command");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void CommandFactory::aliases(const std::string& name,
+                             std::vector<std::string>& alias_rv) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  for (std::map<std::string, std::string>::const_iterator
+       itr = m_aliases.begin(); itr != m_aliases.end(); ++itr) {
+    if (itr->second == name) {
+      alias_rv.push_back(itr->first);
+    }
+  }
 }
