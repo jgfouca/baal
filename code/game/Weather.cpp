@@ -38,7 +38,9 @@ std::string direction_str(Direction direction)
 void draw_wind(std::ostream& out, const Wind& wind)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  out << std::setw(3) << std::left << direction_str(wind.m_direction);
+  const unsigned max_direction_len = 3;
+  out << std::setw(max_direction_len) << std::left
+      << direction_str(wind.m_direction);
   out << std::right;
 
   unsigned speed = wind.m_speed;
@@ -54,7 +56,7 @@ void draw_wind(std::ostream& out, const Wind& wind)
   }
 
   out << BOLD_COLOR << color       // set color and bold text
-      << std::setw(2) << speed     // print value
+      << std::setw(WorldTile::TILE_TEXT_WIDTH - max_direction_len) << speed
       << CLEAR_ALL;                // clear color and boldness
 }
 
@@ -62,8 +64,6 @@ void draw_wind(std::ostream& out, const Wind& wind)
 void draw_dewpoint(std::ostream& out, int dewpoint)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  out << " ";
-
   const char* color = "";
   if (dewpoint < 32) {
     color = RED;
@@ -76,17 +76,14 @@ void draw_dewpoint(std::ostream& out, int dewpoint)
   }
 
   out << BOLD_COLOR << color       // set color and bold text
-      << std::left << std::setw(3) << dewpoint  // print value
+      << std::setw(WorldTile::TILE_TEXT_WIDTH) << dewpoint //value
       << CLEAR_ALL;                // clear color and boldness
-  out << std::right << " ";
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void draw_temperature(std::ostream& out, int temperature)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  out << " ";
-
   const char* color = "";
   if (temperature < 32) {
     color = BLUE;
@@ -99,17 +96,14 @@ void draw_temperature(std::ostream& out, int temperature)
   }
 
   out << BOLD_COLOR << color       // set color and bold text
-      << std::left << std::setw(3) << temperature  // print value
+      << std::setw(WorldTile::TILE_TEXT_WIDTH) << temperature  // print value
       << CLEAR_ALL;                // clear color and boldness
-  out << std::right << " ";
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void draw_pressure(std::ostream& out, unsigned pressure)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  out << " ";
-
   const char* color = "";
   if (pressure < 975) {
     color = GREEN;
@@ -122,9 +116,8 @@ void draw_pressure(std::ostream& out, unsigned pressure)
   }
 
   out << BOLD_COLOR << color   // set color and bold text
-      << std::left << std::setw(4) << pressure  // print value
+      << std::setw(WorldTile::TILE_TEXT_WIDTH) << pressure  // print value
       << CLEAR_ALL;            // clear color and boldness
-  out << std::right;
 }
 
 } // empty namespace

@@ -63,6 +63,7 @@ class WorldTile : public Drawable
 
   virtual void place_city(City& city);
 
+  static const unsigned TILE_TEXT_HEIGHT = 5;
   static const unsigned TILE_TEXT_WIDTH = 5;
 
  protected:

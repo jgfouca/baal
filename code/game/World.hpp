@@ -64,8 +64,6 @@ class World : public Drawable
   std::vector<std::vector<WorldTile*> > m_tiles;
   Time m_time;
 
-  const static unsigned TILE_TEXT_HEIGHT = 5;
-
   // Friend factories
   friend class WorldFactoryGenerated;
   friend class WorldFactoryHardcoded;

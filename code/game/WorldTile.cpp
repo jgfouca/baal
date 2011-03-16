@@ -52,10 +52,10 @@ void WorldTile::draw_text(std::ostream& out) const
   else if (s_draw_mode == CIV) {
     out << BOLD_COLOR; // bold text
     if (city() != NULL) {
-      out << RED << " C:" << std::setw(2) << city()->rank(); // city
+      out << RED << " C:" << std::setw(TILE_TEXT_WIDTH - 3) << city()->rank();
     }
     else if (infra_level() > 0) {
-      out << YELLOW << " I:" << std::setw(2) << infra_level(); // infra
+      out << YELLOW << " I:" << std::setw(TILE_TEXT_WIDTH- 3) << infra_level();
     }
     else {
       out << color();

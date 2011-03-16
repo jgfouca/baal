@@ -1,5 +1,6 @@
 #include "Geology.hpp"
 #include "BaalExceptions.hpp"
+#include "WorldTile.hpp"
 
 #include <iomanip>
 
@@ -70,9 +71,11 @@ void Geology::draw_text(std::ostream& out) const
 
   Require(color  != invalid_color , "Color was not set");
   Require(symbol != invalid_symbol, "Symbol was not set");
+  Require(symbol.size() <= WorldTile::TILE_TEXT_WIDTH,
+          "Symbol '" << symbol << "' is too long");
 
   out << BOLD_COLOR << color    // set color and bold text
-      << symbol                 // print symbol
+      << std::setw(WorldTile::TILE_TEXT_WIDTH) << symbol // print symbol
       << CLEAR_ALL;             // clear color and boldness
 }
 
