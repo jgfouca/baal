@@ -73,25 +73,29 @@ void HelpCommand::init(const std::vector<std::string>& args)
 void HelpCommand::apply(Engine& engine) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  const CommandFactory& factory = CommandFactory::instance();
+  const std::map<std::string, Command*>& cmd_map =
+    CommandFactory::instance().m_cmd_map;
 
   if (m_arg.empty()) {
     std::string help_msg = "List of available commands:\n\n";
     for (std::map<std::string, Command*>::const_iterator
-         itr = factory.m_cmd_map.begin();
-         itr != factory.m_cmd_map.end();
+         itr = cmd_map.begin();
+         itr != cmd_map.end();
          ++itr) {
-      help_msg += itr->second->help() + "\n\n";
+      help_msg += itr->second->help(engine) + "\n\n";
     }
     engine.interface().help(help_msg);
   }
   else {
-    engine.interface().help(factory.m_cmd_map.find(m_arg)->second->help());
+    std::map<std::string, Command*>::const_iterator
+      itr = cmd_map.find(m_arg);
+    Require(itr != cmd_map.end(), "Command " << m_arg << " missing from map");
+    engine.interface().help(itr->second->help(engine));
   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string HelpCommand::help() const
+std::string HelpCommand::help(const Engine& engine) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   return create_help_str(this,
@@ -117,7 +121,7 @@ void EndTurnCommand::apply(Engine& engine) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string EndTurnCommand::help() const
+std::string EndTurnCommand::help(const Engine& engine) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   return create_help_str(this,
@@ -144,7 +148,7 @@ void QuitCommand::apply(Engine& engine) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string QuitCommand::help() const
+std::string QuitCommand::help(const Engine& engine) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   return create_help_str(this,
@@ -195,7 +199,7 @@ void SaveCommand::apply(Engine& engine) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string SaveCommand::help() const
+std::string SaveCommand::help(const Engine& engine) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   return create_help_str(this,
@@ -234,7 +238,7 @@ void SpellCommand::init(const std::vector<std::string>& args)
 void SpellCommand::apply(Engine& engine) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  World&  world = engine.world();
+  World&  world  = engine.world();
   Player& player = engine.player();
 
   // Ensure location is in-bounds
@@ -267,7 +271,7 @@ void SpellCommand::apply(Engine& engine) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string SpellCommand::help() const
+std::string SpellCommand::help(const Engine& engine) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   // TODO - Needs to be better, what spells can this player cast?
@@ -313,7 +317,7 @@ void LearnCommand::apply(Engine& engine) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string LearnCommand::help() const
+std::string LearnCommand::help(const Engine& engine) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   // TODO - Needs to be better, what spells can this player learn?
@@ -345,7 +349,7 @@ void DrawCommand::apply(Engine& engine) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string DrawCommand::help() const
+std::string DrawCommand::help(const Engine& engine) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   // TODO - Needs to be decoupled from exact contents of drawable enum. IE

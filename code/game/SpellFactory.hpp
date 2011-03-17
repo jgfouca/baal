@@ -20,7 +20,33 @@ class SpellFactory
                                    unsigned           spell_level,
                                    const Location&    location);
 
-  static const std::string FIRE_SPELL;
+  static const std::string HOT;
+  static const std::string COLD;
+  static const std::string WIND;
+
+  static const std::string FIRE;
+  static const std::string TSTORM;
+  static const std::string SNOW;
+
+  static const std::string AVALANCHE;
+  static const std::string FLOOD;
+  static const std::string DRY;
+  static const std::string BLIZZARD;
+  static const std::string TORNADO;
+
+  static const std::string HEATWAVE;
+  static const std::string COLDWAVE;
+  static const std::string DROUGHT;
+  static const std::string MONSOON;
+
+  static const std::string DISEASE;
+  static const std::string EARTHQUAKE;
+  static const std::string HURRICANE;
+
+  static const std::string PLAGUE;
+  static const std::string VOLCANO;
+
+  static const std::string ASTEROID;
 };
 
 }

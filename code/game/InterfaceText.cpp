@@ -72,8 +72,11 @@ void InterfaceText::interact()
     m_ostream.flush();
     std::string command_str;
     if (!std::getline(m_istream, command_str)) {
-      // Empty commands are not acceptable
-      m_ostream << "please enter command" << std::endl;
+      // User ctrl-d
+      m_engine.quit();
+      break;
+    }
+    else if (command_str.empty()) {
       continue;
     }
 

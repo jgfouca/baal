@@ -24,7 +24,7 @@ class Command
 
   virtual void apply(Engine& engine) const = 0;
 
-  virtual std::string help() const = 0;
+  virtual std::string help(const Engine& engine) const = 0;
 };
 
 /**
@@ -39,7 +39,7 @@ class HelpCommand : public Command
 
   virtual void apply(Engine& engine) const;
 
-  virtual std::string help() const;
+  virtual std::string help(const Engine& engine) const;
 
  private:
   std::string m_arg;
@@ -57,7 +57,7 @@ class SaveCommand : public Command
 
   virtual void apply(Engine& engine) const;
 
-  virtual std::string help() const;
+  virtual std::string help(const Engine& engine) const;
 
  private:
   std::string m_arg;
@@ -75,7 +75,7 @@ class EndTurnCommand : public Command
 
   virtual void apply(Engine& engine) const;
 
-  virtual std::string help() const;
+  virtual std::string help(const Engine& engine) const;
 };
 
 /**
@@ -90,7 +90,7 @@ class QuitCommand : public Command
 
   virtual void apply(Engine& engine) const;
 
-  virtual std::string help() const;
+  virtual std::string help(const Engine& engine) const;
 };
 
 /**
@@ -105,7 +105,7 @@ class SpellCommand : public Command
 
   virtual void apply(Engine& engine) const;
 
-  virtual std::string help() const;
+  virtual std::string help(const Engine& engine) const;
 
  private:
   std::string m_spell_name;
@@ -125,7 +125,7 @@ class LearnCommand : public Command
 
   virtual void apply(Engine& engine) const;
 
-  virtual std::string help() const;
+  virtual std::string help(const Engine& engine) const;
 
  private:
   std::string m_spell_name;
@@ -144,7 +144,7 @@ class DrawCommand : public Command
 
   virtual void apply(Engine& engine) const;
 
-  virtual std::string help() const;
+  virtual std::string help(const Engine& engine) const;
 
  private:
   std::string s_draw_mode;

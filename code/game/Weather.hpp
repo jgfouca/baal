@@ -65,8 +65,8 @@ class Climate
 
  private:
   int      m_temperature; // in farenheit
-  unsigned m_rainfall;  // in inches/year
-  Wind     m_wind; // prevailing wind
+  unsigned m_rainfall;    // in inches/year
+  Wind     m_wind;        // prevailing wind
 };
 
 /**
@@ -98,10 +98,10 @@ class Atmosphere : public Drawable
  private:
   int compute_dewpoint() const;
 
-  int m_temperature;   // in farenheit
-  int m_dewpoint;      // in farenheit
-  unsigned m_pressure; // in millibars
-  Wind m_wind;
+  int      m_temperature; // in farenheit
+  int      m_dewpoint;    // in farenheit
+  unsigned m_pressure;    // in millibars
+  Wind     m_wind;
 
   static const unsigned NORMAL_PRESSURE = 1000;
 };
