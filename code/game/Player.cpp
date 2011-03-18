@@ -30,10 +30,7 @@ Player::Player()
 void Player::learn(const Spell& spell)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  RequireUser(m_level > m_talents.num_learned(),
-              "You cannot learn any more spells until you level-up");
-  spell.verify_prereqs(*this);
-  m_talents.add(spell);
+  m_talents.add(spell, *this);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

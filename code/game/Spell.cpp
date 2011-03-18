@@ -103,11 +103,11 @@ SpellPrereqStaticInitializer::SpellPrereqStaticInitializer()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-Spell::Spell(const std::string& name,
-             unsigned           spell_level,
-             const Location&    location,
-             unsigned           base_cost,
-             const SpellPrereq& prereq)
+Spell::Spell(SpellFactory::SpellName name,
+             unsigned                spell_level,
+             const Location&         location,
+             unsigned                base_cost,
+             const SpellPrereq&      prereq)
 ///////////////////////////////////////////////////////////////////////////////
   : m_name(name),
     m_spell_level(spell_level),
@@ -115,31 +115,7 @@ Spell::Spell(const std::string& name,
     m_base_cost(base_cost),
     m_prereq(prereq)
 {
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void Spell::verify_prereqs(const Player& player) const
-///////////////////////////////////////////////////////////////////////////////
-{
-  RequireUser(player.level() >= m_prereq.m_min_player_level,
-              "You are not high-enough level to learn that spell");
-
-  const TalentTree& talents = player.talents();
-
-  for (std::vector<std::pair<std::string, unsigned> >::const_iterator
-       itr =  m_prereq.m_min_spell_prereqs.begin();
-       itr != m_prereq.m_min_spell_prereqs.end();
-       ++itr) {
-    std::string spell_name  = itr->first;
-    unsigned    spell_level = itr->second;
-    RequireUser(talents.has(spell_name, spell_level),
-      "Missing required prereq " << spell_level << '[' << spell_level << ']');
-  }
-
-  if (m_spell_level > 1) {
-    RequireUser(talents.has(m_name, m_spell_level - 1),
-     "Missing required prereq " << m_name << '[' << m_spell_level - 1 << ']');
-  }
+  Assert(SpellFactory::is_in_all_names(name), name);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

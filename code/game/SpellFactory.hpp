@@ -2,6 +2,7 @@
 #define SpellFactory_hpp
 
 #include <string>
+#include <vector>
 
 namespace baal {
 
@@ -20,33 +21,41 @@ class SpellFactory
                                    unsigned           spell_level,
                                    const Location&    location);
 
-  static const std::string HOT;
-  static const std::string COLD;
-  static const std::string WIND;
+  typedef const char* SpellName;
 
-  static const std::string FIRE;
-  static const std::string TSTORM;
-  static const std::string SNOW;
+  static bool is_in_all_names(SpellName spell_name);
 
-  static const std::string AVALANCHE;
-  static const std::string FLOOD;
-  static const std::string DRY;
-  static const std::string BLIZZARD;
-  static const std::string TORNADO;
+  static unsigned num_spells();
 
-  static const std::string HEATWAVE;
-  static const std::string COLDWAVE;
-  static const std::string DROUGHT;
-  static const std::string MONSOON;
+  static SpellName HOT;
+  static SpellName COLD;
+  static SpellName WIND;
 
-  static const std::string DISEASE;
-  static const std::string EARTHQUAKE;
-  static const std::string HURRICANE;
+  static SpellName FIRE;
+  static SpellName TSTORM;
+  static SpellName SNOW;
 
-  static const std::string PLAGUE;
-  static const std::string VOLCANO;
+  static SpellName AVALANCHE;
+  static SpellName FLOOD;
+  static SpellName DRY;
+  static SpellName BLIZZARD;
+  static SpellName TORNADO;
 
-  static const std::string ASTEROID;
+  static SpellName HEATWAVE;
+  static SpellName COLDWAVE;
+  static SpellName DROUGHT;
+  static SpellName MONSOON;
+
+  static SpellName DISEASE;
+  static SpellName EARTHQUAKE;
+  static SpellName HURRICANE;
+
+  static SpellName PLAGUE;
+  static SpellName VOLCANO;
+
+  static SpellName ASTEROID;
+
+  static SpellName ALL_SPELLS[];
 };
 
 }

@@ -43,7 +43,7 @@ std::string create_help_str(const Command* command,
   // Formulate and return full help string
   std::string help_str = command_name + " " + usage;
   if (!aliases.empty()) {
-    help_str += "\n  Aliases: " + alias_str;
+    help_str += "  Aliases: " + alias_str;
   }
   return help_str;
 }
@@ -100,7 +100,7 @@ std::string HelpCommand::help(const Engine& engine) const
 {
   return create_help_str(this,
 "[command]\n"
-"  Returns info/syntax help for a command"
+"  Returns info/syntax help for a command\n"
                          );
 }
 
@@ -126,7 +126,7 @@ std::string EndTurnCommand::help(const Engine& engine) const
 {
   return create_help_str(this,
 "\n"
-"  Ends the current turn"
+"  Ends the current turn\n"
                          );
 }
 
@@ -153,7 +153,7 @@ std::string QuitCommand::help(const Engine& engine) const
 {
   return create_help_str(this,
 "\n"
-"  Ends the game"
+"  Ends the game\n"
                          );
 }
 
@@ -204,7 +204,7 @@ std::string SaveCommand::help(const Engine& engine) const
 {
   return create_help_str(this,
 "[save filename]\n"
-"  Saves the game; if no name provided, a name based on data/time will be used"
+"  Saves the game; if no name provided, a name based on data/time will be used\n"
                      );
 }
 
@@ -274,11 +274,25 @@ void SpellCommand::apply(Engine& engine) const
 std::string SpellCommand::help(const Engine& engine) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // TODO - Needs to be better, what spells can this player cast?
-  return create_help_str(this,
+  const TalentTree& talents = engine.player().talents();
+
+  std::vector<std::pair<std::string, unsigned> > castable_spells;
+  talents.query_all_castable_spells(castable_spells);
+
+  std::string help_str =
 "<spell-name> <level> <row>,<col>\n"
-"  Casts spell of type <spell-name> and level <level> at location <row>,<col>"
-                         );
+"  Casts spell of type <spell-name> and level <level> at location <row>,<col>\n"
+"  Castable spells:\n";
+  for (std::vector<std::pair<std::string, unsigned> >::const_iterator
+       itr = castable_spells.begin(); itr != castable_spells.end(); ++itr) {
+    std::string spell_name = itr->first;
+    unsigned spell_lvl     = itr->second;
+    std::ostringstream out;
+    out << "    " << spell_name << " : " << spell_lvl << "\n";
+    help_str += out.str();
+  }
+
+  return create_help_str(this, help_str);
 }
 
 /*****************************************************************************/
@@ -320,11 +334,25 @@ void LearnCommand::apply(Engine& engine) const
 std::string LearnCommand::help(const Engine& engine) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // TODO - Needs to be better, what spells can this player learn?
-  return create_help_str(this,
+  const TalentTree& talents = engine.player().talents();
+
+  std::vector<std::pair<std::string, unsigned> > learnable_spells;
+  talents.query_all_learnable_spells(learnable_spells, engine.player());
+
+  std::string help_str =
 "<spell-name> <level>\n"
-"  Player learns spell of type <spell-name> and level <level>"
-                         );
+"  Player learns spell of type <spell-name> and level <level>\n"
+"  Learnable spells:\n";
+  for (std::vector<std::pair<std::string, unsigned> >::const_iterator
+       itr = learnable_spells.begin(); itr != learnable_spells.end(); ++itr) {
+    std::string spell_name = itr->first;
+    unsigned spell_lvl     = itr->second;
+    std::ostringstream out;
+    out << "    " << spell_name << " : " << spell_lvl << "\n";
+    help_str += out.str();
+  }
+
+  return create_help_str(this, help_str);
 }
 
 /*****************************************************************************/
@@ -358,15 +386,15 @@ std::string DrawCommand::help(const Engine& engine) const
 "<draw-mode>\n"
 "  Changes how the world is drawn.\n"
 "  Available draw modes:\n"
-"      civ\n"
-"      land\n"
-"      geology\n"
-"      magma\n"
-"      tension\n"
-"      wind\n"
-"      temperature\n"
-"      pressure\n"
-"      dewpoint";
+"    civ\n"
+"    land\n"
+"    geology\n"
+"    magma\n"
+"    tension\n"
+"    wind\n"
+"    temperature\n"
+"    pressure\n"
+"    dewpoint\n";
 
   return create_help_str(this, usage);
 }

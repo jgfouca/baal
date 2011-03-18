@@ -13,7 +13,6 @@ namespace baal {
 // creation of lots of very small hpp/cpp files.
 
 class World;
-class Player;
 
 /**
  * Constructor will initialize all the static prereq members in
@@ -49,11 +48,11 @@ struct SpellPrereq
 class Spell
 {
 public:
-  Spell(const std::string& name,
-        unsigned           spell_level,
-        const Location&    location,
-        unsigned           base_cost,
-        const SpellPrereq& prereq);
+  Spell(SpellFactory::SpellName name,
+        unsigned                spell_level,
+        const Location&         location,
+        unsigned                base_cost,
+        const SpellPrereq&      prereq);
 
   virtual ~Spell() {}
 
@@ -64,7 +63,7 @@ public:
 
   const std::string& name() const { return m_name; }
 
-  void verify_prereqs(const Player& player) const;
+  const SpellPrereq& prereq() const { return m_prereq; }
 
   unsigned level() const { return m_spell_level; }
 
