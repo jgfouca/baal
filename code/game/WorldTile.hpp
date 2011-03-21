@@ -15,6 +15,7 @@ namespace baal {
 
 class City;
 class Geology;
+class Anomaly;
 
 /**
  * A simple structure that specifies yields for tiles.
@@ -59,7 +60,7 @@ class WorldTile : public Drawable
 
   virtual unsigned infra_level() const { return 0; }
 
-  virtual void cycle_turn();
+  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies);
 
   virtual void place_city(City& city);
 
@@ -100,6 +101,8 @@ class OceanTile : public WorldTile
 
   virtual char symbol() const { return '~'; }
 
+  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies);
+
  protected:
   unsigned m_depth;
   int m_surface_temp; // in farenheit
@@ -130,7 +133,7 @@ class LandTile: public WorldTile
   // By default, tiles have no moisture
   virtual float soil_moisture() const { return 0.0; }
 
-  virtual void cycle_turn();
+  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies);
 
  protected:
   void recover();
@@ -157,6 +160,8 @@ class MountainTile : public LandTile
   virtual const char* color() const { return WHITE; }
 
   virtual char symbol() const { return '^'; }
+
+  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies);
 
  protected:
   unsigned m_elevation;
@@ -205,6 +210,7 @@ class TileWithPlantGrowth : public LandTile
 
   virtual float soil_moisture() const { return m_soil_moisture; }
 
+  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies);
  protected:
   float m_soil_moisture;
 };

@@ -2,6 +2,7 @@
 #include "BaalExceptions.hpp"
 #include "WorldTile.hpp"
 
+#include <cstdlib>
 #include <iomanip>
 
 using namespace baal;
@@ -122,6 +123,8 @@ void draw_pressure(std::ostream& out, unsigned pressure)
 
 } // empty namespace
 
+/*****************************************************************************/
+
 ///////////////////////////////////////////////////////////////////////////////
 Atmosphere::Atmosphere(const Climate& climate)
 ///////////////////////////////////////////////////////////////////////////////
@@ -170,4 +173,48 @@ bool Atmosphere::is_atmospheric(DrawMode mode)
          mode == DEWPOINT    ||
          mode == TEMPERATURE ||
          mode == PRESSURE;
+}
+
+/*****************************************************************************/
+
+///////////////////////////////////////////////////////////////////////////////
+Anomaly::Anomaly(AnomalyCategory category,
+                 Type type,
+                 unsigned intensity,
+                 const Location& location,
+                 unsigned world_area)
+///////////////////////////////////////////////////////////////////////////////
+  : m_category(category),
+    m_type(type),
+    m_intensity(intensity),
+    m_location(location),
+    m_world_area(world_area)
+{}
+
+///////////////////////////////////////////////////////////////////////////////
+const Anomaly* Anomaly::generate_anomaly(AnomalyCategory category,
+                                         const Location& location,
+                                         const World& world)
+///////////////////////////////////////////////////////////////////////////////
+{
+  // Generate random float 0.0 -> 1.0
+  float roll = static_cast<float>(std::rand()) /
+               static_cast<float>(RAND_MAX);
+
+  // TODO
+  if (roll == 0.0) {
+    return NULL;
+  }
+  return NULL;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+Anomaly::AnomalyCategory& baal::operator++(Anomaly::AnomalyCategory& category)
+///////////////////////////////////////////////////////////////////////////////
+{
+  Require(category != Anomaly::LAST, "Iterating off end of anomalies");
+
+  int i = static_cast<int>(category);
+  ++i;
+  return category = static_cast<Anomaly::AnomalyCategory>(i);
 }

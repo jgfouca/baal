@@ -97,32 +97,43 @@ void World::cycle_turn()
     }
   }
 
-  // Phase 2 of World turn-cycle: Simulate the inter-turn (long-term) weather
+  // Phase 2: Generate anomalies.
+  // TODO: How to handle overlapping anomalies of same category?
+  std::vector<const Anomaly*> anomalies;
+  for (unsigned row = 0; row < height(); ++row) {
+    for (unsigned col = 0; col < width(); ++col) {
+      Location location(row, col);
+      for (Anomaly::AnomalyCategory anom_itr = Anomaly::FIRST; ; ++anom_itr) {
+        const Anomaly* anomaly = Anomaly::generate_anomaly(anom_itr,
+                                                           location,
+                                                           *this);
+        if (anomaly) {
+          anomalies.push_back(anomaly);
+        }
+
+        if (anom_itr == Anomaly::LAST) {
+          break;
+        }
+      }
+    }
+  }
+
+  // Phase 3 of World turn-cycle: Simulate the inter-turn (long-term) weather
   // Every turn, the weather since the last turn will be randomly simulated.
   // There will be random abnormal areas, with the epicenter of the abnormality
   // having the most extreme deviations from the normal climate and peripheral
   // tiles having smaller deviations from normal.
-  // Long-term abnormalilty types are: drought, moist, cold, hot.
+  // Abnormalilty types are: drought, moist, cold, hot, high/low pressure
   // Based on our model of time, we are at the beginning of the current
   // season, so anomalies affect this season; that is why time is not
   // incremented until later.
+  // Current conditions for the next turn will be derived from these anomalies.
   for (unsigned row = 0; row < height(); ++row) {
     for (unsigned col = 0; col < width(); ++col) {
-      m_tiles[row][col]->cycle_turn( /*TODO: Pass anomaly vector*/);
+      m_tiles[row][col]->cycle_turn(anomalies);
     }
   }
 
   // Phase 3: Increment time
   ++m_time;
-
-  // Phase 4: Simulate short-term weather conditions for next turn
-  // We need to initialize weather conditions for the next turn. Again we
-  // will use the notion of abnormalities.
-  // Short-term abnormality types are: high/low pressure, hot/cold; wind is
-  // derived from pressure abnormalities.
-  for (unsigned row = 0; row < height(); ++row) {
-    for (unsigned col = 0; col < width(); ++col) {
-      // TODO: Manipulate tiles' atmosphere objects
-    }
-  }
 }

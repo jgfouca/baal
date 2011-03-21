@@ -385,16 +385,13 @@ std::string DrawCommand::help(const Engine& engine) const
   std::string usage =
 "<draw-mode>\n"
 "  Changes how the world is drawn.\n"
-"  Available draw modes:\n"
-"    civ\n"
-"    land\n"
-"    geology\n"
-"    magma\n"
-"    tension\n"
-"    wind\n"
-"    temperature\n"
-"    pressure\n"
-"    dewpoint\n";
+"  Available draw modes:\n";
+  for (DrawMode mode_itr = Drawable::FIRST; ; ++mode_itr) {
+    usage += "    " + Drawable::draw_mode_to_str(mode_itr)  + "\n";
+    if (mode_itr == Drawable::LAST) {
+      break;
+    }
+  }
 
   return create_help_str(this, usage);
 }

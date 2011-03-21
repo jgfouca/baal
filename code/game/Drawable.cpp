@@ -40,3 +40,42 @@ DrawMode Drawable::parse_draw_mode(const std::string& draw_mode_str)
     RequireUser(false, "Unknown draw mode: " << draw_mode_str);
   }
 }
+
+///////////////////////////////////////////////////////////////////////////////
+std::string Drawable::draw_mode_to_str(DrawMode draw_mode)
+///////////////////////////////////////////////////////////////////////////////
+{
+  switch(draw_mode) {
+  case CIV:
+    return "civ";
+  case LAND:
+    return "land";
+  case GEOLOGY:
+    return "geology";
+  case MAGMA:
+    return "magma";
+  case TENSION:
+    return "tension";
+  case WIND:
+    return "wind";
+  case TEMPERATURE:
+    return "temperature";
+  case PRESSURE:
+    return "pressure";
+  case DEWPOINT:
+    return "dewpoint";
+  default:
+    Require(false, "Unhandled draw mode: " << draw_mode);
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+DrawMode& baal::operator++(DrawMode& draw_mode)
+///////////////////////////////////////////////////////////////////////////////
+{
+  Require(draw_mode != Drawable::LAST, "Iterating off end of draw modes");
+
+  int i = static_cast<int>(draw_mode);
+  ++i;
+  return draw_mode = static_cast<DrawMode>(i);
+}

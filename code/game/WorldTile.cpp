@@ -2,6 +2,7 @@
 #include "City.hpp"
 #include "BaalExceptions.hpp"
 #include "Geology.hpp"
+#include "Weather.hpp"
 
 #include <iomanip>
 
@@ -84,11 +85,11 @@ void WorldTile::place_city(City& city)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void WorldTile::cycle_turn()
+void WorldTile::cycle_turn(const std::vector<const Anomaly*>& anomalies)
 ///////////////////////////////////////////////////////////////////////////////
 {
   m_geology.cycle_turn();
-  m_atmosphere.cycle_turn();
+  m_atmosphere.cycle_turn(anomalies);
 }
 
 /*****************************************************************************/
@@ -100,6 +101,14 @@ OceanTile::OceanTile(unsigned depth, Climate& climate, Geology& geology)
     m_depth(depth),
     m_surface_temp(climate.temperature())
 {}
+
+///////////////////////////////////////////////////////////////////////////////
+void OceanTile::cycle_turn(const std::vector<const Anomaly*>& anomalies)
+///////////////////////////////////////////////////////////////////////////////
+{
+  WorldTile::cycle_turn(anomalies);
+  // TODO
+}
 
 /*****************************************************************************/
 
@@ -145,10 +154,10 @@ void LandTile::recover()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void LandTile::cycle_turn()
+void LandTile::cycle_turn(const std::vector<const Anomaly*>& anomalies)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  WorldTile::cycle_turn();
+  WorldTile::cycle_turn(anomalies);
   recover();
 }
 
@@ -198,4 +207,26 @@ void LandTile::place_city(City& city)
 {
   RequireUser(m_city == NULL, "Tile already had city: " << city.name());
   m_city = &city;
+}
+
+/*****************************************************************************/
+
+///////////////////////////////////////////////////////////////////////////////
+void MountainTile::cycle_turn(const std::vector<const Anomaly*>& anomalies)
+///////////////////////////////////////////////////////////////////////////////
+{
+  LandTile::cycle_turn(anomalies);
+
+  // TODO
+}
+
+/*****************************************************************************/
+
+///////////////////////////////////////////////////////////////////////////////
+void TileWithPlantGrowth::cycle_turn(const std::vector<const Anomaly*>& anomalies)
+///////////////////////////////////////////////////////////////////////////////
+{
+  LandTile::cycle_turn(anomalies);
+
+  // TODO
 }
