@@ -85,11 +85,13 @@ void WorldTile::place_city(City& city)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void WorldTile::cycle_turn(const std::vector<const Anomaly*>& anomalies)
+void WorldTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                           const Location& location,
+                           Season season)
 ///////////////////////////////////////////////////////////////////////////////
 {
   m_geology.cycle_turn();
-  m_atmosphere.cycle_turn(anomalies);
+  m_atmosphere.cycle_turn(anomalies, location, season);
 }
 
 /*****************************************************************************/
@@ -99,15 +101,21 @@ OceanTile::OceanTile(unsigned depth, Climate& climate, Geology& geology)
 ///////////////////////////////////////////////////////////////////////////////
   : WorldTile(Yield(3,0), climate, geology),
     m_depth(depth),
-    m_surface_temp(climate.temperature())
+    m_surface_temp(m_atmosphere.temperature())
 {}
 
 ///////////////////////////////////////////////////////////////////////////////
-void OceanTile::cycle_turn(const std::vector<const Anomaly*>& anomalies)
+void OceanTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                           const Location& location,
+                           Season season)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  WorldTile::cycle_turn(anomalies);
-  // TODO
+  WorldTile::cycle_turn(anomalies, location, season);
+
+  // Sea temperatures retain some heat, so new sea temps have to take old
+  // sea temps into account. Here, we just average season temp and prior
+  // sea temp together as a very simple model.
+  m_surface_temp = (m_atmosphere.temperature() + m_surface_temp) / 2;
 }
 
 /*****************************************************************************/
@@ -154,10 +162,12 @@ void LandTile::recover()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void LandTile::cycle_turn(const std::vector<const Anomaly*>& anomalies)
+void LandTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                          const Location& location,
+                          Season season)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  WorldTile::cycle_turn(anomalies);
+  WorldTile::cycle_turn(anomalies, location, season);
   recover();
 }
 
@@ -174,7 +184,7 @@ void LandTile::build_infra()
 Yield LandTile::yield() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // Important equation that may need balancing
+  // MODEL: Important equation that may need balancing
 
   // Food yielding tiles need to take soil moisture into account
   float moisture_multiplier = 1.0;
@@ -212,21 +222,73 @@ void LandTile::place_city(City& city)
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void MountainTile::cycle_turn(const std::vector<const Anomaly*>& anomalies)
+void MountainTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                              const Location& location,
+                              Season season)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  LandTile::cycle_turn(anomalies);
+  LandTile::cycle_turn(anomalies, location, season);
 
-  // TODO
+  // MODEL: Model how snowpack changes
+
+  float precip = m_atmosphere.rainfall();
+  int temp = m_atmosphere.temperature();
+
+  // How much precip fell as snow?
+  unsigned multiplier = 12; // 12'' of snow per 1'' of precip
+  if (temp > 30) {
+    if (temp < 60) {
+      multiplier *= (60 - temp) / 30;
+    }
+    else {
+      multiplier = 0;
+    }
+  }
+  unsigned new_snow = precip * multiplier;
+
+  float melt_pct = 0.0;
+  if (temp > 30) {
+    if (temp < 70) {
+      melt_pct = static_cast<float>(temp - 30) / static_cast<float>(40);
+    }
+    else {
+      melt_pct = 1.0;
+    }
+  }
+
+  m_snowpack = (new_snow + m_snowpack) * melt_pct;
 }
 
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void TileWithPlantGrowth::cycle_turn(const std::vector<const Anomaly*>& anomalies)
+void TileWithPlantGrowth::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                                     const Location& location,
+                                     Season season)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  LandTile::cycle_turn(anomalies);
+  LandTile::cycle_turn(anomalies, location, season);
 
-  // TODO
+  // MODEL: Model how precip and temp changes soil moisture
+
+  // Get the parameters we need to make the calculation
+  float precip         = m_atmosphere.rainfall();
+  int temp             = m_atmosphere.temperature();
+  float av_precip      = m_climate.rainfall(season);
+  int av_temp          = m_climate.temperature(season);
+  float prior_moisture = m_soil_moisture;
+
+  // Precip's effect on moisture
+  float seasonal_moisture = 1.0;
+  seasonal_moisture *= precip / av_precip;
+
+  // Temperature's effect on moisture. This is trickier; for now only a very
+  // basic model is in place.
+  const float pct_per_degree = 0.01;
+  const unsigned temp_diff = av_temp - temp;
+  seasonal_moisture *= 1.0 + (pct_per_degree * temp_diff);
+
+  // Take past moisture into account but weight current moisture more heavily
+  m_soil_moisture = ((seasonal_moisture * 2) + prior_moisture) / 3;
+
 }

@@ -1,6 +1,7 @@
 #include "Weather.hpp"
 #include "BaalExceptions.hpp"
 #include "WorldTile.hpp"
+#include "World.hpp"
 
 #include <cstdlib>
 #include <iomanip>
@@ -121,6 +122,27 @@ void draw_pressure(std::ostream& out, unsigned pressure)
       << CLEAR_ALL;            // clear color and boldness
 }
 
+///////////////////////////////////////////////////////////////////////////////
+void draw_rainfall(std::ostream& out, float rainfall)
+///////////////////////////////////////////////////////////////////////////////
+{
+  const char* color = "";
+  if (rainfall > 10) {
+    color = GREEN;
+  }
+  else if (rainfall > 2) {
+    color = YELLOW;
+  }
+  else {
+    color = RED;
+  }
+
+  out << BOLD_COLOR << color   // set color and bold text
+      << std::setw(WorldTile::TILE_TEXT_WIDTH)
+      << std::setprecision(3) << rainfall  // print value
+      << CLEAR_ALL;            // clear color and boldness
+}
+
 } // empty namespace
 
 /*****************************************************************************/
@@ -128,9 +150,11 @@ void draw_pressure(std::ostream& out, unsigned pressure)
 ///////////////////////////////////////////////////////////////////////////////
 Atmosphere::Atmosphere(const Climate& climate)
 ///////////////////////////////////////////////////////////////////////////////
-  : m_temperature(climate.temperature()),
+  : m_temperature(climate.temperature(Time::LAST_SEASON_OF_YEAR)),
+    m_rainfall(climate.rainfall(Time::LAST_SEASON_OF_YEAR)),
     m_pressure(NORMAL_PRESSURE),
-    m_wind(climate.wind())
+    m_wind(climate.wind(Time::LAST_SEASON_OF_YEAR)),
+    m_climate(climate)
 {
   m_dewpoint = compute_dewpoint();
 }
@@ -152,6 +176,9 @@ void Atmosphere::draw_text(std::ostream& out) const
   case PRESSURE:
     draw_pressure(out, m_pressure);
     break;
+  case RAINFALL:
+    draw_rainfall(out, m_rainfall);
+    break;
   default:
     Require(false, "Should not draw atmosphere in mode: " << s_draw_mode);
   }
@@ -161,7 +188,7 @@ void Atmosphere::draw_text(std::ostream& out) const
 int Atmosphere::compute_dewpoint() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // TODO
+  // TODO - Function of temp and rainfall probably
   return m_temperature;
 }
 
@@ -172,7 +199,36 @@ bool Atmosphere::is_atmospheric(DrawMode mode)
   return mode == WIND        ||
          mode == DEWPOINT    ||
          mode == TEMPERATURE ||
+         mode == RAINFALL    ||
          mode == PRESSURE;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Atmosphere::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                            const Location& location,
+                            Season season)
+///////////////////////////////////////////////////////////////////////////////
+{
+  // Gather all modifiers from all anomalies
+  float precip_modifier = 1.0;
+  int temp_modifier = 0;
+  int pressure_modifier = 0;
+  for (std::vector<const Anomaly*>::const_iterator itr = anomalies.begin();
+       itr != anomalies.end();
+       ++itr) {
+    const Anomaly* anomaly = *itr;
+    precip_modifier *= anomaly->precip_effect(location);
+    temp_modifier += anomaly->temp_effect(location);
+    pressure_modifier += anomaly->pressure_effect(location);
+  }
+
+  m_temperature = m_climate.temperature(season) + temp_modifier;
+  m_pressure    = NORMAL_PRESSURE + pressure_modifier;
+  m_rainfall    = m_climate.rainfall(season) * precip_modifier;
+
+  m_dewpoint = compute_dewpoint();
+
+  // TODO: Need to compute wind speed changes due to pressure
 }
 
 /*****************************************************************************/
@@ -181,7 +237,7 @@ bool Atmosphere::is_atmospheric(DrawMode mode)
 Anomaly::Anomaly(AnomalyCategory category,
                  Type type,
                  unsigned intensity,
-                 const Location& location,
+                 Location location,
                  unsigned world_area)
 ///////////////////////////////////////////////////////////////////////////////
   : m_category(category),
@@ -197,16 +253,117 @@ const Anomaly* Anomaly::generate_anomaly(AnomalyCategory category,
                                          const World& world)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // Generate random float 0.0 -> 1.0
-  float roll = static_cast<float>(std::rand()) /
-               static_cast<float>(RAND_MAX);
+  // Generate random float 0.0 -> 100.0
+  float roll = (static_cast<float>(std::rand()) /
+                static_cast<float>(RAND_MAX)) * 100;
 
-  // TODO
-  if (roll == 0.0) {
+  unsigned area = world.height() * world.width();
+
+  // Translate roll into an anomaly
+  if (roll <= .10) {
+    return new Anomaly(category, BELOW, 3, location, area);
+  }
+  else if (roll <= 1.0) {
+    return new Anomaly(category, BELOW, 2, location, area);
+  }
+  else if (roll <= 3.0) {
+    return new Anomaly(category, BELOW, 1, location, area);
+  }
+  else if (roll >= 99.9) {
+    return new Anomaly(category, ABOVE, 3, location, area);
+  }
+  else if (roll >= 99.0) {
+    return new Anomaly(category, ABOVE, 2, location, area);
+  }
+  else if (roll >= 97.0) {
+    return new Anomaly(category, ABOVE, 1, location, area);
+  }
+  else {
     return NULL;
   }
-  return NULL;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+float Anomaly::precip_effect(const Location& location) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  // TODO - In all effect methods, need a more sophisticated model for
+  // determining an anomaly's effect on a location. For the moment, anomalies
+  // only affect the immediate location.
+
+  if (m_category != RAINFALL || m_location != location) {
+    return 1.0; // no effect
+  }
+  else {
+    int multiplier = (m_type == ABOVE) ? 1 : -1;
+    return 1.0 + (0.25 * multiplier * m_intensity);
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+int Anomaly::temp_effect(const Location& location) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  if (m_category != TEMPERATURE || m_location != location) {
+    return 0; // no effect
+  }
+  else {
+    int multiplier = (m_type == ABOVE) ? 1 : -1;
+    return 5 * multiplier * m_intensity;
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+int Anomaly::pressure_effect(const Location& location) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  if (m_category != PRESSURE || m_location != location) {
+    return 0; // no effect
+  }
+  else {
+    int multiplier = (m_type == ABOVE) ? 1 : -1;
+    return 10 * multiplier * m_intensity;
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Anomaly::draw_text(std::ostream& out) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  out << "Level: " << type_to_str(m_type) << m_intensity << " "
+      << category_to_str(m_category) << " anomaly at location: " << m_location;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+std::string Anomaly::type_to_str(Type type)
+///////////////////////////////////////////////////////////////////////////////
+{
+  switch (type) {
+  case ABOVE:
+    return "+";
+  case BELOW:
+    return "-";
+  default:
+    Require(false, "Unhandled anomaly type: " << type);
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+std::string Anomaly::category_to_str(AnomalyCategory category)
+///////////////////////////////////////////////////////////////////////////////
+{
+  switch (category) {
+  case TEMPERATURE:
+    return "temperature";
+  case RAINFALL:
+    return "rainfall";
+  case PRESSURE:
+    return "pressure";
+  default:
+    Require(false, "Unhandled anomaly category: " << category);
+  }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 Anomaly::AnomalyCategory& baal::operator++(Anomaly::AnomalyCategory& category)

@@ -3,6 +3,7 @@
 
 #include "Drawable.hpp"
 #include "BaalCommon.hpp"
+#include "Time.hpp"
 
 #include <iosfwd>
 #include <vector>
@@ -56,22 +57,22 @@ struct Wind
 class Climate
 {
  public:
-  Climate(int temperature, unsigned rainfall, Wind wind)
+  Climate(int temperature, float rainfall, Wind wind)
     : m_temperature(temperature),
       m_rainfall(rainfall),
       m_wind(wind)
   {}
 
-  int temperature() const { return m_temperature; }
+  int temperature(Season season) const { return m_temperature; }
 
-  unsigned rainfall() const { return m_rainfall; }
+  float rainfall(Season season) const { return m_rainfall / 4; }
 
-  Wind wind() const { return m_wind; }
+  Wind wind(Season season) const { return m_wind; }
 
  private:
-  int      m_temperature; // in farenheit
-  unsigned m_rainfall;    // in inches/year
-  Wind     m_wind;        // prevailing wind
+  int   m_temperature; // in farenheit
+  float m_rainfall;    // in inches/year
+  Wind  m_wind;        // prevailing wind
 };
 
 /**
@@ -87,6 +88,8 @@ class Atmosphere : public Drawable
 
   int dewpoint() const { return m_dewpoint; }
 
+  float rainfall() const { return m_rainfall; }
+
   unsigned pressure() const { return m_pressure; }
 
   Wind wind() const { return m_wind; }
@@ -97,16 +100,20 @@ class Atmosphere : public Drawable
 
   static bool is_atmospheric(DrawMode mode);
 
-  // TODO: Based on season and anomalies, initialize self
-  void cycle_turn(const std::vector<const Anomaly*>& anomalies) {}
+  // Based on season and anomalies, initialize self
+  void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                  const Location& location,
+                  Season season);
 
  private:
   int compute_dewpoint() const;
 
-  int      m_temperature; // in farenheit
-  int      m_dewpoint;    // in farenheit
-  unsigned m_pressure;    // in millibars
-  Wind     m_wind;
+  int            m_temperature; // in farenheit
+  int            m_dewpoint;    // in farenheit
+  float          m_rainfall;    // in inches, most recent season
+  unsigned       m_pressure;    // in millibars
+  Wind           m_wind;
+  const Climate& m_climate;
 
   static const unsigned NORMAL_PRESSURE = 1000;
 };
@@ -118,7 +125,7 @@ class Atmosphere : public Drawable
  * exponentially less likely. The area affected by the anomaly
  * will depend on the size of the map.
  */
-class Anomaly
+class Anomaly : public Drawable
 {
  public:
   enum Type
@@ -148,31 +155,27 @@ class Anomaly
    * Return this anomaly's effect on a location as a % of
    * normal value of precip.
    */
-  float precip_effect(const Location& location) const
-  {
-    //TODO
-    return 1.0;
-  }
+  float precip_effect(const Location& location) const;
 
   /**
    * Return this anomaly's effect on a location's temperature
    * in terms of degrees of deviation from norm.
    */
-  int temp_effect(const Location& location) const
-  {
-    // TODO
-    return 0;
-  }
+  int temp_effect(const Location& location) const;
 
   /**
    * Return this anomaly's effect on a location's pressure in
    * terms of millibars of deviation from norm.
    */
-  int pressure_effect(const Location& location) const
-  {
-    // TODO
-    return 0;
-  }
+  int pressure_effect(const Location& location) const;
+
+  virtual void draw_text(std::ostream& out) const;
+
+  virtual void draw_graphics() const { /*TODO*/ }
+
+  static std::string type_to_str(Type type);
+
+  static std::string category_to_str(AnomalyCategory category);
 
   static const unsigned MIN_INTENSITY = 1;
   static const unsigned MAX_INTENSITY = 3;
@@ -184,14 +187,14 @@ class Anomaly
   Anomaly(AnomalyCategory category,
           Type type,
           unsigned intensity,
-          const Location& location,
+          Location location,
           unsigned world_area);
 
 
   AnomalyCategory m_category;
   Type            m_type;
   unsigned        m_intensity;
-  const Location& m_location;
+  Location        m_location;
   unsigned        m_world_area;
 };
 

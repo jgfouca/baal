@@ -20,6 +20,7 @@ enum DrawMode
   WIND,
   TEMPERATURE,
   PRESSURE,
+  RAINFALL,
   DEWPOINT // Coupled with Drawable::LAST
 };
 

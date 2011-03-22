@@ -33,6 +33,9 @@ DrawMode Drawable::parse_draw_mode(const std::string& draw_mode_str)
   else if (draw_mode_str == "pressure") {
     return PRESSURE;
   }
+  else if (draw_mode_str == "rainfall") {
+    return RAINFALL;
+  }
   else if (draw_mode_str == "dewpoint") {
     return DEWPOINT;
   }
@@ -62,6 +65,8 @@ std::string Drawable::draw_mode_to_str(DrawMode draw_mode)
     return "temperature";
   case PRESSURE:
     return "pressure";
+  case RAINFALL:
+    return "rainfall";
   case DEWPOINT:
     return "dewpoint";
   default:

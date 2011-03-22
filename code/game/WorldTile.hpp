@@ -4,6 +4,7 @@
 #include "Drawable.hpp"
 #include "Weather.hpp"
 #include "BaalCommon.hpp"
+#include "Time.hpp"
 
 #include <vector>
 #include <iosfwd>
@@ -41,7 +42,7 @@ struct Yield
  * are generally passive containers of data but they do know
  * how to draw themselves.
  *
- * TODO: Every tile has an atmosphere, climate, geology, and yield.
+ * Every tile has an atmosphere, climate, geology, and yield.
  */
 class WorldTile : public Drawable
 {
@@ -60,7 +61,9 @@ class WorldTile : public Drawable
 
   virtual unsigned infra_level() const { return 0; }
 
-  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies);
+  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                          const Location& location,
+                          Season season);
 
   virtual void place_city(City& city);
 
@@ -101,7 +104,9 @@ class OceanTile : public WorldTile
 
   virtual char symbol() const { return '~'; }
 
-  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies);
+  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                          const Location& location,
+                          Season season);
 
  protected:
   unsigned m_depth;
@@ -133,7 +138,9 @@ class LandTile: public WorldTile
   // By default, tiles have no moisture
   virtual float soil_moisture() const { return 0.0; }
 
-  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies);
+  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                          const Location& location,
+                          Season season);
 
  protected:
   void recover();
@@ -161,10 +168,13 @@ class MountainTile : public LandTile
 
   virtual char symbol() const { return '^'; }
 
-  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies);
+  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                          const Location& location,
+                          Season season);
 
  protected:
   unsigned m_elevation;
+  unsigned m_snowpack; // in inches
 };
 
 /**
@@ -210,7 +220,9 @@ class TileWithPlantGrowth : public LandTile
 
   virtual float soil_moisture() const { return m_soil_moisture; }
 
-  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies);
+  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                          const Location& location,
+                          Season season);
  protected:
   float m_soil_moisture;
 };

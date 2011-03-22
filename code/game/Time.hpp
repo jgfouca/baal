@@ -31,6 +31,8 @@ class Time : public Drawable
 
   virtual void draw_graphics() const { /* TODO */ }
 
+  Season season() const { return m_curr_season; }
+
   static std::pair<std::string, const char*> season_info(Season season);
 
   // Constants

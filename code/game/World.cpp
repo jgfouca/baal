@@ -28,6 +28,8 @@ World::~World()
       delete m_tiles[row][col];
     }
   }
+
+  clear_anomalies();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -78,6 +80,15 @@ void World::draw_text(std::ostream& out) const
     out << "\n";
   }
   s_draw_mode = real_draw_mode;
+
+  // Draw recent anomalies
+  for (std::vector<const Anomaly*>::const_iterator
+       itr = m_recent_anomalies.begin();
+       itr != m_recent_anomalies.end();
+       ++itr) {
+    (*itr)->draw_text(out);
+    out << "\n";
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -99,7 +110,7 @@ void World::cycle_turn()
 
   // Phase 2: Generate anomalies.
   // TODO: How to handle overlapping anomalies of same category?
-  std::vector<const Anomaly*> anomalies;
+  clear_anomalies();
   for (unsigned row = 0; row < height(); ++row) {
     for (unsigned col = 0; col < width(); ++col) {
       Location location(row, col);
@@ -108,7 +119,7 @@ void World::cycle_turn()
                                                            location,
                                                            *this);
         if (anomaly) {
-          anomalies.push_back(anomaly);
+          m_recent_anomalies.push_back(anomaly);
         }
 
         if (anom_itr == Anomaly::LAST) {
@@ -130,10 +141,26 @@ void World::cycle_turn()
   // Current conditions for the next turn will be derived from these anomalies.
   for (unsigned row = 0; row < height(); ++row) {
     for (unsigned col = 0; col < width(); ++col) {
-      m_tiles[row][col]->cycle_turn(anomalies);
+      Location location(row, col);
+      m_tiles[row][col]->cycle_turn(m_recent_anomalies,
+                                    location,
+                                    m_time.season());
     }
   }
 
-  // Phase 3: Increment time
+  // Phase 4: Increment time
   ++m_time;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void World::clear_anomalies()
+///////////////////////////////////////////////////////////////////////////////
+{
+  for (std::vector<const Anomaly*>::iterator
+       itr = m_recent_anomalies.begin();
+       itr != m_recent_anomalies.end();
+       ++itr) {
+    delete (*itr);
+  }
+  m_recent_anomalies.clear();
 }

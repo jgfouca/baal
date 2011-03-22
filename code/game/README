@@ -258,5 +258,8 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 * Map editor, map-file format defined, map-file loader
 * Need much more unit-testing
 * Use more typedefs for scalar properties?
+* Change "rainfall" to "precip"
+* Implement disasters as mini games?
 * Change some Require(...) to RequireAttach(...)
 * See code TODOs
+* Find areas that define the game model and tag them with MODEL
