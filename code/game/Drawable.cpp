@@ -15,6 +15,12 @@ DrawMode Drawable::parse_draw_mode(const std::string& draw_mode_str)
   else if (draw_mode_str == "land") {
     return LAND;
   }
+  else if (draw_mode_str == "yield") {
+    return YIELD;
+  }
+  else if (draw_mode_str == "moisture") {
+    return MOISTURE;
+  }
   else if (draw_mode_str == "geology") {
     return GEOLOGY;
   }
@@ -53,6 +59,10 @@ std::string Drawable::draw_mode_to_str(DrawMode draw_mode)
     return "civ";
   case LAND:
     return "land";
+  case YIELD:
+    return "yield";
+  case MOISTURE:
+    return "moisture";
   case GEOLOGY:
     return "geology";
   case MAGMA:

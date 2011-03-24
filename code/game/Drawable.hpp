@@ -14,6 +14,8 @@ enum DrawMode
 {
   CIV,     // Coupled with Drawable::FIRST
   LAND,
+  YIELD,
+  MOISTURE,
   GEOLOGY,
   MAGMA,
   TENSION,

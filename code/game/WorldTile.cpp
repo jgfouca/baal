@@ -40,31 +40,76 @@ WorldTile::~WorldTile()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+void WorldTile::draw_land(std::ostream& out) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  out << BOLD_COLOR << color(); // bold text and set color
+  for (unsigned w = 0; w < TILE_TEXT_WIDTH; ++w) {
+    out << symbol(); // print symbol
+  }
+  out << CLEAR_ALL; // clear color and boldness
+}
+
+///////////////////////////////////////////////////////////////////////////////
 void WorldTile::draw_text(std::ostream& out) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   if (s_draw_mode == LAND) {
-    out << BOLD_COLOR << color(); // bold text and set color
-    for (unsigned w = 0; w < TILE_TEXT_WIDTH; ++w) {
-      out << symbol(); // print symbol
-    }
-    out << CLEAR_ALL; // clear color and boldness
+    draw_land(out);
   }
   else if (s_draw_mode == CIV) {
-    out << BOLD_COLOR; // bold text
     if (city() != NULL) {
-      out << RED << " C:" << std::setw(TILE_TEXT_WIDTH - 3) << city()->rank();
+      out << BOLD_COLOR << RED
+          << " C:" << std::setw(TILE_TEXT_WIDTH - 3) << city()->rank()
+          << CLEAR_ALL;
     }
     else if (infra_level() > 0) {
-      out << YELLOW << " I:" << std::setw(TILE_TEXT_WIDTH- 3) << infra_level();
+      out << BOLD_COLOR << YELLOW
+          << " I:" << std::setw(TILE_TEXT_WIDTH- 3) << infra_level()
+          << CLEAR_ALL;
     }
     else {
-      out << color();
-      for (unsigned w = 0; w < TILE_TEXT_WIDTH; ++w) {
-        out << symbol(); // print symbol
-      }
+      draw_land(out);
     }
-    out << CLEAR_ALL; // clear color and boldness
+  }
+  else if (s_draw_mode == MOISTURE) {
+    const TileWithPlantGrowth* tile_ptr =
+      dynamic_cast<const TileWithPlantGrowth*>(this);
+    if (tile_ptr != NULL) {
+      float moisture = tile_ptr->soil_moisture();
+      out << BOLD_COLOR;
+      if (moisture < 1.0) {
+        out << YELLOW;
+      }
+      else if (moisture < TileWithPlantGrowth::FLOODING_THRESHOLD) {
+        out << GREEN;
+      }
+      else if (moisture < TileWithPlantGrowth::TOTALLY_FLOODED) {
+        out << BLUE;
+      }
+      else {
+        out << RED;
+      }
+      out << std::setprecision(3) << std::setw(TILE_TEXT_WIDTH) << moisture
+          << CLEAR_ALL;
+    }
+    else {
+      draw_land(out);
+    }
+  }
+  else if (s_draw_mode == YIELD) {
+    Yield y = yield();
+    out << BOLD_COLOR;
+    if (y.m_food > 0) {
+      out << GREEN << std::setprecision(3) << std::setw(TILE_TEXT_WIDTH)
+          << y.m_food
+          << CLEAR_ALL;
+    }
+    else {
+      out << RED << std::setprecision(3) << std::setw(TILE_TEXT_WIDTH)
+          << y.m_prod
+          << CLEAR_ALL;
+    }
   }
   else if (Geology::is_geological(s_draw_mode)) {
     m_geology.draw_text(out);
@@ -75,13 +120,6 @@ void WorldTile::draw_text(std::ostream& out) const
   else {
     Require(false, "Unhandled mode: " << s_draw_mode);
   }
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void WorldTile::place_city(City& city)
-///////////////////////////////////////////////////////////////////////////////
-{
-  RequireUser(false, "Can only place cities on land tiles");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -186,29 +224,10 @@ Yield LandTile::yield() const
 {
   // MODEL: Important equation that may need balancing
 
-  // Food yielding tiles need to take soil moisture into account
-  float moisture_multiplier = 1.0;
-  if (m_base_yield.m_food > 0) {
-    float moisture = soil_moisture();
-    if (moisture < 1.5) {
-      // Up until 1.5 times average moisture, yields benefit from more moisture
-      moisture_multiplier = moisture;
-    }
-    else if (moisture < 2.75) {
-      // Yields drop quickly as soil becomes over-saturated
-      moisture_multiplier = 1.5 - (moisture - 1.5);
-    }
-    else {
-      // Things are flooded and can't get any worse. Farmers are able to
-      // salvage some fixed portion of their crops.
-      moisture_multiplier = 0.25;
-    }
-  }
   return
     m_base_yield * // base
     ( m_infra_level ? (2 * m_infra_level) : 1 ) * // infra multiplier
-    m_hp * // damaged tiles yield less
-    moisture_multiplier; //tiles with favorable moisture levels yield more food
+    m_hp; // damaged tiles yield less
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -262,6 +281,37 @@ void MountainTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
+Yield TileWithPlantGrowth::yield() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  Require (m_base_yield.m_food > 0, "Tiles with growth should yield food");
+
+  // MODEL: Important equation that may need balancing
+
+  // Food yielding tiles need to take soil moisture into account
+
+  float moisture_multiplier = 1.0;
+
+  float moisture = soil_moisture();
+  if (moisture < FLOODING_THRESHOLD) {
+    // Up until FLOODING_THRESHOLD times average moisture, yields benefit from
+    // more moisture
+    moisture_multiplier = moisture;
+  }
+  else if (moisture < TOTALLY_FLOODED) {
+    // Yields drop quickly as soil becomes over-saturated
+    moisture_multiplier = FLOODING_THRESHOLD - (moisture - FLOODING_THRESHOLD);
+  }
+  else {
+    // Things are flooded and can't get any worse. Farmers are able to
+    // salvage some fixed portion of their crops.
+    moisture_multiplier = 0.25;
+  }
+
+  return LandTile::yield() * moisture_multiplier;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 void TileWithPlantGrowth::cycle_turn(const std::vector<const Anomaly*>& anomalies,
                                      const Location& location,
                                      Season season)
@@ -285,10 +335,12 @@ void TileWithPlantGrowth::cycle_turn(const std::vector<const Anomaly*>& anomalie
   // Temperature's effect on moisture. This is trickier; for now only a very
   // basic model is in place.
   const float pct_per_degree = 0.01;
-  const unsigned temp_diff = av_temp - temp;
+  const int temp_diff = av_temp - temp;
   seasonal_moisture *= 1.0 + (pct_per_degree * temp_diff);
 
   // Take past moisture into account but weight current moisture more heavily
   m_soil_moisture = ((seasonal_moisture * 2) + prior_moisture) / 3;
 
+  Require(m_soil_moisture >= 0.0 && m_soil_moisture < 100,
+          "Moisture " << m_soil_moisture << " not valid");
 }
