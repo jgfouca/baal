@@ -73,18 +73,18 @@ void WorldTile::draw_text(std::ostream& out) const
     }
   }
   else if (s_draw_mode == MOISTURE) {
-    const TileWithPlantGrowth* tile_ptr =
-      dynamic_cast<const TileWithPlantGrowth*>(this);
+    const FoodTile* tile_ptr =
+      dynamic_cast<const FoodTile*>(this);
     if (tile_ptr != NULL) {
       float moisture = tile_ptr->soil_moisture();
       out << BOLD_COLOR;
       if (moisture < 1.0) {
         out << YELLOW;
       }
-      else if (moisture < TileWithPlantGrowth::FLOODING_THRESHOLD) {
+      else if (moisture < FoodTile::FLOODING_THRESHOLD) {
         out << GREEN;
       }
-      else if (moisture < TileWithPlantGrowth::TOTALLY_FLOODED) {
+      else if (moisture < FoodTile::TOTALLY_FLOODED) {
         out << BLUE;
       }
       else {
@@ -278,10 +278,17 @@ void MountainTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
   m_snowpack = (new_snow + m_snowpack) * melt_pct;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+void MountainTile::place_city(City& city)
+///////////////////////////////////////////////////////////////////////////////
+{
+  Require(false, "Mountain tiles cannot support cities");
+}
+
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-Yield TileWithPlantGrowth::yield() const
+Yield FoodTile::yield() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   Require (m_base_yield.m_food > 0, "Tiles with growth should yield food");
@@ -312,7 +319,7 @@ Yield TileWithPlantGrowth::yield() const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void TileWithPlantGrowth::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+void FoodTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
                                      const Location& location,
                                      Season season)
 ///////////////////////////////////////////////////////////////////////////////

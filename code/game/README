@@ -251,6 +251,11 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 
 - TODO List -
 
+* Design review
+  * Review headers/interfaces. Is interface clean? What data/knowledge
+    is exposed?
+  * Documentation
+  * No magic numbers
 * Seasons need to affect atmosphere
 * Start to fill in Spell implementations
 * Need at least rudimentary PlayerAI so that real games can be tested.

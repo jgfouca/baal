@@ -2,6 +2,7 @@
 #define Interface_hpp
 
 #include <string>
+#include <sstream>
 
 namespace baal {
 
@@ -27,6 +28,8 @@ class Interface
 
   virtual void help(const std::string& helpmsg) = 0;
 
+  virtual void spell_report(const std::string& report) = 0;
+
   void end_turn() { m_end_turn = true; }
 
  protected:
@@ -34,6 +37,13 @@ class Interface
   bool m_end_turn;
 
 };
+
+#define SPELL_REPORT(interface, msg) \
+  do {                                                    \
+    std::ostringstream spell_report_oss;                  \
+    spell_report_oss << msg;                              \
+    interface.spell_report(spell_report_oss.str());       \
+  } while (false)
 
 }
 

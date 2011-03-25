@@ -259,15 +259,26 @@ void SpellCommand::apply(Engine& engine) const
   // Verify that player can cast this spell (can throw)
   player.verify_cast(*spell);
 
+  // Verify that it makes sense to cast this exact spell (can throw)
+  spell->verify_apply(engine);
+
   // These last two operations need to be atomic, neither should ever throw
   // a user error.
+  try {
+    // Let the player object know that the spell has been cast and to adjust
+    // it's state accordingly.
+    player.cast(*spell);
 
-  // Let the player object know that the spell has been cast and to adjust
-  // it's state accordingly.
-  player.cast(*spell);
+    // Apply the spell to the world
+    unsigned exp = spell->apply(engine);
 
-  // Apply the spell to the world
-  spell->apply(world);
+    // Give player experience
+    player.gain_exp(exp);
+  }
+  catch (UserError& error) {
+    Require(false, "User error interrupted atomic operations...\n" <<
+            "Error: " << error.what());
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////

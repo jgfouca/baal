@@ -63,6 +63,8 @@ class WorldTile : public Drawable
 
   virtual ~WorldTile();
 
+  // Basic tile interface
+
   virtual Yield yield() const = 0;
 
   virtual void draw_text(std::ostream& out) const;
@@ -90,6 +92,12 @@ class WorldTile : public Drawable
   virtual unsigned elevation() const { return 0; }
 
   virtual unsigned snowpack() const { return 0; }
+
+  // Getters
+
+  const Atmosphere& atmosphere() const { return m_atmosphere; }
+
+  Atmosphere& atmosphere() { return m_atmosphere; }
 
   // Public constants
 
@@ -144,6 +152,9 @@ class OceanTile : public WorldTile
 
   int surface_temp() const { return m_surface_temp; }
 
+  // Don't like this in the public API
+  void set_surface_temp(int new_temp) { m_surface_temp = new_temp; }
+
  protected:
   unsigned m_depth;
   int m_surface_temp; // in farenheit
@@ -173,7 +184,7 @@ class LandTile: public WorldTile
 
   void build_infra();
 
-  void place_city(City& city);
+  virtual void place_city(City& city);
 
  protected:
   void recover();
@@ -208,6 +219,11 @@ class MountainTile : public LandTile
   virtual unsigned elevation() const { return m_elevation; }
 
   virtual unsigned snowpack() const { return m_snowpack; }
+
+  // Don't like this in the public API
+  void set_snowpack(unsigned new_snowpack) { m_snowpack = new_snowpack; }
+
+  virtual void place_city(City& city);
 
  protected:
   unsigned m_elevation;
@@ -262,10 +278,10 @@ class HillsTile : public LandTile
 /**
  *
  */
-class TileWithPlantGrowth : public LandTile
+class FoodTile : public LandTile
 {
  public:
-  TileWithPlantGrowth(Yield yield, Climate& climate, Geology& geology)
+  FoodTile(Yield yield, Climate& climate, Geology& geology)
     : LandTile(yield, climate, geology),
       m_soil_moisture(1.0)
   {}
@@ -288,11 +304,11 @@ class TileWithPlantGrowth : public LandTile
 /**
  *
  */
-class PlainsTile : public TileWithPlantGrowth
+class PlainsTile : public FoodTile
 {
  public:
   PlainsTile(Climate& climate, Geology& geology)
-    : TileWithPlantGrowth(Yield(1, 0), climate, geology)
+    : FoodTile(Yield(1, 0), climate, geology)
   {}
 
   virtual const char* color() const { return GREEN; }
@@ -303,11 +319,11 @@ class PlainsTile : public TileWithPlantGrowth
 /**
  *
  */
-class LushTile : public TileWithPlantGrowth
+class LushTile : public FoodTile
 {
  public:
   LushTile(Climate& climate, Geology& geology)
-    : TileWithPlantGrowth(Yield(2, 0), climate, geology)
+    : FoodTile(Yield(2, 0), climate, geology)
   {}
 
   virtual const char* color() const { return GREEN; }
