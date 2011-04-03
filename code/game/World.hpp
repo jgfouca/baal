@@ -67,6 +67,7 @@ class World : public Drawable
   // Friend factories
   friend class WorldFactoryGenerated;
   friend class WorldFactoryHardcoded;
+  friend class WorldFactoryFromFile;
 };
 
 }

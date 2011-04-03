@@ -12,6 +12,7 @@ class WorldFactory
  public:
   // Note, client is responsible for deletion
   static World& create();
+  static World& load_from_file();
 
   static const std::string GENERATED_WORLD;
   static const std::string DEFAULT_WORLD;

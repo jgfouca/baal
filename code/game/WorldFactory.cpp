@@ -1,6 +1,7 @@
 #include "WorldFactory.hpp"
 #include "WorldFactoryHardcoded.hpp"
 #include "WorldFactoryGenerated.hpp"
+#include "WorldFactoryFromFile.hpp"
 #include "Configuration.hpp"
 #include "BaalExceptions.hpp"
 
@@ -33,7 +34,9 @@ World& WorldFactory::create()
 
   // Create and return the desired world
   if (numeric) {
-    return WorldFactoryHardcoded::create(world_config);
+    //return WorldFactoryHardcoded::create(world_config);
+	char mapfilename[] = "Default1.baalmap";
+	return WorldFactoryFromFile::create(mapfilename);
   }
   else if (world_config == GENERATED_WORLD) {
     return WorldFactoryGenerated::create();
