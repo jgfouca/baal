@@ -12,6 +12,8 @@ class InterfaceGraphical : public Interface
   virtual void interact() {}
 
   virtual void help(const std::string& helpmsg) {}
+
+  virtual void spell_report(const std::string& report) {}
 };
 
 }

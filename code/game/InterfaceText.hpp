@@ -21,6 +21,8 @@ class InterfaceText : public Interface
 
   virtual void help(const std::string& helpmsg);
 
+  virtual void spell_report(const std::string& report);
+
  private:
   std::ostream& m_ostream;
   std::istream& m_istream;

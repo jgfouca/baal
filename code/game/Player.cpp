@@ -49,7 +49,8 @@ void Player::cast(const Spell& spell)
 {
   m_mana -= spell.cost();
 
-  // Maintain mana invariant
+  // Maintain mana invariant (m_mana is unsigned, so going below zero will
+  // cause it to become enormous).
   Require(m_mana <= m_max_mana,
           "m_mana(" << m_mana << ") > m_max_mana(" << m_max_mana << ")");
 }
@@ -61,7 +62,7 @@ void Player::gain_exp(unsigned exp)
   m_exp += exp;
 
   // Check for level-up
-  if (m_exp >= m_next_level_cost) {
+  while (m_exp >= m_next_level_cost) {
     m_level++;
     m_max_mana *= MANA_INCREASE_PER_LEVEL;
     m_mana_regen_rate *= MANA_INCREASE_PER_LEVEL;

@@ -2,6 +2,7 @@
 #include "City.hpp"
 #include "BaalExceptions.hpp"
 #include "Geology.hpp"
+#include "Weather.hpp"
 
 #include <iomanip>
 
@@ -39,31 +40,76 @@ WorldTile::~WorldTile()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+void WorldTile::draw_land(std::ostream& out) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  out << BOLD_COLOR << color(); // bold text and set color
+  for (unsigned w = 0; w < TILE_TEXT_WIDTH; ++w) {
+    out << symbol(); // print symbol
+  }
+  out << CLEAR_ALL; // clear color and boldness
+}
+
+///////////////////////////////////////////////////////////////////////////////
 void WorldTile::draw_text(std::ostream& out) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   if (s_draw_mode == LAND) {
-    out << BOLD_COLOR << color(); // bold text and set color
-    for (unsigned w = 0; w < TILE_TEXT_WIDTH; ++w) {
-      out << symbol(); // print symbol
-    }
-    out << CLEAR_ALL; // clear color and boldness
+    draw_land(out);
   }
   else if (s_draw_mode == CIV) {
-    out << BOLD_COLOR; // bold text
     if (city() != NULL) {
-      out << RED << " C:" << std::setw(TILE_TEXT_WIDTH - 3) << city()->rank();
+      out << BOLD_COLOR << RED
+          << " C:" << std::setw(TILE_TEXT_WIDTH - 3) << city()->rank()
+          << CLEAR_ALL;
     }
     else if (infra_level() > 0) {
-      out << YELLOW << " I:" << std::setw(TILE_TEXT_WIDTH- 3) << infra_level();
+      out << BOLD_COLOR << YELLOW
+          << " I:" << std::setw(TILE_TEXT_WIDTH- 3) << infra_level()
+          << CLEAR_ALL;
     }
     else {
-      out << color();
-      for (unsigned w = 0; w < TILE_TEXT_WIDTH; ++w) {
-        out << symbol(); // print symbol
-      }
+      draw_land(out);
     }
-    out << CLEAR_ALL; // clear color and boldness
+  }
+  else if (s_draw_mode == MOISTURE) {
+    const FoodTile* tile_ptr =
+      dynamic_cast<const FoodTile*>(this);
+    if (tile_ptr != NULL) {
+      float moisture = tile_ptr->soil_moisture();
+      out << BOLD_COLOR;
+      if (moisture < 1.0) {
+        out << YELLOW;
+      }
+      else if (moisture < FoodTile::FLOODING_THRESHOLD) {
+        out << GREEN;
+      }
+      else if (moisture < FoodTile::TOTALLY_FLOODED) {
+        out << BLUE;
+      }
+      else {
+        out << RED;
+      }
+      out << std::setprecision(3) << std::setw(TILE_TEXT_WIDTH) << moisture
+          << CLEAR_ALL;
+    }
+    else {
+      draw_land(out);
+    }
+  }
+  else if (s_draw_mode == YIELD) {
+    Yield y = yield();
+    out << BOLD_COLOR;
+    if (y.m_food > 0) {
+      out << GREEN << std::setprecision(3) << std::setw(TILE_TEXT_WIDTH)
+          << y.m_food
+          << CLEAR_ALL;
+    }
+    else {
+      out << RED << std::setprecision(3) << std::setw(TILE_TEXT_WIDTH)
+          << y.m_prod
+          << CLEAR_ALL;
+    }
   }
   else if (Geology::is_geological(s_draw_mode)) {
     m_geology.draw_text(out);
@@ -77,18 +123,13 @@ void WorldTile::draw_text(std::ostream& out) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void WorldTile::place_city(City& city)
-///////////////////////////////////////////////////////////////////////////////
-{
-  RequireUser(false, "Can only place cities on land tiles");
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void WorldTile::cycle_turn()
+void WorldTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                           const Location& location,
+                           Season season)
 ///////////////////////////////////////////////////////////////////////////////
 {
   m_geology.cycle_turn();
-  m_atmosphere.cycle_turn();
+  m_atmosphere.cycle_turn(anomalies, location, season);
 }
 
 /*****************************************************************************/
@@ -98,8 +139,22 @@ OceanTile::OceanTile(unsigned depth, Climate& climate, Geology& geology)
 ///////////////////////////////////////////////////////////////////////////////
   : WorldTile(Yield(3,0), climate, geology),
     m_depth(depth),
-    m_surface_temp(climate.temperature())
+    m_surface_temp(m_atmosphere.temperature())
 {}
+
+///////////////////////////////////////////////////////////////////////////////
+void OceanTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                           const Location& location,
+                           Season season)
+///////////////////////////////////////////////////////////////////////////////
+{
+  WorldTile::cycle_turn(anomalies, location, season);
+
+  // Sea temperatures retain some heat, so new sea temps have to take old
+  // sea temps into account. Here, we just average season temp and prior
+  // sea temp together as a very simple model.
+  m_surface_temp = (m_atmosphere.temperature() + m_surface_temp) / 2;
+}
 
 /*****************************************************************************/
 
@@ -145,10 +200,12 @@ void LandTile::recover()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void LandTile::cycle_turn()
+void LandTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                          const Location& location,
+                          Season season)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  WorldTile::cycle_turn();
+  WorldTile::cycle_turn(anomalies, location, season);
   recover();
 }
 
@@ -165,31 +222,12 @@ void LandTile::build_infra()
 Yield LandTile::yield() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // Important equation that may need balancing
+  // MODEL: Important equation that may need balancing
 
-  // Food yielding tiles need to take soil moisture into account
-  float moisture_multiplier = 1.0;
-  if (m_base_yield.m_food > 0) {
-    float moisture = soil_moisture();
-    if (moisture < 1.5) {
-      // Up until 1.5 times average moisture, yields benefit from more moisture
-      moisture_multiplier = moisture;
-    }
-    else if (moisture < 2.75) {
-      // Yields drop quickly as soil becomes over-saturated
-      moisture_multiplier = 1.5 - (moisture - 1.5);
-    }
-    else {
-      // Things are flooded and can't get any worse. Farmers are able to
-      // salvage some fixed portion of their crops.
-      moisture_multiplier = 0.25;
-    }
-  }
   return
     m_base_yield * // base
     ( m_infra_level ? (2 * m_infra_level) : 1 ) * // infra multiplier
-    m_hp * // damaged tiles yield less
-    moisture_multiplier; //tiles with favorable moisture levels yield more food
+    m_hp; // damaged tiles yield less
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -198,4 +236,118 @@ void LandTile::place_city(City& city)
 {
   RequireUser(m_city == NULL, "Tile already had city: " << city.name());
   m_city = &city;
+}
+
+/*****************************************************************************/
+
+///////////////////////////////////////////////////////////////////////////////
+void MountainTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                              const Location& location,
+                              Season season)
+///////////////////////////////////////////////////////////////////////////////
+{
+  LandTile::cycle_turn(anomalies, location, season);
+
+  // MODEL: Model how snowpack changes
+
+  float precip = m_atmosphere.rainfall();
+  int temp = m_atmosphere.temperature();
+
+  // How much precip fell as snow?
+  unsigned multiplier = 12; // 12'' of snow per 1'' of precip
+  if (temp > 30) {
+    if (temp < 60) {
+      multiplier *= (60 - temp) / 30;
+    }
+    else {
+      multiplier = 0;
+    }
+  }
+  unsigned new_snow = precip * multiplier;
+
+  float melt_pct = 0.0;
+  if (temp > 30) {
+    if (temp < 70) {
+      melt_pct = static_cast<float>(temp - 30) / static_cast<float>(40);
+    }
+    else {
+      melt_pct = 1.0;
+    }
+  }
+
+  m_snowpack = (new_snow + m_snowpack) * melt_pct;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void MountainTile::place_city(City& city)
+///////////////////////////////////////////////////////////////////////////////
+{
+  Require(false, "Mountain tiles cannot support cities");
+}
+
+/*****************************************************************************/
+
+///////////////////////////////////////////////////////////////////////////////
+Yield FoodTile::yield() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  Require (m_base_yield.m_food > 0, "Tiles with growth should yield food");
+
+  // MODEL: Important equation that may need balancing
+
+  // Food yielding tiles need to take soil moisture into account
+
+  float moisture_multiplier = 1.0;
+
+  float moisture = soil_moisture();
+  if (moisture < FLOODING_THRESHOLD) {
+    // Up until FLOODING_THRESHOLD times average moisture, yields benefit from
+    // more moisture
+    moisture_multiplier = moisture;
+  }
+  else if (moisture < TOTALLY_FLOODED) {
+    // Yields drop quickly as soil becomes over-saturated
+    moisture_multiplier = FLOODING_THRESHOLD - (moisture - FLOODING_THRESHOLD);
+  }
+  else {
+    // Things are flooded and can't get any worse. Farmers are able to
+    // salvage some fixed portion of their crops.
+    moisture_multiplier = 0.25;
+  }
+
+  return LandTile::yield() * moisture_multiplier;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void FoodTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                                     const Location& location,
+                                     Season season)
+///////////////////////////////////////////////////////////////////////////////
+{
+  LandTile::cycle_turn(anomalies, location, season);
+
+  // MODEL: Model how precip and temp changes soil moisture
+
+  // Get the parameters we need to make the calculation
+  float precip         = m_atmosphere.rainfall();
+  int temp             = m_atmosphere.temperature();
+  float av_precip      = m_climate.rainfall(season);
+  int av_temp          = m_climate.temperature(season);
+  float prior_moisture = m_soil_moisture;
+
+  // Precip's effect on moisture
+  float seasonal_moisture = 1.0;
+  seasonal_moisture *= precip / av_precip;
+
+  // Temperature's effect on moisture. This is trickier; for now only a very
+  // basic model is in place.
+  const float pct_per_degree = 0.01;
+  const int temp_diff = av_temp - temp;
+  seasonal_moisture *= 1.0 + (pct_per_degree * temp_diff);
+
+  // Take past moisture into account but weight current moisture more heavily
+  m_soil_moisture = ((seasonal_moisture * 2) + prior_moisture) / 3;
+
+  Require(m_soil_moisture >= 0.0 && m_soil_moisture < 100,
+          "Moisture " << m_soil_moisture << " not valid");
 }

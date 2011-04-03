@@ -4,6 +4,7 @@
 #include "Drawable.hpp"
 #include "Weather.hpp"
 #include "BaalCommon.hpp"
+#include "Time.hpp"
 
 #include <vector>
 #include <iosfwd>
@@ -15,6 +16,7 @@ namespace baal {
 
 class City;
 class Geology;
+class Anomaly;
 
 /**
  * A simple structure that specifies yields for tiles.
@@ -40,7 +42,19 @@ struct Yield
  * are generally passive containers of data but they do know
  * how to draw themselves.
  *
- * TODO: Every tile has an atmosphere, climate, geology, and yield.
+ * Every tile has an atmosphere, climate, geology, and yield.
+ *
+ * This class also serves as an aggregate of all the interfaces of the
+ * Tile subclasses. Anything you can possibly do to any WorldTile must
+ * be associated with some method in the WorldTile class. In some cases,
+ * operations on certain tiles are invalid, such as asking for the
+ * sea surface temperature of a land tile. In that case, the type of the
+ * tile changed via dynamic_cast? In other cases, the operation may not
+ * make sense, but is a harmless query; in that case, a "NULL-like" value
+ * is returned.
+ *
+ * TODO: There is probably a better way to design this... consider not
+ * relying so heavily on inheritence.
  */
 class WorldTile : public Drawable
 {
@@ -49,28 +63,58 @@ class WorldTile : public Drawable
 
   virtual ~WorldTile();
 
+  // Basic tile interface
+
   virtual Yield yield() const = 0;
 
   virtual void draw_text(std::ostream& out) const;
 
   virtual void draw_graphics() const { /*TODO*/ }
 
-  virtual City* city() const { return NULL; }
+  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                          const Location& location,
+                          Season season);
+
+  // Land-related interface
 
   virtual unsigned infra_level() const { return 0; }
 
-  virtual void cycle_turn();
+  virtual City* city() const { return NULL; }
 
-  virtual void place_city(City& city);
+  virtual void damage(float dmg) {}
+
+  // Ocean-related interface
+
+  virtual unsigned depth() const { return 0; }
+
+  // Mountain-related interface
+
+  virtual unsigned elevation() const { return 0; }
+
+  virtual unsigned snowpack() const { return 0; }
+
+  // Getters
+
+  const Atmosphere& atmosphere() const { return m_atmosphere; }
+
+  Atmosphere& atmosphere() { return m_atmosphere; }
+
+  // Public constants
 
   static const unsigned TILE_TEXT_HEIGHT = 5;
   static const unsigned TILE_TEXT_WIDTH = 5;
 
  protected:
 
+  // Internal methods relating to drawing
+
   virtual const char* color() const = 0;
 
   virtual char symbol() const = 0;
+
+  void draw_land(std::ostream& out) const;
+
+  // Members
 
   Yield        m_base_yield;
   Climate&     m_climate;
@@ -100,6 +144,17 @@ class OceanTile : public WorldTile
 
   virtual char symbol() const { return '~'; }
 
+  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                          const Location& location,
+                          Season season);
+
+  virtual unsigned depth() const { return m_depth; }
+
+  int surface_temp() const { return m_surface_temp; }
+
+  // Don't like this in the public API
+  void set_surface_temp(int new_temp) { m_surface_temp = new_temp; }
+
  protected:
   unsigned m_depth;
   int m_surface_temp; // in farenheit
@@ -115,22 +170,21 @@ class LandTile: public WorldTile
 
   ~LandTile();
 
-  void damage(float dmg);
+  virtual Yield yield() const;
 
-  void build_infra();
+  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                          const Location& location,
+                          Season season);
+
+  virtual void damage(float dmg);
 
   virtual unsigned infra_level() const { return m_infra_level; }
 
-  virtual Yield yield() const;
-
   virtual City* city() const { return m_city; }
 
+  void build_infra();
+
   virtual void place_city(City& city);
-
-  // By default, tiles have no moisture
-  virtual float soil_moisture() const { return 0.0; }
-
-  virtual void cycle_turn();
 
  protected:
   void recover();
@@ -158,8 +212,22 @@ class MountainTile : public LandTile
 
   virtual char symbol() const { return '^'; }
 
+  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                          const Location& location,
+                          Season season);
+
+  virtual unsigned elevation() const { return m_elevation; }
+
+  virtual unsigned snowpack() const { return m_snowpack; }
+
+  // Don't like this in the public API
+  void set_snowpack(unsigned new_snowpack) { m_snowpack = new_snowpack; }
+
+  virtual void place_city(City& city);
+
  protected:
   unsigned m_elevation;
+  unsigned m_snowpack; // in inches
 };
 
 /**
@@ -195,53 +263,6 @@ class TundraTile : public LandTile
 /**
  *
  */
-class TileWithPlantGrowth : public LandTile
-{
- public:
-  TileWithPlantGrowth(Yield yield, Climate& climate, Geology& geology)
-    : LandTile(yield, climate, geology),
-      m_soil_moisture(1.0)
-  {}
-
-  virtual float soil_moisture() const { return m_soil_moisture; }
-
- protected:
-  float m_soil_moisture;
-};
-
-/**
- *
- */
-class PlainsTile : public LandTile
-{
- public:
-  PlainsTile(Climate& climate, Geology& geology)
-    : LandTile(Yield(1, 0), climate, geology)
-  {}
-
-  virtual const char* color() const { return GREEN; }
-
-  virtual char symbol() const { return '_'; }
-};
-
-/**
- *
- */
-class LushTile : public LandTile
-{
- public:
-  LushTile(Climate& climate, Geology& geology)
-    : LandTile(Yield(2, 0), climate, geology)
-  {}
-
-  virtual const char* color() const { return GREEN; }
-
-  virtual char symbol() const { return '='; }
-};
-
-/**
- *
- */
 class HillsTile : public LandTile
 {
  public:
@@ -252,6 +273,62 @@ class HillsTile : public LandTile
   virtual const char* color() const { return GREEN; }
 
   virtual char symbol() const { return '^'; }
+};
+
+/**
+ *
+ */
+class FoodTile : public LandTile
+{
+ public:
+  FoodTile(Yield yield, Climate& climate, Geology& geology)
+    : LandTile(yield, climate, geology),
+      m_soil_moisture(1.0)
+  {}
+
+  virtual Yield yield() const;
+
+  float soil_moisture() const { return m_soil_moisture; }
+
+  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+                          const Location& location,
+                          Season season);
+
+  static const float FLOODING_THRESHOLD = 1.5;
+  static const float TOTALLY_FLOODED = 2.75;
+
+ protected:
+  float m_soil_moisture;
+};
+
+/**
+ *
+ */
+class PlainsTile : public FoodTile
+{
+ public:
+  PlainsTile(Climate& climate, Geology& geology)
+    : FoodTile(Yield(1, 0), climate, geology)
+  {}
+
+  virtual const char* color() const { return GREEN; }
+
+  virtual char symbol() const { return '_'; }
+};
+
+/**
+ *
+ */
+class LushTile : public FoodTile
+{
+ public:
+  LushTile(Climate& climate, Geology& geology)
+    : FoodTile(Yield(2, 0), climate, geology)
+  {}
+
+  virtual const char* color() const { return GREEN; }
+
+  virtual char symbol() const { return '='; }
 };
 
 }

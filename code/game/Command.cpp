@@ -259,15 +259,26 @@ void SpellCommand::apply(Engine& engine) const
   // Verify that player can cast this spell (can throw)
   player.verify_cast(*spell);
 
+  // Verify that it makes sense to cast this exact spell (can throw)
+  spell->verify_apply(engine);
+
   // These last two operations need to be atomic, neither should ever throw
   // a user error.
+  try {
+    // Let the player object know that the spell has been cast and to adjust
+    // it's state accordingly.
+    player.cast(*spell);
 
-  // Let the player object know that the spell has been cast and to adjust
-  // it's state accordingly.
-  player.cast(*spell);
+    // Apply the spell to the world
+    unsigned exp = spell->apply(engine);
 
-  // Apply the spell to the world
-  spell->apply(world);
+    // Give player experience
+    player.gain_exp(exp);
+  }
+  catch (UserError& error) {
+    Require(false, "User error interrupted atomic operations...\n" <<
+            "Error: " << error.what());
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -385,16 +396,13 @@ std::string DrawCommand::help(const Engine& engine) const
   std::string usage =
 "<draw-mode>\n"
 "  Changes how the world is drawn.\n"
-"  Available draw modes:\n"
-"    civ\n"
-"    land\n"
-"    geology\n"
-"    magma\n"
-"    tension\n"
-"    wind\n"
-"    temperature\n"
-"    pressure\n"
-"    dewpoint\n";
+"  Available draw modes:\n";
+  for (DrawMode mode_itr = Drawable::FIRST; ; ++mode_itr) {
+    usage += "    " + Drawable::draw_mode_to_str(mode_itr)  + "\n";
+    if (mode_itr == Drawable::LAST) {
+      break;
+    }
+  }
 
   return create_help_str(this, usage);
 }

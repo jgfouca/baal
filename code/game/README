@@ -251,14 +251,19 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 
 - TODO List -
 
-* Need much better help dumps
+* Design review
+  * Review headers/interfaces. Is interface clean? What data/knowledge
+    is exposed?
+  * Documentation
+  * No magic numbers
 * Seasons need to affect atmosphere
-* Get climate simulation (anomaly-based) working
-* Need to get real talent trees working
-* Start to fill in more disasters
+* Start to fill in Spell implementations
 * Need at least rudimentary PlayerAI so that real games can be tested.
 * Map editor, map-file format defined, map-file loader
 * Need much more unit-testing
 * Use more typedefs for scalar properties?
+* Change "rainfall" to "precip"
+* Implement disasters as mini games?
 * Change some Require(...) to RequireAttach(...)
 * See code TODOs
+* Find areas that define the game model and tag them with MODEL

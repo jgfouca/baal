@@ -36,6 +36,10 @@ struct Location
 
   std::ostream& operator<<(std::ostream& out) const;
 
+  bool operator==(const Location& location) const;
+
+  bool operator!=(const Location& location) const;
+
   unsigned row;
   unsigned col;
 };

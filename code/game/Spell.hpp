@@ -12,7 +12,7 @@ namespace baal {
 // We use this file to define all the spells. This will avoid
 // creation of lots of very small hpp/cpp files.
 
-class World;
+class Engine;
 
 /**
  * Constructor will initialize all the static prereq members in
@@ -56,8 +56,13 @@ public:
 
   virtual ~Spell() {}
 
-  // pure virtual
-  virtual void apply(World& world) const = 0;
+  // Verify that the user's attempt to cast this spell is sane.
+  // This method should throw user errors so that apply doesn't
+  // have to.
+  virtual void verify_apply(Engine& engine) const = 0;
+
+  // Apply should NEVER throw a User exception
+  virtual unsigned apply(Engine& engine) const = 0;
 
   unsigned cost() const { return m_spell_level * m_base_cost; }
 
@@ -99,9 +104,13 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const;
+  virtual unsigned apply(Engine& engine) const;
 
   static const unsigned BASE_COST = 50;
+  static const unsigned DEGREES_PER_LEVEL = 5;
+  static const float OCEAN_SURFACE_CHG_RATIO = .35;
+  static const int KILL_THRESHOLD = 100;
   static SpellPrereq PREREQ;
 };
 
@@ -125,7 +134,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 50;
   static SpellPrereq PREREQ;
@@ -150,7 +160,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 50;
   static SpellPrereq PREREQ;
@@ -177,7 +188,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const;
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const;
 
   static const unsigned BASE_COST = 100;
   static SpellPrereq PREREQ;
@@ -204,7 +216,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 100;
   static SpellPrereq PREREQ;
@@ -229,7 +242,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 100;
   static SpellPrereq PREREQ;
@@ -255,7 +269,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 200;
   static SpellPrereq PREREQ;
@@ -281,7 +296,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 200;
   static SpellPrereq PREREQ;
@@ -307,7 +323,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 200;
   static SpellPrereq PREREQ;
@@ -333,7 +350,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 200;
   static SpellPrereq PREREQ;
@@ -360,7 +378,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 200;
   static SpellPrereq PREREQ;
@@ -386,7 +405,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 400;
   static SpellPrereq PREREQ;
@@ -412,7 +432,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 400;
   static SpellPrereq PREREQ;
@@ -438,7 +459,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 400;
   static SpellPrereq PREREQ;
@@ -464,7 +486,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 400;
   static SpellPrereq PREREQ;
@@ -489,7 +512,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 800;
   static SpellPrereq PREREQ;
@@ -515,7 +539,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 800;
   static SpellPrereq PREREQ;
@@ -543,7 +568,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 800;
   static SpellPrereq PREREQ;
@@ -568,7 +594,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 1600;
   static SpellPrereq PREREQ;
@@ -594,7 +621,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 1600;
   static SpellPrereq PREREQ;
@@ -619,7 +647,8 @@ public:
             PREREQ)
   {}
 
-  virtual void apply(World& world) const { /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
+  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 3200;
   static SpellPrereq PREREQ;

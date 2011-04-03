@@ -1,8 +1,12 @@
 #include "Spell.hpp"
 #include "World.hpp"
+#include "Engine.hpp"
+#include "Interface.hpp"
 #include "Player.hpp"
+#include "City.hpp"
 
 #include <iostream>
+#include <cmath>
 
 using std::ostream;
 using namespace baal;
@@ -125,15 +129,91 @@ ostream& Spell::operator<<(ostream& out) const
   return out << m_name << '[' << m_spell_level << ']';
 }
 
+///////////////////////////////////////////////////////////////////////////////
+ostream& baal::operator<<(ostream& out, const Spell& spell)
+///////////////////////////////////////////////////////////////////////////////
+{
+  return spell.operator<<(out);
+}
+
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void Fire::apply(World& world) const
+void Hot::verify_apply(Engine& engine) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  // no-op. This spell can be cast anywhere, anytime.
+}
+
+///////////////////////////////////////////////////////////////////////////////
+unsigned Hot::apply(Engine& engine) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  World& world = engine.world();
+  Interface& interface = engine.interface();
+  WorldTile& tile = world.get_tile(m_location);
+  Atmosphere& atmos = tile.atmosphere();
+
+  unsigned num_killed = 0;
+
+  // 3 cases: Ocean, Mountain, Land
+  OceanTile* ocean_tile  = dynamic_cast<OceanTile*>(&tile);
+  MountainTile* mtn_tile = dynamic_cast<MountainTile*>(&tile);
+  FoodTile* food_tile    = dynamic_cast<FoodTile*>(&tile);
+
+  // Regardless of tile type, atmosphere is warmed
+  int prior_temp = atmos.temperature();
+  unsigned warmup = m_spell_level * DEGREES_PER_LEVEL;
+  int new_temp = prior_temp + warmup;
+  atmos.set_temperature(new_temp);
+
+  if (ocean_tile != NULL) {
+    // Heat ocean surface up
+    int prior_ocean_temp = ocean_tile->surface_temp();
+    int new_temp = prior_ocean_temp + warmup * OCEAN_SURFACE_CHG_RATIO;
+    ocean_tile->set_surface_temp(new_temp);
+  }
+  else if (mtn_tile != NULL) {
+    // Check snowpack. A sudden meltoff of snowpack could cause a flood.
+    //unsigned snowpack = mtn_tile->snowpack();
+
+    // This introduces the notion of a chain-reaction disaster. Players should
+    // get double exp for induced disaster.
+
+    // TODO
+  }
+  else if (food_tile != NULL) {
+    // TODO: This requires another special setter. Maybe we need a special
+    // spell accessor class that things affected by spells are friends with.
+
+    // Reduce moisture, damage tile (if temps are high enough)
+  }
+
+  // This spell can kill if cast on a city and temps get high enough.
+  City* city = tile.city();
+  if (city != NULL && new_temp > KILL_THRESHOLD) {
+    unsigned city_pop = city->population();
+    const float pct_killed =
+      std::sqrt(static_cast<float>(new_temp - KILL_THRESHOLD));
+    num_killed = pct_killed * city_pop;
+    SPELL_REPORT(interface, m_name << " has killed: " << num_killed);
+
+    // TODO: Reduce city pop by kill-count
+  }
+
+  return num_killed;
+}
+
+/*****************************************************************************/
+
+///////////////////////////////////////////////////////////////////////////////
+unsigned Fire::apply(Engine& engine) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   // TODO Fill in
   // Does not apply to oceans
 
+  World& world = engine.world();
   WorldTile& tile = world.get_tile(m_location);
   LandTile* tile_ptr = dynamic_cast<LandTile*>(&tile);
   Require(tile_ptr != NULL, "Can only cast fire on land tiles");
@@ -141,11 +221,6 @@ void Fire::apply(World& world) const
 
   // TODO: check for city, soil moisture, wind, temp, etc
   affected_tile.damage(.5);
-}
 
-///////////////////////////////////////////////////////////////////////////////
-ostream& baal::operator<<(ostream& out, const Spell& spell)
-///////////////////////////////////////////////////////////////////////////////
-{
-  return spell.operator<<(out);
+  return 0;
 }
