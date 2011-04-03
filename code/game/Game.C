@@ -21,13 +21,13 @@ std::string get_help()
   const std::string text_interface    = InterfaceFactory::TEXT_INTERFACE;
   const std::string gfx_interface     = InterfaceFactory::GRAPHICAL_INTERFACE;
   const std::string default_interface = InterfaceFactory::DEFAULT_INTERFACE;
-  
+
   const std::string generated_world   = WorldFactory::GENERATED_WORLD;
   const unsigned num_hardcoded_worlds = WorldFactoryHardcoded::NUM_HARDCODED_WORLDS;
   const std::string default_world     = WorldFactory::DEFAULT_WORLD;
 
   std::ostringstream out;
-  out << "<baal-exe> [-i (t|g)] [-w (r|1|2|...)] [-p <name>]\n"
+  out << "<baal-exe> [-i (t|g)] [-w (<file>|r|1|2|...)] [-p <name>]\n"
       << "\n"
       << "  Use the -i option to choose interface\n"
       << "    " << text_interface << " -> text" <<
@@ -45,6 +45,7 @@ std::string get_help()
   }
   out << "    " << generated_world << " -> randomly generated world" <<
     (generated_world == default_interface ? "(default)" : "") << "\n"
+      << "    <file> -> Use world loaded from file\n"
       << "\n"
       << "  Use the -p option to chose player name\n";
   return out.str();
@@ -109,7 +110,7 @@ int main(int argc, char** argv)
 #else
   const bool isopt = true;
 #endif
-  
+
   if (baal::is_opt()) {
     Require(isopt, "Expect opt, build system is broken");
     std::cout << "Running in opt mode" << std::endl;

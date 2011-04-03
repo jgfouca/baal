@@ -3,7 +3,7 @@ include ../common.mk
 BOOSTCXXFLAGS :=
 BOOSTLDFLAGS := -lboost_thread
 
-XMLCXXFLAGS :=
+XMLCXXFLAGS := -I /usr/include/libxml2
 XMLLDFLAGS := -lxml2
 
 GAMECXXFLAGS := $(CXXFLAGS) $(BOOSTCXXFLAGS) $(XMLCXXFLAGS)

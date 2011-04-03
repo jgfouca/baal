@@ -49,7 +49,7 @@ struct Yield
  * be associated with some method in the WorldTile class. In some cases,
  * operations on certain tiles are invalid, such as asking for the
  * sea surface temperature of a land tile. In that case, the type of the
- * tile changed via dynamic_cast? In other cases, the operation may not
+ * tile checked via dynamic_cast? In other cases, the operation may not
  * make sense, but is a harmless query; in that case, a "NULL-like" value
  * is returned.
  *

@@ -34,12 +34,13 @@ World& WorldFactory::create()
 
   // Create and return the desired world
   if (numeric) {
-    //return WorldFactoryHardcoded::create(world_config);
-	char mapfilename[] = "Default1.baalmap";
-	return WorldFactoryFromFile::create(mapfilename);
+    return WorldFactoryHardcoded::create(world_config);
   }
   else if (world_config == GENERATED_WORLD) {
     return WorldFactoryGenerated::create();
+  }
+  else if (is_baal_map_file(world_config)) {
+    return WorldFactoryFromFile::create(world_config);
   }
   else {
     RequireUser(false, "Invalid choice of world: " << world_config);
