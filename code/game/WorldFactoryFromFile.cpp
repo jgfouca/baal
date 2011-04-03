@@ -54,7 +54,7 @@ World& WorldFactoryFromFile::load_world_from_file(char * mapfilename)
       int row = get_int_from_parent(mapfile, cur, "row");
       int col = get_int_from_parent(mapfile, cur, "col");
       char* name = get_element(mapfile, cur, "name");
-      world.m_tiles[row][col]->place_city(*new City(name));
+      dynamic_cast<LandTile*>(world.m_tiles[row][col])->place_city(*new City(name));
     }
     cur = cur->next;
   }
