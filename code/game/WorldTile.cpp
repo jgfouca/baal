@@ -182,7 +182,7 @@ void LandTile::damage(float dmg)
 {
   Require(dmg > 0.0 && dmg < 1.0, "Invalid value for damage: " << dmg);
 
-  m_hp *= dmg;
+  m_hp *= (1.0 - dmg);
 
   Require(m_hp > 0.0 && m_hp < 1.0, "Invariant for hp failed: " << m_hp);
 }
@@ -236,6 +236,16 @@ void LandTile::place_city(City& city)
 {
   RequireUser(m_city == NULL, "Tile already had city: " << city.name());
   m_city = &city;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void LandTile::remove_city()
+///////////////////////////////////////////////////////////////////////////////
+{
+  Require(m_city != NULL, "Erroneous call to remove_city");
+
+  delete m_city;
+  m_city = NULL;
 }
 
 /*****************************************************************************/

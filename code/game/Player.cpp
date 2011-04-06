@@ -97,5 +97,5 @@ void Player::draw_text(std::ostream& out) const
       << "  name: " << m_name << "\n"
       << "  level: " << BOLD_COLOR << GREEN << m_level << CLEAR_ALL  << "\n"
       << "  mana: " << BOLD_COLOR << BLUE << m_mana << "/" << m_max_mana << CLEAR_ALL << "\n"
-      << "  exp: " << BOLD_COLOR << YELLOW << m_exp << CLEAR_ALL << "\n";
+      << "  exp: " << BOLD_COLOR << YELLOW << m_exp << "/" << m_next_level_cost << CLEAR_ALL << "\n";
 }

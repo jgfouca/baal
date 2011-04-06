@@ -8,6 +8,7 @@ using namespace baal;
 SpellFactory::SpellName SpellFactory::HOT  = "hot";
 SpellFactory::SpellName SpellFactory::COLD = "cold";
 SpellFactory::SpellName SpellFactory::WIND = "wind";
+SpellFactory::SpellName SpellFactory::HARM = "harm";
 
 SpellFactory::SpellName SpellFactory::FIRE   = "fire";
 SpellFactory::SpellName SpellFactory::TSTORM = "tstorm";
@@ -37,6 +38,7 @@ SpellFactory::SpellName SpellFactory::ALL_SPELLS[] = {
   SpellFactory::HOT,
   SpellFactory::COLD,
   SpellFactory::WIND,
+  SpellFactory::HARM,
   SpellFactory::FIRE,
   SpellFactory::TSTORM,
   SpellFactory::SNOW,
@@ -71,6 +73,9 @@ const Spell& SpellFactory::create_spell(const std::string& spell_name,
   }
   else if (spell_name == WIND) {
     return *(new WindSpell(spell_level, location));
+  }
+  else if (spell_name == HARM) {
+    return *(new Harm(spell_level, location));
   }
   else if (spell_name == FIRE) {
     return *(new Fire(spell_level, location));

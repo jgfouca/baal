@@ -38,6 +38,8 @@ class TalentTree
 
   std::map<std::string, unsigned> m_spell_level_map;
   unsigned m_num_learned;
+
+  static const unsigned MAX_SPELL_LEVEL = 5;
 };
 
 }

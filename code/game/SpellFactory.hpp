@@ -30,6 +30,7 @@ class SpellFactory
   static SpellName HOT;
   static SpellName COLD;
   static SpellName WIND;
+  static SpellName HARM;
 
   static SpellName FIRE;
   static SpellName TSTORM;

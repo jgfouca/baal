@@ -13,6 +13,9 @@ namespace baal {
 // creation of lots of very small hpp/cpp files.
 
 class Engine;
+class LandTile;
+class City;
+class Interface;
 
 /**
  * Constructor will initialize all the static prereq members in
@@ -20,7 +23,7 @@ class Engine;
  */
 class SpellPrereqStaticInitializer
 {
-public:
+ public:
   SpellPrereqStaticInitializer();
 };
 
@@ -47,11 +50,12 @@ struct SpellPrereq
  */
 class Spell
 {
-public:
+ public:
   Spell(SpellFactory::SpellName name,
         unsigned                spell_level,
         const Location&         location,
         unsigned                base_cost,
+        unsigned                cost_increment,
         const SpellPrereq&      prereq);
 
   virtual ~Spell() {}
@@ -64,7 +68,8 @@ public:
   // Apply should NEVER throw a User exception
   virtual unsigned apply(Engine& engine) const = 0;
 
-  unsigned cost() const { return m_spell_level * m_base_cost; }
+  virtual unsigned cost() const
+  { return m_base_cost + (m_spell_level - 1) * m_cost_increment; }
 
   const std::string& name() const { return m_name; }
 
@@ -74,12 +79,22 @@ public:
 
   std::ostream& operator<<(std::ostream& out) const;
 
-protected:
+ protected:
+
+  // Members
   std::string        m_name;
   unsigned           m_spell_level;
   Location           m_location;
   unsigned           m_base_cost;
+  unsigned           m_cost_increment;
   const SpellPrereq& m_prereq;
+
+  // Internal methods
+
+  void kill(Interface& interface,
+            LandTile& tile,
+            City& city,
+            unsigned num_killed) const;
 };
 
 std::ostream& operator<<(std::ostream& out, const Spell& spell);
@@ -94,13 +109,14 @@ std::ostream& operator<<(std::ostream& out, const Spell& spell);
  */
 class Hot : public Spell
 {
-public:
+ public:
   Hot(unsigned        spell_level,
       const Location& location)
     : Spell(SpellFactory::HOT,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -108,6 +124,7 @@ public:
   virtual unsigned apply(Engine& engine) const;
 
   static const unsigned BASE_COST = 50;
+  static const unsigned COST_INC = BASE_COST / 3;
   static const unsigned DEGREES_PER_LEVEL = 5;
   static const float OCEAN_SURFACE_CHG_RATIO = .35;
   static const int KILL_THRESHOLD = 100;
@@ -124,20 +141,56 @@ public:
  */
 class Cold : public Spell
 {
-public:
+ public:
   Cold(unsigned        spell_level,
        const Location& location)
     : Spell(SpellFactory::COLD,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply(Engine& engine) const;
+  virtual unsigned apply(Engine& engine) const;
 
   static const unsigned BASE_COST = 50;
+  static const unsigned COST_INC = BASE_COST / 3;
+  static const unsigned DEGREES_PER_LEVEL = 5;
+  static const float OCEAN_SURFACE_CHG_RATIO = .35;
+  static const int KILL_THRESHOLD = 0;
+  static SpellPrereq PREREQ;
+};
+
+/**
+ * A weak direct damage spell against cities, this spell causes
+ * generic misfortune within a city.
+ *
+ * Enhanced by nothing. A civ's technology acts as a resistance to
+ * this spell.
+ *
+ * This is a tier 1 spell
+ */
+class Harm : public Spell
+{
+ public:
+  Harm(unsigned        spell_level,
+       const Location& location)
+    : Spell(SpellFactory::HARM,
+            spell_level,
+            location,
+            BASE_COST,
+            COST_INC,
+            PREREQ)
+  {}
+
+  virtual void verify_apply(Engine& engine) const;
+  virtual unsigned apply(Engine& engine) const;
+
+  static const unsigned BASE_COST = 50;
+  static const unsigned COST_INC = BASE_COST / 3;
+  static const float KILL_PCT_PER_LEVEL = 0.01;
   static SpellPrereq PREREQ;
 };
 
@@ -150,13 +203,14 @@ public:
  */
 class WindSpell : public Spell
 {
-public:
+ public:
   WindSpell(unsigned        spell_level,
             const Location& location)
     : Spell(SpellFactory::WIND,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -164,6 +218,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 50;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -178,13 +233,14 @@ public:
  */
 class Fire : public Spell
 {
-public:
+ public:
   Fire(unsigned        spell_level,
        const Location& location)
     : Spell(SpellFactory::FIRE,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -192,6 +248,7 @@ public:
   virtual unsigned apply(Engine& engine) const;
 
   static const unsigned BASE_COST = 100;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -206,13 +263,14 @@ public:
  */
 class Tstorm : public Spell
 {
-public:
+ public:
   Tstorm(unsigned        spell_level,
          const Location& location)
     : Spell(SpellFactory::TSTORM,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -220,6 +278,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 100;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -232,13 +291,14 @@ public:
  */
 class Snow : public Spell
 {
-public:
+ public:
   Snow(unsigned        spell_level,
        const Location& location)
     : Spell(SpellFactory::SNOW,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -246,6 +306,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 100;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -259,13 +320,14 @@ public:
  */
 class Avalanche : public Spell
 {
-public:
+ public:
   Avalanche(unsigned        spell_level,
             const Location& location)
     : Spell(SpellFactory::AVALANCHE,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -273,6 +335,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 200;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -286,13 +349,14 @@ public:
  */
 class Flood : public Spell
 {
-public:
+ public:
   Flood(unsigned        spell_level,
         const Location& location)
     : Spell(SpellFactory::FLOOD,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -300,6 +364,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 200;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -313,13 +378,14 @@ public:
  */
 class Dry : public Spell
 {
-public:
+ public:
   Dry(unsigned        spell_level,
       const Location& location)
     : Spell(SpellFactory::DRY,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -327,6 +393,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 200;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -340,13 +407,14 @@ public:
  */
 class Blizzard : public Spell
 {
-public:
+ public:
   Blizzard(unsigned        spell_level,
            const Location& location)
     : Spell(SpellFactory::BLIZZARD,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -354,6 +422,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 200;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -368,13 +437,14 @@ public:
  */
 class Tornado : public Spell
 {
-public:
+ public:
   Tornado(unsigned        spell_level,
           const Location& location)
     : Spell(SpellFactory::TORNADO,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -382,6 +452,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 200;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -395,13 +466,14 @@ public:
  */
 class Heatwave : public Spell
 {
-public:
+ public:
   Heatwave(unsigned        spell_level,
            const Location& location)
     : Spell(SpellFactory::HEATWAVE,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -409,6 +481,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 400;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -422,13 +495,14 @@ public:
  */
 class Coldwave : public Spell
 {
-public:
+ public:
   Coldwave(unsigned        spell_level,
            const Location& location)
     : Spell(SpellFactory::COLDWAVE,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -436,6 +510,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 400;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -449,13 +524,14 @@ public:
  */
 class Drought : public Spell
 {
-public:
+ public:
   Drought(unsigned        spell_level,
           const Location& location)
     : Spell(SpellFactory::DROUGHT,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -463,6 +539,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 400;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -476,13 +553,14 @@ public:
  */
 class Monsoon : public Spell
 {
-public:
+ public:
   Monsoon(unsigned        spell_level,
           const Location& location)
     : Spell(SpellFactory::MONSOON,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -490,6 +568,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 400;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -502,13 +581,14 @@ public:
  */
 class Disease : public Spell
 {
-public:
+ public:
   Disease(unsigned        spell_level,
           const Location& location)
     : Spell(SpellFactory::DISEASE,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -516,6 +596,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 800;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -529,13 +610,14 @@ public:
  */
 class Earthquake : public Spell
 {
-public:
+ public:
   Earthquake(unsigned        spell_level,
              const Location& location)
     : Spell(SpellFactory::EARTHQUAKE,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -543,6 +625,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 800;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -558,13 +641,14 @@ public:
  */
 class Hurricane : public Spell
 {
-public:
+ public:
   Hurricane(unsigned        spell_level,
             const Location& location)
     : Spell(SpellFactory::HURRICANE,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -572,6 +656,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 800;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -584,13 +669,14 @@ public:
  */
 class Plague : public Spell
 {
-public:
+ public:
   Plague(unsigned        spell_level,
          const Location& location)
     : Spell(SpellFactory::PLAGUE,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -598,6 +684,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 1600;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -611,13 +698,14 @@ public:
  */
 class Volcano : public Spell
 {
-public:
+ public:
   Volcano(unsigned        spell_level,
           const Location& location)
     : Spell(SpellFactory::VOLCANO,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -625,6 +713,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 1600;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 
@@ -637,13 +726,14 @@ public:
  */
 class Asteroid : public Spell
 {
-public:
+ public:
   Asteroid(unsigned        spell_level,
            const Location& location)
     : Spell(SpellFactory::ASTEROID,
             spell_level,
             location,
             BASE_COST,
+            COST_INC,
             PREREQ)
   {}
 
@@ -651,6 +741,7 @@ public:
   virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 3200;
+  static const unsigned COST_INC = BASE_COST / 3;
   static SpellPrereq PREREQ;
 };
 

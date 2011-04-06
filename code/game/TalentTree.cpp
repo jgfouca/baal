@@ -12,6 +12,8 @@ void TalentTree::add(const Spell& spell, const Player& player)
 {
   RequireUser(player.level() > m_num_learned,
               "You cannot learn any more spells until you level-up");
+  RequireUser(spell.level() <= MAX_SPELL_LEVEL,
+              "You've hit the maximum level for that spell");
 
   check_prereqs(spell, player);
 

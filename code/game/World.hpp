@@ -13,6 +13,7 @@
 namespace baal {
 
 class Anomaly;
+class City;
 
 /**
  * Represents the world.
@@ -59,6 +60,8 @@ class World : public Drawable
   unsigned height() const { return m_height; }
 
  private:
+
+  // Internal methods
   void clear_anomalies();
 
   // Members

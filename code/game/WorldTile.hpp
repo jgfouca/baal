@@ -152,12 +152,21 @@ class OceanTile : public WorldTile
 
   int surface_temp() const { return m_surface_temp; }
 
-  // Don't like this in the public API
-  void set_surface_temp(int new_temp) { m_surface_temp = new_temp; }
-
  protected:
+
   unsigned m_depth;
   int m_surface_temp; // in farenheit
+
+ private:
+
+  // Friend interface
+
+  void set_surface_temp(int new_temp) { m_surface_temp = new_temp; }
+
+  // Friends
+
+  friend class Hot;
+  friend class Cold;
 };
 
 /**
@@ -185,6 +194,8 @@ class LandTile: public WorldTile
   void build_infra();
 
   virtual void place_city(City& city);
+
+  void remove_city();
 
  protected:
   void recover();
@@ -220,14 +231,21 @@ class MountainTile : public LandTile
 
   virtual unsigned snowpack() const { return m_snowpack; }
 
-  // Don't like this in the public API
-  void set_snowpack(unsigned new_snowpack) { m_snowpack = new_snowpack; }
-
   virtual void place_city(City& city);
 
  protected:
   unsigned m_elevation;
   unsigned m_snowpack; // in inches
+
+ private:
+
+  // Friend interface
+
+  void set_snowpack(unsigned new_snowpack) { m_snowpack = new_snowpack; }
+
+  // Friends
+
+  friend class Hot;
 };
 
 /**

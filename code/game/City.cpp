@@ -1,4 +1,5 @@
 #include "City.hpp"
+#include "BaalExceptions.hpp"
 
 using namespace baal;
 
@@ -16,6 +17,9 @@ City::City(const std::string& name)
 void City::cycle_turn()
 ///////////////////////////////////////////////////////////////////////////////
 {
+  Require(m_population > 0,
+          "This city has no people and should have been deleted");
+
   // TODO: Gather resources based on nearby worked tiles
   float food_gathered = static_cast<float>(m_population) / POP_THAT_EATS_ONE_FOOD;
   float prod_gathered = 1.0;
@@ -47,4 +51,15 @@ void City::cycle_turn()
     ++m_rank;
     m_next_rank_pop *= CITY_RANK_UP_MULTIPLIER;
   }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void City::kill(unsigned killed)
+///////////////////////////////////////////////////////////////////////////////
+{
+  // Cites can be wiped out, but that is done via the World object that owns
+  // them.
+  Require(m_population >= killed, "Invalid killed: " << killed);
+
+  m_population -= killed;
 }

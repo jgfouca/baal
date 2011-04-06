@@ -19,6 +19,8 @@ class PlayerAI : public Drawable
 
   virtual void draw_graphics() const { /*TODO*/ }
 
+  unsigned tech_level() const { return m_tech_level; }
+
  private:
   void manage_city(City& city);
 

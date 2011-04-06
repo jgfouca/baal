@@ -105,12 +105,19 @@ class Atmosphere : public Drawable
                   const Location& location,
                   Season season);
 
-  // Don't really want this exposed in the public API, but
-  // don't want a proliferation of friends either.
-  void set_temperature(int new_temp) { m_temperature = new_temp; }
-
  private:
   int compute_dewpoint() const;
+
+  // Interface for friend spells
+
+  void set_temperature(int new_temp) { m_temperature = new_temp; }
+
+  // Friends
+
+  friend class Hot;
+  friend class Cold;
+
+  // Members
 
   int            m_temperature; // in farenheit
   int            m_dewpoint;    // in farenheit
