@@ -28,7 +28,8 @@ WorldTile::WorldTile(Yield yield, Climate& climate, Geology& geology)
   : m_base_yield(yield),
     m_climate(climate),
     m_geology(geology),
-    m_atmosphere(climate)
+    m_atmosphere(climate),
+    m_worked(false)
 {}
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -130,6 +131,15 @@ void WorldTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
 {
   m_geology.cycle_turn();
   m_atmosphere.cycle_turn(anomalies, location, season);
+  m_worked = false;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void WorldTile::work()
+///////////////////////////////////////////////////////////////////////////////
+{
+  Require(!m_worked, "Tile already being worked");
+  m_worked = true;
 }
 
 /*****************************************************************************/

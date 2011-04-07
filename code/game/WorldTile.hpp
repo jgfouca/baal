@@ -75,6 +75,10 @@ class WorldTile : public Drawable
                           const Location& location,
                           Season season);
 
+  bool worked() const { return m_worked; }
+
+  void work();
+
   // Land-related interface
 
   virtual unsigned infra_level() const { return 0; }
@@ -116,10 +120,11 @@ class WorldTile : public Drawable
 
   // Members
 
-  Yield        m_base_yield;
-  Climate&     m_climate;
-  Geology&     m_geology;
-  Atmosphere   m_atmosphere;
+  Yield      m_base_yield;
+  Climate&   m_climate;
+  Geology&   m_geology;
+  Atmosphere m_atmosphere;
+  bool       m_worked;
 
  private:
   // forbidden methods
