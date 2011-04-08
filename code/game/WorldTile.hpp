@@ -202,15 +202,15 @@ class LandTile: public WorldTile
 
   void remove_city();
 
+  static const unsigned LAND_TILE_MAX_INFRA  = 5;
+  static const float LAND_TILE_RECOVERY_RATE = 0.10;
+
  protected:
   void recover();
 
   float m_hp; // 0..1
   unsigned m_infra_level; // 0..MAX
   City* m_city; // valid to have no (NULL) city, so use ptr
-
-  static const float LAND_TILE_RECOVERY_RATE = 0.10;
-  static const unsigned LAND_TILE_MAX_INFRA  = 5;
 };
 
 /**

@@ -10,6 +10,7 @@ namespace baal {
 
 class World;
 class WorldTile;
+class LandTile;
 
 /**
  * Represents human-built cities.
@@ -33,6 +34,8 @@ class City
 
   void ordered_insert(std::list<WorldTile*>& tile_list, WorldTile& tile) const;
 
+  bool try_to_build_infra(LandTile& land_tile);
+
   // Members
 
   std::string m_name;
@@ -53,6 +56,11 @@ class City
   static const float FOOD_FROM_CITY_CENTER = 1.0;
   static const float PROD_FROM_CITY_CENTER = 1.0;
   static const float PROD_FROM_SPECIALIST  = 1.0;
+  static const unsigned SETTLER_PROD_COST  = 100;
+  static const unsigned INFRA_PROD_COST    = 25;
+  static const unsigned CITY_DEF_PROD_COST = 50;
+  static const float TOO_MANY_FOOD_WORKDERS = 0.66;
+  static const float EXPECTED_PROD_PER_SIZE = 2.0;
 
   // Friend interface
 

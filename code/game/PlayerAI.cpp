@@ -27,8 +27,6 @@ void PlayerAI::cycle_turn()
       City* city = world.get_tile(Location(row, col)).city();
       if (city) {
         m_population += city->population();
-
-        manage_city(*city);
       }
     }
   }
@@ -48,17 +46,6 @@ void PlayerAI::cycle_turn()
   Require(m_tech_points < m_next_tech_level_cost,
           "Expect tech-points(" << m_tech_points <<
           ") < tech-cost(" << m_next_tech_level_cost << ")");
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void PlayerAI::manage_city(City& city)
-///////////////////////////////////////////////////////////////////////////////
-{
-  // TODO
-
-  // Allocate workers
-
-  // Decide what to build
 }
 
 ///////////////////////////////////////////////////////////////////////////////

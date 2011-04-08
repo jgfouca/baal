@@ -22,8 +22,6 @@ class PlayerAI : public Drawable
   unsigned tech_level() const { return m_tech_level; }
 
  private:
-  void manage_city(City& city);
-
   Engine&  m_engine;
   unsigned m_tech_level;
   unsigned m_tech_points;

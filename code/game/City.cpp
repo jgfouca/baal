@@ -22,6 +22,8 @@ City::City(const std::string& name, World& world, const Location& location)
 void City::cycle_turn()
 ///////////////////////////////////////////////////////////////////////////////
 {
+  // TODO: Make tile yields go up based on tech-level
+
   Require(m_population > 0,
           "This city has no people and should have been deleted");
 
@@ -57,14 +59,14 @@ void City::cycle_turn()
   float food_gathered = FOOD_FROM_CITY_CENTER;
   float prod_gathered = PROD_FROM_CITY_CENTER;
   unsigned num_workers = m_rank;
+  unsigned num_workers_used_for_food = 0;
   for (std::list<WorldTile*>::iterator itr = food_tiles.begin();
-       itr != food_tiles.end() && num_workers > 0; ) {
+       itr != food_tiles.end() && num_workers > 0; ++itr) {
     if (food_gathered < req_food) {
       (*itr)->work();
       --num_workers;
+      ++num_workers_used_for_food;
       food_gathered += (*itr)->yield().m_food;
-      food_tiles.pop_front();
-      itr = food_tiles.begin();
     }
     else {
       // TODO: AI should continue to pile up food to increase it's growth
@@ -75,13 +77,11 @@ void City::cycle_turn()
   }
 
   for (std::list<WorldTile*>::iterator itr = prod_tiles.begin();
-       itr != prod_tiles.end() && num_workers > 0; ) {
+       itr != prod_tiles.end() && num_workers > 0; ++itr) {
     if ((*itr)->yield().m_prod > PROD_FROM_SPECIALIST) {
       (*itr)->work();
       --num_workers;
       prod_gathered += (*itr)->yield().m_prod;
-      prod_tiles.pop_front();
-      itr = prod_tiles.begin();
     }
   }
 
@@ -91,7 +91,44 @@ void City::cycle_turn()
   // Accumulate production
   m_production += prod_gathered;
 
-  // TODO - Decide on how to spend production
+  // Decide on how to spend production. Options: City fortifications,
+  // tile infrastructure, or settler. In the current system, the AI builds
+  // general production points and it can use them to insta-buy the things
+  // it wants. This is a bit unrealistic and should probably be replaced
+  // with a system where the AI chooses to start building something and
+  // all production points go to that thing until it is finished (a la civ).
+
+  // We want some of our workers doing something other than just
+  // collecting food.  If we are having to dedicate our workforce to
+  // food, we probably need better food infrastructure. By putting this
+  // first, we are giving it the highest priority.
+  float pct_workers_on_food =
+    static_cast<float>(num_workers_used_for_food) / m_rank;
+  float expected_production = m_rank * EXPECTED_PROD_PER_SIZE;
+  if (pct_workers_on_food > TOO_MANY_FOOD_WORKDERS) {
+    for (std::list<WorldTile*>::iterator itr = food_tiles.begin();
+         itr != food_tiles.end();
+         ++itr) {
+      FoodTile* food_tile = dynamic_cast<FoodTile*>(*itr);
+      if (food_tile != NULL) {
+        try_to_build_infra(*food_tile);
+      }
+    }
+  }
+  // See if we want to build any production infrastructure
+  else if (prod_gathered < expected_production) {
+    for (std::list<WorldTile*>::iterator itr = prod_tiles.begin();
+         itr != prod_tiles.end();
+         ++itr) {
+      LandTile* land_tile = dynamic_cast<LandTile*>(*itr);
+      Require(land_tile != NULL, "Production from a non-land tile?");
+      try_to_build_infra(*land_tile);
+    }
+  }
+  else {
+    // TODO: We're good as far as food and production, make a settler or
+    // city defenses.
+  }
 
   // Handle population growth
 
@@ -123,8 +160,6 @@ void City::cycle_turn()
 void City::kill(unsigned killed)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // Cites can be wiped out, but that is done via the World object that owns
-  // them.
   Require(m_population >= killed, "Invalid killed: " << killed);
 
   m_population -= killed;
@@ -167,4 +202,21 @@ void City::ordered_insert(std::list<WorldTile*>& tile_list,
   }
 
   tile_list.push_back(&tile);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+bool City::try_to_build_infra(LandTile& land_tile)
+///////////////////////////////////////////////////////////////////////////////
+{
+  unsigned infra_level = land_tile.infra_level();
+  if (infra_level < LandTile::LAND_TILE_MAX_INFRA) {
+    unsigned next_infra_level = infra_level + 1;
+    float prod_cost = next_infra_level * INFRA_PROD_COST;
+    if (prod_cost < m_production) {
+      m_production -= prod_cost;
+      land_tile.build_infra();
+      return true;
+    }
+  }
+  return false;
 }
