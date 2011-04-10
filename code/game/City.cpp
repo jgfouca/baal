@@ -1,45 +1,104 @@
 #include "City.hpp"
 #include "BaalExceptions.hpp"
 #include "World.hpp"
+#include "Engine.hpp"
+#include "PlayerAI.hpp"
 
+#include <cstdlib>
+#include <cmath>
 #include <list>
+#include <iostream>
 
 using namespace baal;
 
+namespace {
+
 ///////////////////////////////////////////////////////////////////////////////
-City::City(const std::string& name, World& world, const Location& location)
+bool is_within_distance_of_any_city(const Location& location, int distance)
+///////////////////////////////////////////////////////////////////////////////
+{
+  const std::vector<City*>& cities = Engine::instance().world().cities();
+  for (std::vector<City*>::const_iterator
+       itr = cities.begin(); itr != cities.end(); ++itr) {
+    const Location& city_loc = (*itr)->location();
+    int loc_row = location.row;
+    int loc_col = location.col;
+    int city_loc_row = city_loc.row;
+    int city_loc_col = city_loc.col;
+    if (std::abs(loc_row - city_loc_row) <= distance &&
+        std::abs(loc_col - city_loc_col) <= distance) {
+      return true;
+    }
+  }
+  return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+float compute_city_loc_heuristic(const Location& location)
+///////////////////////////////////////////////////////////////////////////////
+{
+  World& world = Engine::instance().world();
+  const unsigned row_loc = location.row;
+  const unsigned col_loc = location.col;
+  float available_food = 0.0;
+  float available_prod = 0.0;
+  for (int row_delta = -1; row_delta <= 1; ++row_delta) {
+    for (int col_delta = -1; col_delta <= 1; ++col_delta) {
+      Location loc_delta(row_loc + row_delta, col_loc + col_delta);
+      if (world.in_bounds(loc_delta) &&
+          !is_within_distance_of_any_city(loc_delta, 1)) {
+        WorldTile& tile = world.get_tile(loc_delta);
+        if (tile.yield().m_food > 0) {
+          available_food += tile.yield().m_food;
+        }
+        else {
+          available_prod += tile.yield().m_prod;
+        }
+      }
+    }
+  }
+
+  // Favor city locations with a good balance of food and production
+  return std::sqrt( (available_food + 1.0) * (available_prod + 1.0) );
+}
+
+} // empty namespace
+
+///////////////////////////////////////////////////////////////////////////////
+City::City(const std::string& name, const Location& location)
 ///////////////////////////////////////////////////////////////////////////////
   : m_name(name),
     m_rank(1),
     m_population(CITY_STARTING_POP),
     m_next_rank_pop(CITY_STARTING_POP * CITY_RANK_UP_MULTIPLIER),
     m_production(0.0),
-    m_world(world),
-    m_city_location(location)
+    m_location(location),
+    m_defense_level(0)
 {}
 
 ///////////////////////////////////////////////////////////////////////////////
 void City::cycle_turn()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // TODO: Make tile yields go up based on tech-level
-
   Require(m_population > 0,
           "This city has no people and should have been deleted");
+
+  Engine& engine = Engine::instance();
+  World& world = engine.world();
 
   // Gather resources based on nearby worked tiles. At this time, cities will
   // only be able to harvest adjacent tiles.
 
   // Evaluate nearby tiles, put in to sorted lists (best-to-worst) for each
   // of the two yield types
-  unsigned row_loc = m_city_location.row;
-  unsigned col_loc = m_city_location.col;
+  const unsigned row_loc = m_location.row;
+  const unsigned col_loc = m_location.col;
   std::list<WorldTile*> food_tiles, prod_tiles; // sorted highest to lowest
   for (int row_delta = -1; row_delta <= 1; ++row_delta) {
     for (int col_delta = -1; col_delta <= 1; ++col_delta) {
       Location loc_delta(row_loc + row_delta, col_loc + col_delta);
-      if (m_world.in_bounds(loc_delta)) {
-        WorldTile& tile = m_world.get_tile(loc_delta);
+      if (world.in_bounds(loc_delta)) {
+        WorldTile& tile = world.get_tile(loc_delta);
         if (!tile.worked()) {
           if (tile.yield().m_food > 0) {
             ordered_insert(food_tiles, tile);
@@ -86,7 +145,8 @@ void City::cycle_turn()
   }
 
   // Remaining workers are specialists that contribute production
-  prod_gathered += num_workers * PROD_FROM_SPECIALIST;
+  prod_gathered +=
+    num_workers * PROD_FROM_SPECIALIST * engine.ai_player().tech_yield_multiplier();
 
   // Accumulate production
   m_production += prod_gathered;
@@ -98,36 +158,137 @@ void City::cycle_turn()
   // with a system where the AI chooses to start building something and
   // all production points go to that thing until it is finished (a la civ).
 
+  // First, we need to decide what production item we should be saving
+  // up for. Note that the AI will *not* build a cheaper item that is of
+  // lower priority if it cannot afford the highest priority item. It will
+  // always save-up for the highest priority.
+
   // We want some of our workers doing something other than just
-  // collecting food.  If we are having to dedicate our workforce to
-  // food, we probably need better food infrastructure. By putting this
-  // first, we are giving it the highest priority.
-  float pct_workers_on_food =
-    static_cast<float>(num_workers_used_for_food) / m_rank;
-  float expected_production = m_rank * EXPECTED_PROD_PER_SIZE;
-  if (pct_workers_on_food > TOO_MANY_FOOD_WORKDERS) {
-    for (std::list<WorldTile*>::iterator itr = food_tiles.begin();
-         itr != food_tiles.end();
-         ++itr) {
-      FoodTile* food_tile = dynamic_cast<FoodTile*>(*itr);
-      if (food_tile != NULL) {
-        try_to_build_infra(*food_tile);
+  // collecting food. If we are having to dedicate our workforce to
+  // food, we probably need better food infrastructure. We need to verify
+  // that there are nearby food tiles that we can enhance.
+  bool build_food_infra = false;
+  FoodTile* food_tile = NULL;
+  {
+    float pct_workers_on_food =
+      static_cast<float>(num_workers_used_for_food) / m_rank;
+    if (pct_workers_on_food > TOO_MANY_FOOD_WORKERS ||
+        food_gathered < req_food) {
+      for (std::list<WorldTile*>::iterator itr = food_tiles.begin();
+           itr != food_tiles.end();
+           ++itr) {
+        food_tile = dynamic_cast<FoodTile*>(*itr);
+        if (food_tile != NULL &&
+            (food_tile->infra_level() < LandTile::LAND_TILE_MAX_INFRA)) {
+          build_food_infra = true;
+          break;
+        }
       }
     }
   }
-  // See if we want to build any production infrastructure
-  else if (prod_gathered < expected_production) {
+
+  // We want a healthy level of production from this city if possible. We
+  // need to verify that there are nearby production tiles that we can
+  // enhance.
+  bool build_prod_infra = false;
+  LandTile* prod_tile = NULL;
+  {
+    if (prod_gathered < PROD_BEFORE_SETTLER) {
+      for (std::list<WorldTile*>::iterator itr = prod_tiles.begin();
+           itr != prod_tiles.end();
+           ++itr) {
+        prod_tile = dynamic_cast<LandTile*>(*itr);
+        Require(prod_tile != NULL, "Production from a non-land tile?");
+        if (prod_tile->infra_level() < LandTile::LAND_TILE_MAX_INFRA) {
+          build_prod_infra = true;
+          break;
+        }
+      }
+    }
+  }
+
+  // We want to expand with settlers once a city has become large enough
+  bool build_settler = false;
+  Location settler_loc;
+  {
+    // Check if building a settler is appropriate. New cities must be
+    // "adjacent" to the city that created the settler.
+    const int max_distance = 3;
+    const int min_distance = 2;
+    float heuristic_of_best_loc_so_far = 0.0;
+    for (int row_delta = -max_distance; row_delta <= max_distance; ++row_delta) {
+      for (int col_delta = -max_distance; col_delta <= max_distance; ++col_delta) {
+        Location loc_delta(row_loc + row_delta, col_loc + col_delta);
+
+        // Check if this is a valid city loc
+        if (world.in_bounds(loc_delta) &&
+            world.get_tile(loc_delta).supports_city() &&
+            !is_within_distance_of_any_city(loc_delta, min_distance - 1)) {
+
+          float heuristic = compute_city_loc_heuristic(loc_delta);
+          if (heuristic > heuristic_of_best_loc_so_far) {
+            settler_loc = loc_delta;
+            heuristic_of_best_loc_so_far = heuristic;
+            build_settler = true;
+          }
+        }
+      }
+    }
+  }
+
+  // We want a high level of production from this city if possible. We
+  // need to verify that there are nearby production tiles that we can
+  // enhance.
+  bool fallback_build_prod_infra = false;
+  {
     for (std::list<WorldTile*>::iterator itr = prod_tiles.begin();
          itr != prod_tiles.end();
          ++itr) {
-      LandTile* land_tile = dynamic_cast<LandTile*>(*itr);
-      Require(land_tile != NULL, "Production from a non-land tile?");
-      try_to_build_infra(*land_tile);
+      prod_tile = dynamic_cast<LandTile*>(*itr);
+      Require(prod_tile != NULL, "Production from a non-land tile?");
+      if (prod_tile->infra_level() < LandTile::LAND_TILE_MAX_INFRA) {
+        fallback_build_prod_infra = true;
+        break;
+      }
+    }
+  }
+
+
+  // Building defenses is always a decent option. Note that there is no upper
+  // limit on the amount of defense a city can build.
+  bool build_defenses = true;
+
+  // Now we actually try to build stuff. The order in which we check the bools
+  // defines the priorities of the items.
+  if (build_food_infra) {
+    Require(food_tile != NULL, "Error during food infra check");
+    build_infra(*food_tile);
+  }
+  else if (build_prod_infra) {
+    Require(prod_tile != NULL, "Error during prod infra check");
+    build_infra(*prod_tile);
+  }
+  else if (build_settler) {
+    if (m_production >= SETTLER_PROD_COST) {
+      world.place_city(settler_loc);
+      m_production -= SETTLER_PROD_COST;
+    }
+  }
+  else if (fallback_build_prod_infra) {
+    Require(prod_tile != NULL, "Error during fallback prod infra check");
+    build_infra(*prod_tile);
+  }
+  else if (build_defenses) {
+    // No settler expansion is possible, build city defenses. This is the
+    // lowest priority item to build.
+    unsigned cost = (m_defense_level + 1) * CITY_DEF_PROD_COST;
+    if (m_production >= cost) {
+      ++m_defense_level;
+      m_production -= cost;
     }
   }
   else {
-    // TODO: We're good as far as food and production, make a settler or
-    // city defenses.
+    Require(false, "Nothing worth building?");
   }
 
   // Handle population growth
@@ -205,18 +366,17 @@ void City::ordered_insert(std::list<WorldTile*>& tile_list,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool City::try_to_build_infra(LandTile& land_tile)
+bool City::build_infra(LandTile& land_tile)
 ///////////////////////////////////////////////////////////////////////////////
 {
   unsigned infra_level = land_tile.infra_level();
-  if (infra_level < LandTile::LAND_TILE_MAX_INFRA) {
-    unsigned next_infra_level = infra_level + 1;
-    float prod_cost = next_infra_level * INFRA_PROD_COST;
-    if (prod_cost < m_production) {
-      m_production -= prod_cost;
-      land_tile.build_infra();
-      return true;
-    }
+  Require(infra_level < LandTile::LAND_TILE_MAX_INFRA, "Error in build eval");
+  unsigned next_infra_level = infra_level + 1;
+  float prod_cost = next_infra_level * INFRA_PROD_COST;
+  if (prod_cost < m_production) {
+    m_production -= prod_cost;
+    land_tile.build_infra();
+    return true;
   }
   return false;
 }

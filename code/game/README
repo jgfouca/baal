@@ -256,9 +256,10 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
     is exposed?
   * Documentation
   * No magic numbers
+* Make food req dependent on rank, not pop?
+* Need tracing infrastructure
 * Seasons need to affect atmosphere
 * Start to fill in Spell implementations
-* Need at least rudimentary PlayerAI so that real games can be tested.
 * Map editor, map-file format defined, map-file loader
 * Need much more unit-testing
 * Use more typedefs for scalar properties?

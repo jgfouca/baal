@@ -16,6 +16,8 @@ Configuration& Configuration::instance()
 Configuration::Configuration()
 ///////////////////////////////////////////////////////////////////////////////
   : m_interface_config(UNSET),
-    m_world_config(UNSET)
+    m_world_config(UNSET),
+    m_player_name(UNSET),
+    m_initialized(false)
 {
 }

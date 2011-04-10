@@ -6,10 +6,9 @@
 using namespace baal;
 
 ///////////////////////////////////////////////////////////////////////////////
-PlayerAI::PlayerAI(Engine& engine)
+PlayerAI::PlayerAI()
 ///////////////////////////////////////////////////////////////////////////////
-  : m_engine(engine),
-    m_tech_level(STARTING_TECH_LEVEL),
+  : m_tech_level(STARTING_TECH_LEVEL),
     m_tech_points(0),
     m_next_tech_level_cost(FIRST_TECH_LEVEL_COST),
     m_population(0)
@@ -19,16 +18,16 @@ PlayerAI::PlayerAI(Engine& engine)
 void PlayerAI::cycle_turn()
 ///////////////////////////////////////////////////////////////////////////////
 {
+  Engine& engine = Engine::instance();
+
   // Compute population and manage cities
   m_population = 0;
-  const World& world = m_engine.world();
-  for (unsigned row = 0; row < world.height(); ++row) {
-    for (unsigned col = 0; col < world.width(); ++col) {
-      City* city = world.get_tile(Location(row, col)).city();
-      if (city) {
-        m_population += city->population();
-      }
-    }
+  const World& world = engine.world();
+  const std::vector<City*>& cities = world.cities();
+  for (std::vector<City*>::const_iterator
+       itr = cities.begin(); itr != cities.end(); ++itr) {
+    City* city = *itr;
+    m_population += city->population();
   }
   Require(m_population > 0, "This map has no human presence!");
 

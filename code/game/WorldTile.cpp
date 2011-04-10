@@ -1,8 +1,11 @@
 #include "WorldTile.hpp"
+#include "World.hpp"
 #include "City.hpp"
 #include "BaalExceptions.hpp"
 #include "Geology.hpp"
 #include "Weather.hpp"
+#include "Engine.hpp"
+#include "PlayerAI.hpp"
 
 #include <iomanip>
 
@@ -166,6 +169,13 @@ void OceanTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
   m_surface_temp = (m_atmosphere.temperature() + m_surface_temp) / 2;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+Yield OceanTile::yield() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  return m_base_yield * Engine::instance().ai_player().tech_yield_multiplier();
+}
+
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -223,7 +233,7 @@ void LandTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
 void LandTile::build_infra()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  RequireUser(m_infra_level < LAND_TILE_MAX_INFRA, "Infra is maxed");
+  Require(m_infra_level < LAND_TILE_MAX_INFRA, "Infra is maxed");
 
   m_infra_level++;
 }
@@ -236,7 +246,8 @@ Yield LandTile::yield() const
 
   return
     m_base_yield * // base
-    ( m_infra_level ? (2 * m_infra_level) : 1 ) * // infra multiplier
+    (1 + m_infra_level) * // infra multiplier
+    Engine::instance().ai_player().tech_yield_multiplier() * // tech multiplier
     m_hp; // damaged tiles yield less
 }
 
@@ -244,7 +255,8 @@ Yield LandTile::yield() const
 void LandTile::place_city(City& city)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  RequireUser(m_city == NULL, "Tile already had city: " << city.name());
+  Require(supports_city(), "Tile does not support cities");
+  Require(m_city == NULL, "Tile already had city: " << city.name());
   m_city = &city;
 }
 
@@ -253,8 +265,6 @@ void LandTile::remove_city()
 ///////////////////////////////////////////////////////////////////////////////
 {
   Require(m_city != NULL, "Erroneous call to remove_city");
-
-  delete m_city;
   m_city = NULL;
 }
 

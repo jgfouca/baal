@@ -23,6 +23,8 @@ class Configuration
    */
   static Configuration& instance();
 
+  bool initialized() const { return m_initialized; }
+
   // Getters
 
   const std::string& get_interface_config() const
@@ -54,6 +56,9 @@ class Configuration
   std::string m_interface_config;
   std::string m_world_config;
   std::string m_player_name;
+
+  // Member to denote that configuration object has been initialized
+  bool m_initialized;
 
   // Any modifier/setter of Configuration has to be a friend
   friend bool parse_args(int argc, char** argv);

@@ -70,9 +70,10 @@ void HelpCommand::init(const std::vector<std::string>& args)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void HelpCommand::apply(Engine& engine) const
+void HelpCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
+  Engine& engine = Engine::instance();
   const std::map<std::string, Command*>& cmd_map =
     CommandFactory::instance().m_cmd_map;
 
@@ -82,7 +83,7 @@ void HelpCommand::apply(Engine& engine) const
          itr = cmd_map.begin();
          itr != cmd_map.end();
          ++itr) {
-      help_msg += itr->second->help(engine) + "\n\n";
+      help_msg += itr->second->help() + "\n\n";
     }
     engine.interface().help(help_msg);
   }
@@ -90,12 +91,12 @@ void HelpCommand::apply(Engine& engine) const
     std::map<std::string, Command*>::const_iterator
       itr = cmd_map.find(m_arg);
     Require(itr != cmd_map.end(), "Command " << m_arg << " missing from map");
-    engine.interface().help(itr->second->help(engine));
+    engine.interface().help(itr->second->help());
   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string HelpCommand::help(const Engine& engine) const
+std::string HelpCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   return create_help_str(this,
@@ -114,14 +115,14 @@ void EndTurnCommand::init(const std::vector<std::string>& args)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void EndTurnCommand::apply(Engine& engine) const
+void EndTurnCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  engine.interface().end_turn();
+  Engine::instance().interface().end_turn();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string EndTurnCommand::help(const Engine& engine) const
+std::string EndTurnCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   return create_help_str(this,
@@ -140,15 +141,16 @@ void QuitCommand::init(const std::vector<std::string>& args)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void QuitCommand::apply(Engine& engine) const
+void QuitCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
+  Engine& engine = Engine::instance();
   engine.interface().end_turn();
   engine.quit();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string QuitCommand::help(const Engine& engine) const
+std::string QuitCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   return create_help_str(this,
@@ -192,14 +194,14 @@ void SaveCommand::init(const std::vector<std::string>& args)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void SaveCommand::apply(Engine& engine) const
+void SaveCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   // TODO
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string SaveCommand::help(const Engine& engine) const
+std::string SaveCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   return create_help_str(this,
@@ -235,9 +237,10 @@ void SpellCommand::init(const std::vector<std::string>& args)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void SpellCommand::apply(Engine& engine) const
+void SpellCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
+  Engine& engine = Engine::instance();
   World&  world  = engine.world();
   Player& player = engine.player();
 
@@ -260,7 +263,7 @@ void SpellCommand::apply(Engine& engine) const
   player.verify_cast(*spell);
 
   // Verify that it makes sense to cast this exact spell (can throw)
-  spell->verify_apply(engine);
+  spell->verify_apply();
 
   // These last two operations need to be atomic, neither should ever throw
   // a user error.
@@ -270,7 +273,7 @@ void SpellCommand::apply(Engine& engine) const
     player.cast(*spell);
 
     // Apply the spell to the world
-    unsigned exp = spell->apply(engine);
+    unsigned exp = spell->apply();
 
     // Give player experience
     player.gain_exp(exp);
@@ -282,9 +285,10 @@ void SpellCommand::apply(Engine& engine) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string SpellCommand::help(const Engine& engine) const
+std::string SpellCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
+  Engine& engine = Engine::instance();
   const TalentTree& talents = engine.player().talents();
 
   std::vector<std::pair<std::string, unsigned> > castable_spells;
@@ -324,10 +328,10 @@ void LearnCommand::init(const std::vector<std::string>& args)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void LearnCommand::apply(Engine& engine) const
+void LearnCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Player& player = engine.player();
+  Player& player = Engine::instance().player();
   Location dummy;
 
   // We need to auto_ptr since learn can throw exceptions.
@@ -342,13 +346,14 @@ void LearnCommand::apply(Engine& engine) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string LearnCommand::help(const Engine& engine) const
+std::string LearnCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  const TalentTree& talents = engine.player().talents();
+  Player& player = Engine::instance().player();
+  const TalentTree& talents = player.talents();
 
   std::vector<std::pair<std::string, unsigned> > learnable_spells;
-  talents.query_all_learnable_spells(learnable_spells, engine.player());
+  talents.query_all_learnable_spells(learnable_spells, player);
 
   std::string help_str =
 "<spell-name> <level>\n"
@@ -379,16 +384,16 @@ void DrawCommand::init(const std::vector<std::string>& args)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void DrawCommand::apply(Engine& engine) const
+void DrawCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   DrawMode new_draw_mode = Drawable::parse_draw_mode(s_draw_mode);
   Drawable::set_draw_mode(new_draw_mode);
-  engine.interface().draw(); // redraw
+  Engine::instance().interface().draw(); // redraw
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string DrawCommand::help(const Engine& engine) const
+std::string DrawCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   // TODO - Needs to be decoupled from exact contents of drawable enum. IE

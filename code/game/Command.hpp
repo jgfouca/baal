@@ -11,8 +11,6 @@
 
 namespace baal {
 
-class Engine;
-
 /**
  * A Command is the entity by which a player affects the game state.
  * Command apply themselves immediately upon creation.
@@ -22,9 +20,9 @@ class Command
  public:
   virtual void init(const std::vector<std::string>& args) = 0;
 
-  virtual void apply(Engine& engine) const = 0;
+  virtual void apply() const = 0;
 
-  virtual std::string help(const Engine& engine) const = 0;
+  virtual std::string help() const = 0;
 };
 
 /**
@@ -37,9 +35,9 @@ class HelpCommand : public Command
  public:
   virtual void init(const std::vector<std::string>& args);
 
-  virtual void apply(Engine& engine) const;
+  virtual void apply() const;
 
-  virtual std::string help(const Engine& engine) const;
+  virtual std::string help() const;
 
  private:
   std::string m_arg;
@@ -55,9 +53,9 @@ class SaveCommand : public Command
  public:
   virtual void init(const std::vector<std::string>& args);
 
-  virtual void apply(Engine& engine) const;
+  virtual void apply() const;
 
-  virtual std::string help(const Engine& engine) const;
+  virtual std::string help() const;
 
  private:
   std::string m_arg;
@@ -73,9 +71,9 @@ class EndTurnCommand : public Command
  public:
   virtual void init(const std::vector<std::string>& args);
 
-  virtual void apply(Engine& engine) const;
+  virtual void apply() const;
 
-  virtual std::string help(const Engine& engine) const;
+  virtual std::string help() const;
 };
 
 /**
@@ -88,9 +86,9 @@ class QuitCommand : public Command
  public:
   virtual void init(const std::vector<std::string>& args);
 
-  virtual void apply(Engine& engine) const;
+  virtual void apply() const;
 
-  virtual std::string help(const Engine& engine) const;
+  virtual std::string help() const;
 };
 
 /**
@@ -103,9 +101,9 @@ class SpellCommand : public Command
  public:
   virtual void init(const std::vector<std::string>& args);
 
-  virtual void apply(Engine& engine) const;
+  virtual void apply() const;
 
-  virtual std::string help(const Engine& engine) const;
+  virtual std::string help() const;
 
  private:
   std::string m_spell_name;
@@ -123,9 +121,9 @@ class LearnCommand : public Command
  public:
   virtual void init(const std::vector<std::string>& args);
 
-  virtual void apply(Engine& engine) const;
+  virtual void apply() const;
 
-  virtual std::string help(const Engine& engine) const;
+  virtual std::string help() const;
 
  private:
   std::string m_spell_name;
@@ -142,9 +140,9 @@ class DrawCommand : public Command
  public:
   virtual void init(const std::vector<std::string>& args);
 
-  virtual void apply(Engine& engine) const;
+  virtual void apply() const;
 
-  virtual std::string help(const Engine& engine) const;
+  virtual std::string help() const;
 
  private:
   std::string s_draw_mode;

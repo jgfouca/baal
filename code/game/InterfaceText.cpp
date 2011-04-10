@@ -14,11 +14,10 @@
 using namespace baal;
 
 ///////////////////////////////////////////////////////////////////////////////
-InterfaceText::InterfaceText(Engine& engine,
-                             std::ostream& out,
+InterfaceText::InterfaceText(std::ostream& out,
                              std::istream& in)
 ///////////////////////////////////////////////////////////////////////////////
- : Interface(engine),
+ : Interface(),
    m_ostream(out),
    m_istream(in)
 {}
@@ -27,23 +26,25 @@ InterfaceText::InterfaceText(Engine& engine,
 void InterfaceText::draw()
 ///////////////////////////////////////////////////////////////////////////////
 {
+  Engine& engine = Engine::instance();
+
   // DESIGN: Should "drawable" items know how to draw themselves? That might
   // reduce coupling between those classes and the interface classes.
 
   clear_screen();
 
   // Draw world
-  m_engine.world().draw_text(m_ostream);
+  engine.world().draw_text(m_ostream);
 
   m_ostream << "\n";
 
   // Draw Player
-  m_engine.player().draw_text(m_ostream);
+  engine.player().draw_text(m_ostream);
 
   m_ostream << "\n";
 
   // Draw AI Player
-  m_engine.ai_player().draw_text(m_ostream);
+  engine.ai_player().draw_text(m_ostream);
 
   m_ostream.flush();
 }
@@ -66,6 +67,8 @@ void InterfaceText::spell_report(const std::string& report)
 void InterfaceText::interact()
 ///////////////////////////////////////////////////////////////////////////////
 {
+  Engine& engine = Engine::instance();
+
   // Get handle to command factory
   const CommandFactory& cmd_factory = CommandFactory::instance();
 
@@ -80,7 +83,7 @@ void InterfaceText::interact()
     std::string command_str;
     if (!std::getline(m_istream, command_str)) {
       // User ctrl-d
-      m_engine.quit();
+      engine.quit();
       break;
     }
     else if (command_str.empty()) {
@@ -89,11 +92,25 @@ void InterfaceText::interact()
 
     try {
       const Command& command = cmd_factory.parse_command(command_str);
-      command.apply(m_engine);
+      command.apply();
     }
     catch (UserError& error) {
       m_ostream << "ERROR: " << error.what() << std::endl;
       m_ostream << "\nType: 'help [command]' for assistence" << std::endl;
     }
   }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void InterfaceText::human_wins()
+///////////////////////////////////////////////////////////////////////////////
+{
+  m_ostream << BOLD_COLOR << RED << "YOU'RE WINNAR!!" << std::endl;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void InterfaceText::ai_wins()
+///////////////////////////////////////////////////////////////////////////////
+{
+  m_ostream << BOLD_COLOR << RED << "YOU'RE LOZER!!" << std::endl;
 }

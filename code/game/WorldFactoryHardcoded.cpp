@@ -116,7 +116,7 @@ World& WorldFactoryHardcoded::generate_world_1()
                                      *new Transform(2.0));
   world.m_tiles[4][2] = new LushTile(*new Climate(70, 30, Wind(10, SSE)),
                                      *new Transform(2.0));
-  dynamic_cast<LandTile*>(world.m_tiles[4][2])->place_city(*new City("Capital", world, Location(4, 2)));
+  world.place_city("Capital", Location(4, 2));
   world.m_tiles[4][3] = new OceanTile(1000,
                                       *new Climate(80, 45, Wind(10, SE)),
                                       *new Subducting(1.0));

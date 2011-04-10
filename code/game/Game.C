@@ -94,6 +94,8 @@ bool parse_args(int argc, char** argv)
     }
   }
 
+  config.m_initialized = true;
+
   return true;
 }
 
@@ -123,7 +125,7 @@ int main(int argc, char** argv)
   // Parse args
   if (baal::parse_args(argc, argv)) {
     // Begin game, errors during construction are probably user-errors
-    baal::Engine engine;
+    baal::Engine& engine = baal::Engine::instance();
     engine.play();
   }
 

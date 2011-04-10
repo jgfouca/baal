@@ -33,6 +33,20 @@ World::~World()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+Location World::get_location(const WorldTile& tile) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  for (unsigned row = 0; row < height(); ++row) {
+    for (unsigned col = 0; col < width(); ++col) {
+      if (m_tiles[row][col] == &tile) {
+        return Location(row, col);
+      }
+    }
+  }
+  Require(false, "Failed to find tile");
+  return Location();
+}
+///////////////////////////////////////////////////////////////////////////////
 void World::draw_text(std::ostream& out) const
 ///////////////////////////////////////////////////////////////////////////////
 {
@@ -98,14 +112,12 @@ void World::cycle_turn()
   // Phase 1 of World turn-cycle: Cities are cycled. We want to do this first
   // so that cities feel the "pain" of baal's attacks; otherwise, the tiles
   // would have a a chance to heal before they were harvested, lessening the
-  // effect of Baal's attacks.
-  for (unsigned row = 0; row < height(); ++row) {
-    for (unsigned col = 0; col < width(); ++col) {
-      City* city = m_tiles[row][col]->city();
-      if (city) {
-        city->cycle_turn();
-      }
-    }
+  // effect of Baal's attacks. We use numeric iterators here because the
+  // cycling of cities can produce new cities;
+  unsigned num_cities_at_start = m_cities.size();
+  for (unsigned i = 0; i < num_cities_at_start; ++i) {
+    City* city = m_cities[i];;
+    city->cycle_turn();
   }
 
   // Phase 2: Generate anomalies.
@@ -150,6 +162,41 @@ void World::cycle_turn()
 
   // Phase 4: Increment time
   ++m_time;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void World::place_city(const std::string& name, const Location& location)
+///////////////////////////////////////////////////////////////////////////////
+{
+  City* new_city = new City(name, location);
+  WorldTile& tile = get_tile(location);
+  dynamic_cast<LandTile&>(tile).place_city(*new_city);
+  m_cities.push_back(new_city);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void World::place_city(const Location& location)
+///////////////////////////////////////////////////////////////////////////////
+{
+  std::ostringstream out;
+  out << "City " << m_cities.size() + 1;
+  place_city(out.str(), location);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void World::remove_city(City& city)
+///////////////////////////////////////////////////////////////////////////////
+{
+  std::vector<City*>::iterator itr = std::find(m_cities.begin(),
+                                               m_cities.end(),
+                                               &city);
+  Require(itr != m_cities.end(),
+          "City '" << city.name() << "' not in m_cities");
+  m_cities.erase(itr);
+
+  WorldTile& tile = get_tile(city.location());
+  dynamic_cast<LandTile&>(tile).remove_city();
+  delete &city;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

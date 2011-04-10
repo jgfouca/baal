@@ -56,7 +56,7 @@ World& WorldFactoryFromFile::load()
       RequireUser(landtile != NULL,
                   "Tried to place city at " << row << ", " << col <<
                   "; which is not a landtile");
-      landtile->place_city(*new City(name, world, Location(row, col)));
+      world.place_city(name, Location(row, col));
     }
     m_curr_node = m_curr_node->next;
   }

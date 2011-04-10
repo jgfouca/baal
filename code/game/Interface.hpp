@@ -17,9 +17,8 @@ class Engine;
 class Interface
 {
  public:
-  Interface(Engine& engine)
-    : m_engine(engine),
-      m_end_turn(false)
+  Interface()
+    : m_end_turn(false)
   {}
 
   virtual void draw() = 0;
@@ -32,10 +31,12 @@ class Interface
 
   void end_turn() { m_end_turn = true; }
 
- protected:
-  Engine& m_engine;
-  bool m_end_turn;
+  virtual void human_wins() = 0;
 
+  virtual void ai_wins() = 0;
+
+ protected:
+  bool m_end_turn;
 };
 
 #define SPELL_REPORT(interface, msg) \

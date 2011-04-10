@@ -12,10 +12,7 @@ namespace baal {
 // We use this file to define all the spells. This will avoid
 // creation of lots of very small hpp/cpp files.
 
-class Engine;
-class LandTile;
 class City;
-class Interface;
 
 /**
  * Constructor will initialize all the static prereq members in
@@ -63,10 +60,10 @@ class Spell
   // Verify that the user's attempt to cast this spell is sane.
   // This method should throw user errors so that apply doesn't
   // have to.
-  virtual void verify_apply(Engine& engine) const = 0;
+  virtual void verify_apply() const = 0;
 
   // Apply should NEVER throw a User exception
-  virtual unsigned apply(Engine& engine) const = 0;
+  virtual unsigned apply() const = 0;
 
   virtual unsigned cost() const
   { return m_base_cost + (m_spell_level - 1) * m_cost_increment; }
@@ -91,9 +88,7 @@ class Spell
 
   // Internal methods
 
-  void kill(Interface& interface,
-            LandTile& tile,
-            City& city,
+  void kill(City& city,
             unsigned num_killed) const;
 };
 
@@ -120,8 +115,8 @@ class Hot : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const;
-  virtual unsigned apply(Engine& engine) const;
+  virtual void verify_apply() const;
+  virtual unsigned apply() const;
 
   static const unsigned BASE_COST = 50;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -152,8 +147,8 @@ class Cold : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const;
-  virtual unsigned apply(Engine& engine) const;
+  virtual void verify_apply() const;
+  virtual unsigned apply() const;
 
   static const unsigned BASE_COST = 50;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -185,8 +180,8 @@ class Harm : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const;
-  virtual unsigned apply(Engine& engine) const;
+  virtual void verify_apply() const;
+  virtual unsigned apply() const;
 
   static const unsigned BASE_COST = 50;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -214,8 +209,8 @@ class WindSpell : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 50;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -244,8 +239,8 @@ class Fire : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const;
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const;
 
   static const unsigned BASE_COST = 100;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -274,8 +269,8 @@ class Tstorm : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 100;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -302,8 +297,8 @@ class Snow : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 100;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -331,8 +326,8 @@ class Avalanche : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 200;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -360,8 +355,8 @@ class Flood : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 200;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -389,8 +384,8 @@ class Dry : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 200;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -418,8 +413,8 @@ class Blizzard : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 200;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -448,8 +443,8 @@ class Tornado : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 200;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -477,8 +472,8 @@ class Heatwave : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 400;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -506,8 +501,8 @@ class Coldwave : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 400;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -535,8 +530,8 @@ class Drought : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 400;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -564,8 +559,8 @@ class Monsoon : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 400;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -592,8 +587,8 @@ class Disease : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 800;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -621,8 +616,8 @@ class Earthquake : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 800;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -652,8 +647,8 @@ class Hurricane : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 800;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -680,8 +675,8 @@ class Plague : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 1600;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -709,8 +704,8 @@ class Volcano : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 1600;
   static const unsigned COST_INC = BASE_COST / 3;
@@ -737,8 +732,8 @@ class Asteroid : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply(Engine& engine) const { /*TODO*/ }
-  virtual unsigned apply(Engine& engine) const { return 0; /*TODO*/ }
+  virtual void verify_apply() const { /*TODO*/ }
+  virtual unsigned apply() const { return 0; /*TODO*/ }
 
   static const unsigned BASE_COST = 3200;
   static const unsigned COST_INC = BASE_COST / 3;

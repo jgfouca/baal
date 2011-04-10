@@ -6,6 +6,7 @@
 #include "BaalCommon.hpp"
 #include "Drawable.hpp"
 #include "Time.hpp"
+#include "City.hpp"
 
 #include <vector>
 #include <iosfwd>
@@ -13,7 +14,6 @@
 namespace baal {
 
 class Anomaly;
-class City;
 
 /**
  * Represents the world.
@@ -28,7 +28,7 @@ class World : public Drawable
   void cycle_turn();
 
   bool in_bounds(const Location& location) const {
-    return location.row < m_height || location.col < m_width;
+    return location.row < m_height && location.col < m_width;
   }
 
   // Getters
@@ -51,13 +51,28 @@ class World : public Drawable
     return *(m_tiles[location.row][location.col]);
   }
 
-  virtual void draw_text(std::ostream& out) const;
-
-  virtual void draw_graphics() const { /* TODO */ }
+  // Very expensive, use sparingly
+  Location get_location(const WorldTile& tile) const;
 
   unsigned width() const { return m_width; }
 
   unsigned height() const { return m_height; }
+
+  const std::vector<City*>& cities() const { return m_cities; }
+
+  // Display-related
+
+  virtual void draw_text(std::ostream& out) const;
+
+  virtual void draw_graphics() const { /* TODO */ }
+
+  // Modification API
+
+  void place_city(const std::string& name, const Location& location);
+
+  void place_city(const Location& location);
+
+  void remove_city(City& city);
 
  private:
 
@@ -70,6 +85,7 @@ class World : public Drawable
   std::vector<std::vector<WorldTile*> > m_tiles;
   Time m_time;
   std::vector<const Anomaly*> m_recent_anomalies;
+  std::vector<City*> m_cities;
 
   // Friend factories
   friend class WorldFactoryGenerated;

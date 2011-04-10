@@ -14,7 +14,7 @@ const std::string InterfaceFactory::GRAPHICAL_INTERFACE = "g";
 const std::string InterfaceFactory::DEFAULT_INTERFACE   = TEXT_INTERFACE;
 
 ///////////////////////////////////////////////////////////////////////////////
-Interface& InterfaceFactory::create(Engine& engine)
+Interface& InterfaceFactory::create()
 ///////////////////////////////////////////////////////////////////////////////
 {
   // Get user's choice of interface
@@ -26,10 +26,10 @@ Interface& InterfaceFactory::create(Engine& engine)
 
   // Create and return the desired interface
   if (interface_config == TEXT_INTERFACE) {
-    return *(new InterfaceText(engine, std::cout, std::cin));
+    return *(new InterfaceText(std::cout, std::cin));
   }
   //else if (interface_config == GRAPHICAL_INTERFACE) {
-  //  return *(InterfaceGraphical::create(engine));
+  //  return *(InterfaceGraphical::create());
   //}
   else {
     RequireUser(false, "Invalid choice of interface: " << interface_config);

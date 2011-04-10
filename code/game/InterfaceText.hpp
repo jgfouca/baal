@@ -13,7 +13,7 @@ namespace baal {
 class InterfaceText : public Interface
 {
  public:
-  InterfaceText(Engine& engine, std::ostream& out, std::istream& in);
+  InterfaceText(std::ostream& out, std::istream& in);
 
   virtual void draw();
 
@@ -22,6 +22,10 @@ class InterfaceText : public Interface
   virtual void help(const std::string& helpmsg);
 
   virtual void spell_report(const std::string& report);
+
+  virtual void human_wins();
+
+  virtual void ai_wins();
 
  private:
   std::ostream& m_ostream;

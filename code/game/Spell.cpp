@@ -127,18 +127,19 @@ Spell::Spell(SpellFactory::SpellName name,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void Spell::kill(Interface& interface,
-                 LandTile& tile,
-                 City& city,
+void Spell::kill(City& city,
                  unsigned num_killed) const
 ///////////////////////////////////////////////////////////////////////////////
 {
+  Engine& engine = Engine::instance();
+  Interface& interface = engine.interface();
+
   city.kill(num_killed);
   SPELL_REPORT(interface, m_name << " has killed: " << num_killed);
 
   if (city.population() == 0) {
-    tile.remove_city();
     SPELL_REPORT(interface, m_name << " has obliterated city: " << city.name());
+    engine.world().remove_city(city);
   }
 }
 
@@ -159,16 +160,17 @@ ostream& baal::operator<<(ostream& out, const Spell& spell)
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void Hot::verify_apply(Engine& engine) const
+void Hot::verify_apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   // no-op. This spell can be cast anywhere, anytime.
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned Hot::apply(Engine& engine) const
+unsigned Hot::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
+  Engine& engine       = Engine::instance();
   World& world         = engine.world();
   Interface& interface = engine.interface();
   WorldTile& tile      = world.get_tile(m_location);
@@ -220,7 +222,7 @@ unsigned Hot::apply(Engine& engine) const
     num_killed = pct_killed * city_pop;
 
     // Reduce city pop by kill-count
-    kill(interface, *food_tile, *city, num_killed);
+    kill(*city, num_killed);
   }
 
   return num_killed;
@@ -229,16 +231,17 @@ unsigned Hot::apply(Engine& engine) const
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void Cold::verify_apply(Engine& engine) const
+void Cold::verify_apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   // no-op. This spell can be cast anywhere, anytime.
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned Cold::apply(Engine& engine) const
+unsigned Cold::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
+  Engine& engine       = Engine::instance();
   World& world         = engine.world();
   Interface& interface = engine.interface();
   WorldTile& tile      = world.get_tile(m_location);
@@ -286,7 +289,7 @@ unsigned Cold::apply(Engine& engine) const
     num_killed = pct_killed * city_pop;
 
     // Reduce city pop by kill-count
-    kill(interface, *food_tile, *city, num_killed);
+    kill(*city, num_killed);
   }
 
   return num_killed;
@@ -295,12 +298,12 @@ unsigned Cold::apply(Engine& engine) const
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void Harm::verify_apply(Engine& engine) const
+void Harm::verify_apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   // This spell can only be cast on cities
 
-  WorldTile& tile = engine.world().get_tile(m_location);
+  WorldTile& tile = Engine::instance().world().get_tile(m_location);
 
   // Check for city
   City* city = tile.city();
@@ -308,11 +311,11 @@ void Harm::verify_apply(Engine& engine) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned Harm::apply(Engine& engine) const
+unsigned Harm::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
+  Engine& engine       = Engine::instance();
   World& world         = engine.world();
-  Interface& interface = engine.interface();
   PlayerAI& ai_player  = engine.ai_player();
   WorldTile& tile      = world.get_tile(m_location);
 
@@ -328,7 +331,7 @@ unsigned Harm::apply(Engine& engine) const
   num_killed = city_pop * pct_killed;
 
   // Reduce city pop by kill-count
-  kill(interface, dynamic_cast<LandTile&>(tile), *city, num_killed);
+  kill(*city, num_killed);
 
   return num_killed;
 }
@@ -336,13 +339,13 @@ unsigned Harm::apply(Engine& engine) const
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned Fire::apply(Engine& engine) const
+unsigned Fire::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   // TODO Fill in
   // Does not apply to oceans
 
-  World& world = engine.world();
+  World& world = Engine::instance().world();
   WorldTile& tile = world.get_tile(m_location);
   LandTile* tile_ptr = dynamic_cast<LandTile*>(&tile);
   Require(tile_ptr != NULL, "Can only cast fire on land tiles");

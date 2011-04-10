@@ -13,13 +13,18 @@ class PlayerAI;
  * facilitates interaction between objects by providing a way to get handles
  * to the other key objects. Finally, it manages the high-level flow of the
  * game.
+ *
+ * Design: To avoid the tedium of passing this class around everywhere,
+ * we've decided to make this class a singleton. The downside to this
+ * choice is that it makes relationships between the classes poorly
+ * defined since every class has access to each other.
  */
 class Engine
 {
  public:
-  Engine();
-
   ~Engine();
+
+  static Engine& instance();
 
   void play();
 
@@ -38,11 +43,17 @@ class Engine
   void quit() { m_quit = true; }
 
  private:
+  Engine();
+
   Interface& m_interface;
   World&     m_world;
   Player&    m_player;
   PlayerAI&  m_ai_player;
   bool       m_quit;
+
+  // Forbidden
+  Engine(const Engine&);
+  Engine& operator=(const Engine&);
 };
 
 }

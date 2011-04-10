@@ -79,6 +79,8 @@ class WorldTile : public Drawable
 
   void work();
 
+  virtual bool supports_city() const { return false; }
+
   // Land-related interface
 
   virtual unsigned infra_level() const { return 0; }
@@ -143,7 +145,7 @@ class OceanTile : public WorldTile
  public:
   OceanTile(unsigned depth, Climate& climate, Geology& geology);
 
-  virtual Yield yield() const { return m_base_yield; }
+  virtual Yield yield() const;
 
   virtual const char* color() const { return BLUE; }
 
@@ -196,21 +198,34 @@ class LandTile: public WorldTile
 
   virtual City* city() const { return m_city; }
 
+  virtual bool supports_city() const { return true; }
+
   void build_infra();
-
-  virtual void place_city(City& city);
-
-  void remove_city();
 
   static const unsigned LAND_TILE_MAX_INFRA  = 5;
   static const float LAND_TILE_RECOVERY_RATE = 0.10;
 
  protected:
+
+  // Internal methods
+
   void recover();
+
+  // Members
 
   float m_hp; // 0..1
   unsigned m_infra_level; // 0..MAX
   City* m_city; // valid to have no (NULL) city, so use ptr
+
+  // Friends interface
+
+  virtual void place_city(City& city);
+
+  void remove_city();
+
+  // Friends
+
+  friend class World;
 };
 
 /**
@@ -236,9 +251,11 @@ class MountainTile : public LandTile
 
   virtual unsigned snowpack() const { return m_snowpack; }
 
-  virtual void place_city(City& city);
+  virtual bool supports_city() const { return false; }
 
  protected:
+  virtual void place_city(City& city);
+
   unsigned m_elevation;
   unsigned m_snowpack; // in inches
 
