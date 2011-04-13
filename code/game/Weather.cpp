@@ -229,6 +229,7 @@ void Atmosphere::cycle_turn(const std::vector<const Anomaly*>& anomalies,
   m_dewpoint = compute_dewpoint();
 
   // TODO: Need to compute wind speed changes due to pressure
+  m_wind = m_climate.wind(season);
 }
 
 /*****************************************************************************/

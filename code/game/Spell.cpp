@@ -15,7 +15,7 @@ using namespace baal;
 SpellPrereq Hot::PREREQ;
 SpellPrereq Cold::PREREQ;
 SpellPrereq WindSpell::PREREQ;
-SpellPrereq Harm::PREREQ;
+SpellPrereq Infect::PREREQ;
 
 SpellPrereq Fire::PREREQ;
 SpellPrereq Tstorm::PREREQ;
@@ -51,7 +51,7 @@ SpellPrereqStaticInitializer static_prereq_init;
 SpellPrereqStaticInitializer::SpellPrereqStaticInitializer()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // Hot, Cold, Wind, Harm have no prereqs
+  // Hot, Cold, Wind, Infect have no prereqs
 
   Fire::PREREQ.m_min_player_level = 5;
   Fire::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::HOT, 1));
@@ -90,8 +90,7 @@ SpellPrereqStaticInitializer::SpellPrereqStaticInitializer()
   Monsoon::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::FLOOD, 1));
 
   Disease::PREREQ.m_min_player_level = 20;
-  Disease::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::HEATWAVE, 1));
-  Disease::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::COLDWAVE, 1));
+  Disease::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::INFECT, 1));
 
   Earthquake::PREREQ.m_min_player_level = 20;
 
@@ -144,10 +143,42 @@ void Spell::kill(City& city,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+unsigned Spell::destroy_infra(WorldTile& tile, unsigned max_destroyed) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  Engine& engine = Engine::instance();
+  Interface& interface = engine.interface();
+
+  LandTile& land_tile = dynamic_cast<LandTile&>(tile);
+  unsigned orig_infra = land_tile.infra_level();
+  unsigned num_destroyed = // Cannot destroy infra that's not there
+    (orig_infra < max_destroyed) ? orig_infra : max_destroyed;
+  land_tile.destroy_infra(num_destroyed);
+
+  SPELL_REPORT(interface,
+               m_name << " has destroyed " <<
+               num_destroyed << " levels of infrastructure");
+  return num_destroyed;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 ostream& Spell::operator<<(ostream& out) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   return out << m_name << '[' << m_spell_level << ']';
+}
+
+///////////////////////////////////////////////////////////////////////////////
+unsigned Spell::exp_for_destroyed_infra(unsigned num_destroyed)
+///////////////////////////////////////////////////////////////////////////////
+{
+  if (num_destroyed == 0) {
+    return 0;
+  }
+  else {
+    static const unsigned base_exp = 200;
+    return std::pow(2.0, num_destroyed) * base_exp;
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -175,6 +206,7 @@ unsigned Hot::apply() const
   Interface& interface = engine.interface();
   WorldTile& tile      = world.get_tile(m_location);
   Atmosphere& atmos    = tile.atmosphere();
+  PlayerAI& ai_player  = engine.ai_player();
 
   unsigned num_killed = 0;
 
@@ -218,7 +250,8 @@ unsigned Hot::apply() const
   if (city != NULL && new_temp > KILL_THRESHOLD) {
     unsigned city_pop = city->population();
     const float pct_killed =
-      std::sqrt(static_cast<float>(new_temp - KILL_THRESHOLD));
+      std::sqrt(static_cast<float>(new_temp - KILL_THRESHOLD)) / // base
+      ai_player.tech_level(); // tech penalty
     num_killed = pct_killed * city_pop;
 
     // Reduce city pop by kill-count
@@ -246,6 +279,7 @@ unsigned Cold::apply() const
   Interface& interface = engine.interface();
   WorldTile& tile      = world.get_tile(m_location);
   Atmosphere& atmos    = tile.atmosphere();
+  PlayerAI& ai_player  = engine.ai_player();
 
   unsigned num_killed = 0;
 
@@ -285,7 +319,8 @@ unsigned Cold::apply() const
   if (city != NULL && new_temp < KILL_THRESHOLD) {
     unsigned city_pop = city->population();
     const float pct_killed =
-      std::sqrt(static_cast<float>(KILL_THRESHOLD - new_temp));
+      std::sqrt(static_cast<float>(KILL_THRESHOLD - new_temp)) / // base
+      ai_player.tech_level(); // tech penalty
     num_killed = pct_killed * city_pop;
 
     // Reduce city pop by kill-count
@@ -298,7 +333,7 @@ unsigned Cold::apply() const
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void Harm::verify_apply() const
+void Infect::verify_apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   // This spell can only be cast on cities
@@ -311,13 +346,14 @@ void Harm::verify_apply() const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned Harm::apply() const
+unsigned Infect::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   Engine& engine       = Engine::instance();
   World& world         = engine.world();
   PlayerAI& ai_player  = engine.ai_player();
   WorldTile& tile      = world.get_tile(m_location);
+  Atmosphere& atmos    = tile.atmosphere();
 
   unsigned num_killed = 0;
 
@@ -325,15 +361,90 @@ unsigned Harm::apply() const
   City* city = tile.city();
   Require(city != NULL, "Verification did not catch NULL city");
 
+  // Calculate extreme temperature bonus
+  float extreme_temp_bonus = 1.0;
+  int curr_temp = atmos.temperature();
+  if (curr_temp < COLD_THRESHOLD) {
+    extreme_temp_bonus +=
+      (BONUS_PER_DEGREE_BEYOND_THRESHOLD * (COLD_THRESHOLD - curr_temp));
+  }
+  else if (curr_temp > WARM_THRESHOLD) {
+    extreme_temp_bonus +=
+      (BONUS_PER_DEGREE_BEYOND_THRESHOLD * (curr_temp - WARM_THRESHOLD));
+  }
+
+  // Calculate num killed
   unsigned city_pop = city->population();
   const float pct_killed =
-    (KILL_PCT_PER_LEVEL * m_spell_level) / ai_player.tech_level();
+    (KILL_PCT_PER_LEVEL * m_spell_level) * // base kill %
+    (1.0 + city->rank() * BONUS_PER_CITY_RANK) * // city rank bonus
+    (city->famine() ? FAMINE_BONUS : 1.0) * // famine bonus
+    extreme_temp_bonus / // extreme temp bonus (calculated above)
+    ai_player.tech_level(); // tech penalty
   num_killed = city_pop * pct_killed;
 
   // Reduce city pop by kill-count
   kill(*city, num_killed);
 
   return num_killed;
+}
+
+/*****************************************************************************/
+
+///////////////////////////////////////////////////////////////////////////////
+void WindSpell::verify_apply() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  // no-op. This spell can be cast anywhere, anytime.
+}
+
+///////////////////////////////////////////////////////////////////////////////
+unsigned WindSpell::apply() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  Engine& engine       = Engine::instance();
+  World& world         = engine.world();
+  Interface& interface = engine.interface();
+  WorldTile& tile      = world.get_tile(m_location);
+  Atmosphere& atmos    = tile.atmosphere();
+  PlayerAI& ai_player  = engine.ai_player();
+
+  unsigned num_killed = 0;
+  unsigned infra_destroyed = 0;
+
+  // Compute and apply new wind speed
+  Wind prior_wind = atmos.wind();
+  unsigned speedup = m_spell_level * MPH_PER_LEVEL;
+  Wind new_wind = prior_wind + speedup;
+  atmos.set_wind(new_wind);
+
+  // Wind can destroy infrastructure
+  if (tile.infra_level() > 0) {
+    unsigned damage_threshold = BASE_DAMAGE_THRESHOLD + ai_player.tech_level();
+    if (new_wind.m_speed > damage_threshold) {
+      unsigned max_infra_destroyed = 1 + ( (new_wind.m_speed - damage_threshold) /
+                                           MPH_PER_ADDITIONAL_INFRA_DEVASTATION );
+      infra_destroyed += destroy_infra(tile, max_infra_destroyed);
+    }
+  }
+  else {
+    // Check for the existance of a city
+    // This spell can kill if cast on a city and winds get high enough
+    City* city = tile.city();
+    if (city != NULL && new_wind.m_speed > KILL_THRESHOLD) {
+      unsigned city_pop = city->population();
+      const float pct_killed =
+        std::sqrt(static_cast<float>(new_wind.m_speed - KILL_THRESHOLD)) / // base
+        std::sqrt(ai_player.tech_level()) / // tech penalty
+        std::sqrt(city->defense()); // city-defense penalty
+      num_killed = pct_killed * city_pop;
+
+      // Reduce city pop by kill-count
+      kill(*city, num_killed);
+    }
+  }
+
+  return num_killed + exp_for_destroyed_infra(infra_destroyed);
 }
 
 /*****************************************************************************/

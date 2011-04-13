@@ -44,15 +44,18 @@ float compute_city_loc_heuristic(const Location& location)
   float available_prod = 0.0;
   for (int row_delta = -1; row_delta <= 1; ++row_delta) {
     for (int col_delta = -1; col_delta <= 1; ++col_delta) {
-      Location loc_delta(row_loc + row_delta, col_loc + col_delta);
-      if (world.in_bounds(loc_delta) &&
-          !is_within_distance_of_any_city(loc_delta, 1)) {
-        WorldTile& tile = world.get_tile(loc_delta);
-        if (tile.yield().m_food > 0) {
-          available_food += tile.yield().m_food;
-        }
-        else {
-          available_prod += tile.yield().m_prod;
+      // Cannot work tile that has city
+      if (row_delta != 0 || col_delta != 0) {
+        Location loc_delta(row_loc + row_delta, col_loc + col_delta);
+        if (world.in_bounds(loc_delta) &&
+            !is_within_distance_of_any_city(loc_delta, 1)) {
+          WorldTile& tile = world.get_tile(loc_delta);
+          if (tile.yield().m_food > 0) {
+            available_food += tile.yield().m_food;
+          }
+          else {
+            available_prod += tile.yield().m_prod;
+          }
         }
       }
     }
@@ -73,7 +76,8 @@ City::City(const std::string& name, const Location& location)
     m_next_rank_pop(CITY_STARTING_POP * CITY_RANK_UP_MULTIPLIER),
     m_production(0.0),
     m_location(location),
-    m_defense_level(0)
+    m_defense_level(0),
+    m_famine(false)
 {}
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -96,15 +100,18 @@ void City::cycle_turn()
   std::list<WorldTile*> food_tiles, prod_tiles; // sorted highest to lowest
   for (int row_delta = -1; row_delta <= 1; ++row_delta) {
     for (int col_delta = -1; col_delta <= 1; ++col_delta) {
-      Location loc_delta(row_loc + row_delta, col_loc + col_delta);
-      if (world.in_bounds(loc_delta)) {
-        WorldTile& tile = world.get_tile(loc_delta);
-        if (!tile.worked()) {
-          if (tile.yield().m_food > 0) {
-            ordered_insert(food_tiles, tile);
-          }
-          else {
-            ordered_insert(prod_tiles, tile);
+      // Cannot work tile that has city
+      if (row_delta != 0 || col_delta != 0) {
+        Location loc_delta(row_loc + row_delta, col_loc + col_delta);
+        if (world.in_bounds(loc_delta)) {
+          WorldTile& tile = world.get_tile(loc_delta);
+          if (!tile.worked()) {
+            if (tile.yield().m_food > 0) {
+              ordered_insert(food_tiles, tile);
+            }
+            else {
+              ordered_insert(prod_tiles, tile);
+            }
           }
         }
       }
@@ -135,6 +142,8 @@ void City::cycle_turn()
     }
   }
 
+  // TODO: If city is getting close to being food capped, do not sacrafice
+  // good production tiles for marginal food tiles.
   for (std::list<WorldTile*>::iterator itr = prod_tiles.begin();
        itr != prod_tiles.end() && num_workers > 0; ++itr) {
     if ((*itr)->yield().m_prod > PROD_FROM_SPECIALIST) {
@@ -253,7 +262,6 @@ void City::cycle_turn()
     }
   }
 
-
   // Building defenses is always a decent option. Note that there is no upper
   // limit on the amount of defense a city can build.
   bool build_defenses = true;
@@ -296,12 +304,14 @@ void City::cycle_turn()
   // Compute multiplier, cannot exceed base by more than a factor of 4
   float food_multiplier;
   if (food_gathered < req_food) {
+    m_famine = true;
     food_multiplier = -req_food / food_gathered;
     if (food_multiplier < -1 * MAX_GROWTH_MODIFIER) {
       food_multiplier = -1 * MAX_GROWTH_MODIFIER;
     }
   }
   else {
+    m_famine = false;
     food_multiplier = food_gathered / req_food;
     if (food_multiplier > MAX_GROWTH_MODIFIER) {
       food_multiplier = MAX_GROWTH_MODIFIER;

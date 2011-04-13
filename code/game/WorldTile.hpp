@@ -223,9 +223,12 @@ class LandTile: public WorldTile
 
   void remove_city();
 
+  void destroy_infra(unsigned num_destroyed);
+
   // Friends
 
   friend class World;
+  friend class Spell;
 };
 
 /**

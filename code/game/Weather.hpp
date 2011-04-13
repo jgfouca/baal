@@ -44,6 +44,11 @@ struct Wind
     m_speed(speed), m_direction(direction)
   {}
 
+  Wind operator+(unsigned mph)
+  {
+    return Wind(m_speed + mph, m_direction);
+  }
+
   unsigned  m_speed; // mph
   Direction m_direction;
 };
@@ -112,10 +117,13 @@ class Atmosphere : public Drawable
 
   void set_temperature(int new_temp) { m_temperature = new_temp; }
 
+  void set_wind(const Wind& wind) { m_wind = wind; }
+
   // Friends
 
   friend class Hot;
   friend class Cold;
+  friend class WindSpell;
 
   // Members
 

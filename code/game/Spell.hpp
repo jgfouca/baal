@@ -13,6 +13,7 @@ namespace baal {
 // creation of lots of very small hpp/cpp files.
 
 class City;
+class WorldTile;
 
 /**
  * Constructor will initialize all the static prereq members in
@@ -88,17 +89,24 @@ class Spell
 
   // Internal methods
 
+  static unsigned exp_for_destroyed_infra(unsigned num_destroyed);
+
   void kill(City& city,
             unsigned num_killed) const;
+
+  // Returns levels of infrastructure that actually get destroyed
+  unsigned destroy_infra(WorldTile& tile, unsigned max_destroyed) const;
 };
 
 std::ostream& operator<<(std::ostream& out, const Spell& spell);
 
 /**
  * Increases the immediate temperature of a region. High temperatures can
- * kill people in cities or deplete soil moisture on farms.
+ * kill people in cities or deplete soil moisture on farms. This spell is not
+ * intended to be a primary damage dealer; instead, you should be using this
+ * spell to enhance the more-powerful spells.
  *
- * Enhanced by high temps, high dewpoints
+ * Enhanced by high temps, high dewpoints. Decreased by AI tech level.
  *
  * This is a tier 1 spell
  */
@@ -128,9 +136,11 @@ class Hot : public Spell
 
 /**
  * Decreases the immediate temperature of a region. Cold temperatures can
- * kill people in cities or kill crops.
+ * kill people in cities or kill crops. This spell is not
+ * intended to be a primary damage dealer; instead, you should be using this
+ * spell to enhance the more-powerful spells.
  *
- * Enhanced by low temps, low dewpoints
+ * Enhanced by low temps, low dewpoints. Decreased by AI tech level.
  *
  * This is a tier 1 spell
  */
@@ -160,19 +170,20 @@ class Cold : public Spell
 
 /**
  * A weak direct damage spell against cities, this spell causes
- * generic misfortune within a city.
+ * an infection to spread within a city. This spell should be very
+ * useful for getting players to the higher level spells.
  *
- * Enhanced by nothing. A civ's technology acts as a resistance to
- * this spell.
+ * Enhanced by extreme temperatures, recent famine, and size of city.
+ * Decreased by AI tech level.
  *
  * This is a tier 1 spell
  */
-class Harm : public Spell
+class Infect : public Spell
 {
  public:
-  Harm(unsigned        spell_level,
-       const Location& location)
-    : Spell(SpellFactory::HARM,
+  Infect(unsigned        spell_level,
+         const Location& location)
+    : Spell(SpellFactory::INFECT,
             spell_level,
             location,
             BASE_COST,
@@ -186,13 +197,22 @@ class Harm : public Spell
   static const unsigned BASE_COST = 50;
   static const unsigned COST_INC = BASE_COST / 3;
   static const float KILL_PCT_PER_LEVEL = 0.01;
+  static const float BONUS_PER_CITY_RANK = 0.10;
+  static const float FAMINE_BONUS = 2.0;
+  static const int WARM_THRESHOLD = 90;
+  static const int COLD_THRESHOLD = 30;
+  static const float BONUS_PER_DEGREE_BEYOND_THRESHOLD = 0.1;
   static SpellPrereq PREREQ;
 };
 
 /**
- * Increases the immediate wind speed of a region.
+ * Increases the immediate wind speed of a region. High wind speeds can
+ * kill, but this spell is generally more useful in combinations rather
+ * than a direct damage spell. High wind speeds can damage farm
+ * infrastructure.
  *
- * Enhanced by high winds.
+ * Enhanced by high winds. Decreased by AI tech level. Decreased by city
+ * defense.
  *
  * This is a tier 1 spell
  */
@@ -209,11 +229,15 @@ class WindSpell : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void verify_apply() const;
+  virtual unsigned apply() const;
 
   static const unsigned BASE_COST = 50;
   static const unsigned COST_INC = BASE_COST / 3;
+  static const unsigned MPH_PER_LEVEL = 20;
+  static const unsigned BASE_DAMAGE_THRESHOLD = 60;
+  static const unsigned MPH_PER_ADDITIONAL_INFRA_DEVASTATION = 30;
+  static const unsigned KILL_THRESHOLD = 80;
   static SpellPrereq PREREQ;
 };
 

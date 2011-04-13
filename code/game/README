@@ -259,6 +259,7 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 * Make food req dependent on rank, not pop?
 * Need tracing infrastructure
 * Seasons need to affect atmosphere
+* Pressure needs to affect winds
 * Start to fill in Spell implementations
 * Map editor, map-file format defined, map-file loader
 * Need much more unit-testing

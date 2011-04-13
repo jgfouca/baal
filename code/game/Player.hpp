@@ -59,7 +59,7 @@ private:
   static const unsigned STARTING_MANA            = 100;
   static const unsigned FIRST_LEVELUP_EXP_COST   = 100;
   static const unsigned STARTING_MANA_REGEN_RATE = STARTING_MANA / 20;
-  static const float    MANA_INCREASE_PER_LEVEL  = 1.2;
+  static const float    MANA_INCREASE_PER_LEVEL  = 1.4;
   static const float    EXP_LEVEL_COST_INCREASE  = 2.0;
 
   static const std::string DEFAULT_PLAYER_NAME;

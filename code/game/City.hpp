@@ -27,6 +27,10 @@ class City
 
   const Location& location() const { return m_location; }
 
+  bool famine() const { return m_famine; }
+
+  unsigned defense() const { return m_defense_level; }
+
  private:
 
   // Internal methods
@@ -44,6 +48,7 @@ class City
   float       m_production;
   Location    m_location;
   unsigned    m_defense_level;
+  bool        m_famine;
 
   // Behavioral constants
 
