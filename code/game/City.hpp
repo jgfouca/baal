@@ -56,6 +56,7 @@ class City
   static const float MAX_GROWTH_MODIFIER   = 4.0;
   static const unsigned CITY_RANK_UP_MULTIPLIER = 2;
   static const unsigned CITY_STARTING_POP = 1000;
+  static const unsigned MIN_CITY_SIZE = CITY_STARTING_POP / 5;
   static const unsigned POP_THAT_EATS_ONE_FOOD = 1000;
   static const float FOOD_FROM_CITY_CENTER = 1.0;
   static const float PROD_FROM_CITY_CENTER = 1.0;

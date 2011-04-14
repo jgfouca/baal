@@ -12,8 +12,9 @@ namespace baal {
 // We use this file to define all the spells. This will avoid
 // creation of lots of very small hpp/cpp files.
 
-class City;
+
 class WorldTile;
+class City;
 
 /**
  * Constructor will initialize all the static prereq members in
@@ -87,15 +88,20 @@ class Spell
   unsigned           m_cost_increment;
   const SpellPrereq& m_prereq;
 
+  // Constants
+
+  static const unsigned CITY_DESTROY_EXP_BONUS = 1000;
+
   // Internal methods
 
-  static unsigned exp_for_destroyed_infra(unsigned num_destroyed);
+  // Returns exp gained
+  unsigned kill(City& city,
+                float pct_killed) const;
 
-  void kill(City& city,
-            unsigned num_killed) const;
-
-  // Returns levels of infrastructure that actually get destroyed
+  // Returns exp gained
   unsigned destroy_infra(WorldTile& tile, unsigned max_destroyed) const;
+
+  void damage_tile(WorldTile& tile, float damage) const;
 };
 
 std::ostream& operator<<(std::ostream& out, const Spell& spell);
@@ -131,6 +137,8 @@ class Hot : public Spell
   static const unsigned DEGREES_PER_LEVEL = 5;
   static const float OCEAN_SURFACE_CHG_RATIO = .35;
   static const int KILL_THRESHOLD = 100;
+  static const float EXPONENT = 1.5;
+  static const unsigned DIVISOR = 5;
   static SpellPrereq PREREQ;
 };
 
@@ -165,6 +173,9 @@ class Cold : public Spell
   static const unsigned DEGREES_PER_LEVEL = 5;
   static const float OCEAN_SURFACE_CHG_RATIO = .35;
   static const int KILL_THRESHOLD = 0;
+  static const float FAMINE_BONUS = 2.0;
+  static const float EXPONENT = 1.5;
+  static const unsigned DIVISOR = 5;
   static SpellPrereq PREREQ;
 };
 
@@ -244,9 +255,10 @@ class WindSpell : public Spell
 /**
  * Starts a fire at a location. Fires will kill people in cities and
  * destroy infrastructure.
+ * TODO: has a chance to spead?
  *
  * Enhanced by high wind, low dewpoint, high temperature, and low soil
- * moisture.
+ * moisture. Reduced by city defense and tech level.
  *
  * This is a tier 2 spell
  */
@@ -263,11 +275,19 @@ class Fire : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply() const { /*TODO*/ }
+  virtual void verify_apply() const;
   virtual unsigned apply() const;
 
   static const unsigned BASE_COST = 100;
   static const unsigned COST_INC = BASE_COST / 3;
+  static const int TEMP_TIPPING_POINT = 75;
+  static const float TEMP_EXP_BASE = 1.03;
+  static const int WIND_TIPPING_POINT = 10;
+  static const float WIND_EXP_BASE = 1.05;
+  static const float MOISTURE_TIPPING_POINT = 0.75;
+  static const float MOISTURE_EXP_BASE = 1.05; // per moisture pct
+  static const float DESTRUCTIVENESS_PER_INFRA = 5.0;
+
   static SpellPrereq PREREQ;
 };
 
