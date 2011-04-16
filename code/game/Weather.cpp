@@ -238,7 +238,7 @@ void Atmosphere::cycle_turn(const std::vector<const Anomaly*>& anomalies,
 Anomaly::Anomaly(AnomalyCategory category,
                  Type type,
                  unsigned intensity,
-                 Location location,
+                 const Location& location,
                  unsigned world_area)
 ///////////////////////////////////////////////////////////////////////////////
   : m_category(category),
@@ -297,7 +297,7 @@ float Anomaly::precip_effect(const Location& location) const
   }
   else {
     int multiplier = (m_type == ABOVE) ? 1 : -1;
-    return 1.0 + (0.25 * multiplier * m_intensity);
+    return 1.0 + (PRECIP_CHANGE_PER_LEVEL * multiplier * m_intensity);
   }
 }
 
@@ -310,7 +310,7 @@ int Anomaly::temp_effect(const Location& location) const
   }
   else {
     int multiplier = (m_type == ABOVE) ? 1 : -1;
-    return 5 * multiplier * m_intensity;
+    return TEMP_CHANGE_PER_LEVEL * multiplier * m_intensity;
   }
 }
 
@@ -323,7 +323,7 @@ int Anomaly::pressure_effect(const Location& location) const
   }
   else {
     int multiplier = (m_type == ABOVE) ? 1 : -1;
-    return 10 * multiplier * m_intensity;
+    return PRESSURE_CHANGE_PER_LEVEL * multiplier * m_intensity;
   }
 }
 

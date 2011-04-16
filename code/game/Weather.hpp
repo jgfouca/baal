@@ -202,13 +202,18 @@ class Anomaly : public Drawable
   static const AnomalyCategory FIRST = TEMPERATURE;
   static const AnomalyCategory LAST  = PRESSURE;
 
+  static const float PRECIP_CHANGE_PER_LEVEL = 0.25;
+  static const int TEMP_CHANGE_PER_LEVEL = 7;
+  static const int PRESSURE_CHANGE_PER_LEVEL = 15;
+
  private:
   Anomaly(AnomalyCategory category,
           Type type,
           unsigned intensity,
-          Location location,
+          const Location& location,
           unsigned world_area);
 
+  // Members
 
   AnomalyCategory m_category;
   Type            m_type;

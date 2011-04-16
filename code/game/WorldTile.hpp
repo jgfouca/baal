@@ -304,7 +304,8 @@ class TundraTile : public LandTile
 };
 
 /**
- *
+ * TODO: Hill-tile lack of moisture make it awkward to handle
+ * for many disasters. Resolve this issue.
  */
 class HillsTile : public LandTile
 {

@@ -50,14 +50,19 @@ disasters or increasing population growth).
 
 In between turns, the civilization will grow and develop. During
 Baal's turn, he will be presented with a current layout of the
-land. The seasons will alternate between winter and summer. The state
-of all geological, biological, and climatological properties would be
+land. The seasons will cycle between winter, spring, fall, and summer.
+The state of all geological, biological, and climatological properties would be
 somewhat randomized. Based on the current state, the player may see
 opportunities to hit the civilization with various
 disasters. Disasters cost mana; total mana and mana regeneration will
 depend on your "level". Levels are gained by killing people, just like
 an RPG. There may even be room for some kind of talent tree here where
 you could focus on different categories of disasters.
+
+The AI will initially be much more "powerful" than Ba'al in that it will
+grow fast and there won't be much that Ba'al can do about it. However,
+Ba'als power will grow and it is expected that his ability to kill will
+start to surpass the civ's ability to grow.
 
 -- Multiplayer --
 
@@ -74,7 +79,9 @@ Present the player with interesting choices, simple game mechanics,
 but deep strategy. Give the player the satisfaction and thrill of
 unleashing successful combinations of disasters. The game should have
 a strong problem-solving element; IE decisions on what disasters to
-cast should be non-trivial.
+cast should be non-trivial. The game should reward the player for making
+good long-term decisions, such as keeping a tile hot and dry before
+hitting it with fire.
 
 - Details -
 

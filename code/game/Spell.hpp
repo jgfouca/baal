@@ -106,6 +106,9 @@ class Spell
 
 std::ostream& operator<<(std::ostream& out, const Spell& spell);
 
+// TODO - Do we want spells for controlling all the basic properties
+// of the atmosphere? Or do we want to leave some up to pure chance (pressure)?
+
 /**
  * Increases the immediate temperature of a region. High temperatures can
  * kill people in cities or deplete soil moisture on farms. This spell is not
@@ -134,7 +137,7 @@ class Hot : public Spell
 
   static const unsigned BASE_COST = 50;
   static const unsigned COST_INC = BASE_COST / 3;
-  static const unsigned DEGREES_PER_LEVEL = 5;
+  static const unsigned DEGREES_PER_LEVEL = 7;
   static const float OCEAN_SURFACE_CHG_RATIO = .35;
   static const int KILL_THRESHOLD = 100;
   static const float EXPONENT = 1.5;
@@ -292,8 +295,10 @@ class Fire : public Spell
 };
 
 /**
- * Spawn severe thunderstorms. These storms have a chance to cause floods,
- * tornadoes, and high winds. Lightning can kill city dwellers.
+ * Spawn severe thunderstorms. These storms have a chance to cause
+ * weak floods, tornadoes, and high winds, making this a good spell for
+ * causing chain-reactions. Lightning can kill city dwellers and is
+ * the only way for a tstorm to directly get kills.
  *
  * Enhanced by high wind, high dewpoint, high temperature, low pressure, and
  * high temperature differentials.
@@ -313,11 +318,24 @@ class Tstorm : public Spell
             PREREQ)
   {}
 
-  virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void verify_apply() const;
+  virtual unsigned apply() const;
 
   static const unsigned BASE_COST = 100;
   static const unsigned COST_INC = BASE_COST / 3;
+  static const int TEMP_TIPPING_POINT = 85;
+  static const float TEMP_EXP_BASE = 1.03;
+  static const int WIND_TIPPING_POINT = 15;
+  static const float WIND_EXP_BASE = 1.03;
+  static const int PRESSURE_TIPPING_POINT = 990;
+  static const float PRESSURE_EXP_BASE = 1.05;
+
+  static const float WIND_DESTRUCTIVENESS_THRESHOLD = 10.0;
+  static const float FLOOD_DESTRUCTIVENESS_THRESHOLD = 20.0;
+  static const float TORNADO_DESTRUCTIVENESS_THRESHOLD = 40.0;
+
+  static const float LIGHTING_PCT_KILL_PER_DESTRUCTIVENESS = .02;
+
   static SpellPrereq PREREQ;
 };
 

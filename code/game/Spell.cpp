@@ -475,7 +475,7 @@ unsigned Fire::apply() const
   unsigned exp = 0;
 
   // Query properties relevant to fire destructiveness
-  unsigned wind_speed = atmos.wind().m_speed;
+  int wind_speed      = atmos.wind().m_speed;
   int temperature     = atmos.temperature();
   //int dewpoint        = atmos.dewpoint(); // TODO
   float soil_moisture = tile.soil_moisture();
@@ -492,7 +492,7 @@ unsigned Fire::apply() const
     unsigned max_infra_destroyed =
       destructiveness /
       (DESTRUCTIVENESS_PER_INFRA + std::sqrt(ai_player.tech_level()));
-    if (destructiveness > 0) {
+    if (max_infra_destroyed > 0) {
       exp += destroy_infra(tile, max_infra_destroyed);
     }
     damage_tile(tile, destructiveness / 100);
@@ -509,6 +509,79 @@ unsigned Fire::apply() const
     // Reduce city pop by kill-count
     exp += kill(*city, pct_killed);
   }
+
+  return exp;
+}
+
+/*****************************************************************************/
+
+///////////////////////////////////////////////////////////////////////////////
+void Tstorm::verify_apply() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  // This spell can only be cast on plains and lush tiles (food tiles).
+
+  WorldTile& tile = Engine::instance().world().get_tile(m_location);
+  FoodTile* food_tile = dynamic_cast<FoodTile*>(&tile);
+  RequireUser(food_tile != NULL,
+              "Tstorm can only be cast on tiles with plant growth");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+unsigned Tstorm::apply() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  /**
+   * Spawn severe thunderstorms. These storms have a chance to cause
+   * weak floods, tornadoes, and high winds, making this a good spell for
+   * causing chain-reactions. Lightning can kill city dwellers and is
+   * the only way for a tstorm to directly get kills.
+   *
+   * Enhanced by high wind, high dewpoint, high temperature, low pressure, and
+   * high temperature differentials.
+   *
+   * This is a tier 2 spell
+   */
+
+  Engine& engine       = Engine::instance();
+  World& world         = engine.world();
+  FoodTile& tile       = dynamic_cast<FoodTile&>(world.get_tile(m_location));
+  Atmosphere& atmos    = tile.atmosphere();
+  PlayerAI& ai_player  = engine.ai_player();
+
+  unsigned exp = 0;
+
+  // Query properties relevant to tstorm destructiveness
+  int wind_speed = atmos.wind().m_speed;
+  int temperature     = atmos.temperature();
+  //int dewpoint        = atmos.dewpoint(); // TODO
+  int pressure   = atmos.pressure();
+
+  // Compute destructiveness of tstorm
+  float destructiveness =
+    m_spell_level * // base
+    std::pow(TEMP_EXP_BASE, temperature - TEMP_TIPPING_POINT) * // temperature influence
+    std::pow(WIND_EXP_BASE, wind_speed - WIND_TIPPING_POINT) * // wind infuence
+    std::pow(PRESSURE_EXP_BASE, pressure - PRESSURE_TIPPING_POINT); // moisture influence
+
+  // TODO: What levels should chain reaction spells be?
+  // TODO: In general, spells need to be much more verbose about
+  // what they're doing and why.
+  if (destructiveness > 10.0) {
+
+  }
+
+  // Check for the existence of a city
+  // This spell can kill via lightning on a city
+  City* city = tile.city();
+  const float pct_killed =
+    destructiveness * LIGHTING_PCT_KILL_PER_DESTRUCTIVENESS / // base
+
+    std::sqrt(ai_player.tech_level()) / // tech penalty
+    std::sqrt(city->defense()); // city-defense penalty
+
+  // Reduce city pop by kill-count
+  exp += kill(*city, pct_killed);
 
   return exp;
 }

@@ -150,7 +150,7 @@ void TalentTree::check_prereqs(const Spell& spell, const Player& player) const
     std::string spell_name  = itr->first;
     unsigned    spell_level = itr->second;
     RequireUser(has(spell_name, spell_level),
-      "Missing required prereq " << spell_level << '[' << spell_level << ']');
+      "Missing required prereq " << spell_name << '[' << spell_level << ']');
   }
 }
 
