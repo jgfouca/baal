@@ -258,6 +258,7 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 
 - TODO List -
 
+* Seasons need to affect atmosphere
 * Design review
   * Review headers/interfaces. Is interface clean? What data/knowledge
     is exposed?
@@ -265,9 +266,9 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
   * No magic numbers
 * Make food req dependent on rank, not pop?
 * Need tracing infrastructure
-* Seasons need to affect atmosphere
 * Pressure needs to affect winds
 * Start to fill in Spell implementations
+* Find areas that define the game model and tag them with MODEL
 * Map editor, map-file format defined, map-file loader
 * Need much more unit-testing
 * Use more typedefs for scalar properties?
@@ -275,4 +276,3 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 * Implement disasters as mini games?
 * Change some Require(...) to RequireAttach(...)
 * See code TODOs
-* Find areas that define the game model and tag them with MODEL

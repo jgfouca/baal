@@ -108,12 +108,12 @@ SpellPrereqStaticInitializer::SpellPrereqStaticInitializer()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-Spell::Spell(SpellFactory::SpellName name,
-             unsigned                spell_level,
-             const Location&         location,
-             unsigned                base_cost,
-             unsigned                cost_increment,
-             const SpellPrereq&      prereq)
+Spell::Spell(const std::string& name,
+             unsigned           spell_level,
+             const Location&    location,
+             unsigned           base_cost,
+             unsigned           cost_increment,
+             const SpellPrereq& prereq)
 ///////////////////////////////////////////////////////////////////////////////
   : m_name(name),
     m_spell_level(spell_level),
@@ -199,6 +199,36 @@ void Spell::damage_tile(WorldTile& tile, float damage) const
 
   SPELL_REPORT(interface,
                m_name << " has caused " << damage*100 << "% damage to tile");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+unsigned Spell::spawn(const std::string& spell_name, unsigned spell_level) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  const Spell& spell = SpellFactory::create_spell(spell_name,
+                                                  spell_level,
+                                                  m_location);
+
+  // Check if this spell can be applied here
+  bool verify_ok = true;
+  try {
+    spell.verify_apply();
+  }
+  catch (UserError& error) {
+    verify_ok = false;
+  }
+
+  if (verify_ok) {
+    Interface& interface = Engine::instance().interface();
+    SPELL_REPORT(interface,
+      m_name << " has caused a level " << spell_level << " " << spell_name);
+
+    unsigned exp = CHAIN_REACTION_BONUS * spell.apply();
+    delete &spell;
+    return exp;
+  }
+
+  return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -564,11 +594,22 @@ unsigned Tstorm::apply() const
     std::pow(WIND_EXP_BASE, wind_speed - WIND_TIPPING_POINT) * // wind infuence
     std::pow(PRESSURE_EXP_BASE, pressure - PRESSURE_TIPPING_POINT); // moisture influence
 
-  // TODO: What levels should chain reaction spells be?
   // TODO: In general, spells need to be much more verbose about
   // what they're doing and why.
-  if (destructiveness > 10.0) {
 
+  if (destructiveness > WIND_DESTRUCTIVENESS_THRESHOLD) {
+    unsigned wind_level = destructiveness / WIND_DESTRUCTIVENESS_THRESHOLD;
+    exp += spawn(SpellFactory::WIND, wind_level);
+  }
+
+  if (destructiveness > FLOOD_DESTRUCTIVENESS_THRESHOLD) {
+    unsigned flood_level = destructiveness / FLOOD_DESTRUCTIVENESS_THRESHOLD;
+    exp += spawn(SpellFactory::FLOOD, flood_level);
+  }
+
+  if (destructiveness > TORNADO_DESTRUCTIVENESS_THRESHOLD) {
+    unsigned tornado_level = destructiveness / TORNADO_DESTRUCTIVENESS_THRESHOLD;
+    exp += spawn(SpellFactory::TORNADO, tornado_level);
   }
 
   // Check for the existence of a city
@@ -576,7 +617,6 @@ unsigned Tstorm::apply() const
   City* city = tile.city();
   const float pct_killed =
     destructiveness * LIGHTING_PCT_KILL_PER_DESTRUCTIVENESS / // base
-
     std::sqrt(ai_player.tech_level()) / // tech penalty
     std::sqrt(city->defense()); // city-defense penalty
 

@@ -5,36 +5,36 @@
 
 using namespace baal;
 
-SpellFactory::SpellName SpellFactory::HOT    = "hot";
-SpellFactory::SpellName SpellFactory::COLD   = "cold";
-SpellFactory::SpellName SpellFactory::WIND   = "wind";
-SpellFactory::SpellName SpellFactory::INFECT = "infect";
+std::string SpellFactory::HOT    = "hot";
+std::string SpellFactory::COLD   = "cold";
+std::string SpellFactory::WIND   = "wind";
+std::string SpellFactory::INFECT = "infect";
 
-SpellFactory::SpellName SpellFactory::FIRE   = "fire";
-SpellFactory::SpellName SpellFactory::TSTORM = "tstorm";
-SpellFactory::SpellName SpellFactory::SNOW   = "snow";
+std::string SpellFactory::FIRE   = "fire";
+std::string SpellFactory::TSTORM = "tstorm";
+std::string SpellFactory::SNOW   = "snow";
 
-SpellFactory::SpellName SpellFactory::AVALANCHE = "avalanche";
-SpellFactory::SpellName SpellFactory::FLOOD     = "flood";
-SpellFactory::SpellName SpellFactory::DRY       = "dry";
-SpellFactory::SpellName SpellFactory::BLIZZARD  = "blizzard";
-SpellFactory::SpellName SpellFactory::TORNADO   = "tornado";
+std::string SpellFactory::AVALANCHE = "avalanche";
+std::string SpellFactory::FLOOD     = "flood";
+std::string SpellFactory::DRY       = "dry";
+std::string SpellFactory::BLIZZARD  = "blizzard";
+std::string SpellFactory::TORNADO   = "tornado";
 
-SpellFactory::SpellName SpellFactory::HEATWAVE = "heatwave";
-SpellFactory::SpellName SpellFactory::COLDWAVE = "coldwave";
-SpellFactory::SpellName SpellFactory::DROUGHT  = "drought";
-SpellFactory::SpellName SpellFactory::MONSOON  = "monsoon";
+std::string SpellFactory::HEATWAVE = "heatwave";
+std::string SpellFactory::COLDWAVE = "coldwave";
+std::string SpellFactory::DROUGHT  = "drought";
+std::string SpellFactory::MONSOON  = "monsoon";
 
-SpellFactory::SpellName SpellFactory::DISEASE    = "disease";
-SpellFactory::SpellName SpellFactory::EARTHQUAKE = "earthquake";
-SpellFactory::SpellName SpellFactory::HURRICANE  = "hurricane";
+std::string SpellFactory::DISEASE    = "disease";
+std::string SpellFactory::EARTHQUAKE = "earthquake";
+std::string SpellFactory::HURRICANE  = "hurricane";
 
-SpellFactory::SpellName SpellFactory::PLAGUE  = "plague";
-SpellFactory::SpellName SpellFactory::VOLCANO = "volcano";
+std::string SpellFactory::PLAGUE  = "plague";
+std::string SpellFactory::VOLCANO = "volcano";
 
-SpellFactory::SpellName SpellFactory::ASTEROID = "asteroid";
+std::string SpellFactory::ASTEROID = "asteroid";
 
-SpellFactory::SpellName SpellFactory::ALL_SPELLS[] = {
+std::string SpellFactory::ALL_SPELLS[] = {
   SpellFactory::HOT,
   SpellFactory::COLD,
   SpellFactory::WIND,
@@ -137,7 +137,7 @@ const Spell& SpellFactory::create_spell(const std::string& spell_name,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool SpellFactory::is_in_all_names(SpellFactory::SpellName spell_name)
+bool SpellFactory::is_in_all_names(const std::string& spell_name)
 ///////////////////////////////////////////////////////////////////////////////
 {
   for (unsigned i = 0; i < SpellFactory::num_spells(); ++i) {
@@ -152,5 +152,5 @@ bool SpellFactory::is_in_all_names(SpellFactory::SpellName spell_name)
 unsigned SpellFactory::num_spells()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  return sizeof(ALL_SPELLS)/sizeof(SpellName);
+  return sizeof(ALL_SPELLS)/sizeof(std::string);
 }

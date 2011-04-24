@@ -50,12 +50,12 @@ struct SpellPrereq
 class Spell
 {
  public:
-  Spell(SpellFactory::SpellName name,
-        unsigned                spell_level,
-        const Location&         location,
-        unsigned                base_cost,
-        unsigned                cost_increment,
-        const SpellPrereq&      prereq);
+  Spell(const std::string&  name,
+        unsigned            spell_level,
+        const Location&     location,
+        unsigned            base_cost,
+        unsigned            cost_increment,
+        const SpellPrereq&  prereq);
 
   virtual ~Spell() {}
 
@@ -91,6 +91,7 @@ class Spell
   // Constants
 
   static const unsigned CITY_DESTROY_EXP_BONUS = 1000;
+  static const unsigned CHAIN_REACTION_BONUS = 2;
 
   // Internal methods
 
@@ -102,6 +103,11 @@ class Spell
   unsigned destroy_infra(WorldTile& tile, unsigned max_destroyed) const;
 
   void damage_tile(WorldTile& tile, float damage) const;
+
+  // Some disasters can spawn other disasters (chain reaction). This method
+  // encompassed the implementation of this phenominon. The amount of exp
+  // gained is returned.
+  unsigned spawn(const std::string& spell_name, unsigned spell_level) const;
 };
 
 std::ostream& operator<<(std::ostream& out, const Spell& spell);

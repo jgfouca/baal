@@ -21,42 +21,40 @@ class SpellFactory
                                    unsigned           spell_level,
                                    const Location&    location);
 
-  typedef const char* SpellName;
-
-  static bool is_in_all_names(SpellName spell_name);
+  static bool is_in_all_names(const std::string& spell_name);
 
   static unsigned num_spells();
 
-  static SpellName HOT;
-  static SpellName COLD;
-  static SpellName WIND;
-  static SpellName INFECT;
+  static std::string HOT;
+  static std::string COLD;
+  static std::string WIND;
+  static std::string INFECT;
 
-  static SpellName FIRE;
-  static SpellName TSTORM;
-  static SpellName SNOW;
+  static std::string FIRE;
+  static std::string TSTORM;
+  static std::string SNOW;
 
-  static SpellName AVALANCHE;
-  static SpellName FLOOD;
-  static SpellName DRY;
-  static SpellName BLIZZARD;
-  static SpellName TORNADO;
+  static std::string AVALANCHE;
+  static std::string FLOOD;
+  static std::string DRY;
+  static std::string BLIZZARD;
+  static std::string TORNADO;
 
-  static SpellName HEATWAVE;
-  static SpellName COLDWAVE;
-  static SpellName DROUGHT;
-  static SpellName MONSOON;
+  static std::string HEATWAVE;
+  static std::string COLDWAVE;
+  static std::string DROUGHT;
+  static std::string MONSOON;
 
-  static SpellName DISEASE;
-  static SpellName EARTHQUAKE;
-  static SpellName HURRICANE;
+  static std::string DISEASE;
+  static std::string EARTHQUAKE;
+  static std::string HURRICANE;
 
-  static SpellName PLAGUE;
-  static SpellName VOLCANO;
+  static std::string PLAGUE;
+  static std::string VOLCANO;
 
-  static SpellName ASTEROID;
+  static std::string ASTEROID;
 
-  static SpellName ALL_SPELLS[];
+  static std::string ALL_SPELLS[];
 };
 
 }
