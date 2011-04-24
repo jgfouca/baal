@@ -72,7 +72,7 @@ void Engine::play()
     // AI player takes turn
     m_ai_player.cycle_turn();
 
-    // Cycle world
+    // Cycle world. Note this should always be the last item to cycle.
     m_world.cycle_turn();
 
     // Check for game-ending state

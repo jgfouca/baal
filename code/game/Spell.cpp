@@ -51,7 +51,11 @@ SpellPrereqStaticInitializer static_prereq_init;
 SpellPrereqStaticInitializer::SpellPrereqStaticInitializer()
 ///////////////////////////////////////////////////////////////////////////////
 {
+  // Tier 1
+
   // Hot, Cold, Wind, Infect have no prereqs
+
+  // Tier 2
 
   Fire::PREREQ.m_min_player_level = 5;
   Fire::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::HOT, 1));
@@ -61,6 +65,8 @@ SpellPrereqStaticInitializer::SpellPrereqStaticInitializer()
 
   Snow::PREREQ.m_min_player_level = 5;
   Snow::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::COLD, 1));
+
+  // Tier 3
 
   Avalanche::PREREQ.m_min_player_level = 10;
   Avalanche::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::SNOW, 1));
@@ -77,6 +83,8 @@ SpellPrereqStaticInitializer::SpellPrereqStaticInitializer()
   Tornado::PREREQ.m_min_player_level = 10;
   Tornado::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::TSTORM, 1));
 
+  // Tier 4
+
   Heatwave::PREREQ.m_min_player_level = 15;
   Heatwave::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::DRY, 1));
 
@@ -89,6 +97,8 @@ SpellPrereqStaticInitializer::SpellPrereqStaticInitializer()
   Monsoon::PREREQ.m_min_player_level = 15;
   Monsoon::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::FLOOD, 1));
 
+  // Tier 5
+
   Disease::PREREQ.m_min_player_level = 20;
   Disease::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::INFECT, 1));
 
@@ -97,11 +107,15 @@ SpellPrereqStaticInitializer::SpellPrereqStaticInitializer()
   Hurricane::PREREQ.m_min_player_level = 20;
   Hurricane::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::MONSOON, 1));
 
+  // Tier 6
+
   Plague::PREREQ.m_min_player_level = 25;
   Plague::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::DISEASE, 1));
 
   Volcano::PREREQ.m_min_player_level = 25;
   Volcano::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::EARTHQUAKE, 1));
+
+  // Tier 7
 
   Asteroid::PREREQ.m_min_player_level = 30;
   Asteroid::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::VOLCANO, 1));

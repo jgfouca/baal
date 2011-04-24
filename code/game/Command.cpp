@@ -205,7 +205,7 @@ std::string SaveCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   return create_help_str(this,
-"[save filename]\n"
+"[filename]\n"
 "  Saves the game; if no name provided, a name based on data/time will be used\n"
                      );
 }
@@ -396,8 +396,6 @@ void DrawCommand::apply() const
 std::string DrawCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // TODO - Needs to be decoupled from exact contents of drawable enum. IE
-  //        this help messages needs to auto-update when draw-modes change.
   std::string usage =
 "<draw-mode>\n"
 "  Changes how the world is drawn.\n"
@@ -410,4 +408,36 @@ std::string DrawCommand::help() const
   }
 
   return create_help_str(this, usage);
+}
+
+/*****************************************************************************/
+
+///////////////////////////////////////////////////////////////////////////////
+void HackCommand::init(const std::vector<std::string>& args)
+///////////////////////////////////////////////////////////////////////////////
+{
+  RequireUser(args.size() == 1, "The hack command takes 1 argument");
+
+  // Parse exp
+  std::istringstream iss(args[0]);
+  iss >> m_exp;
+  RequireUser(!iss.fail(), "Argument not a valid integer");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void HackCommand::apply() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  Player& player = Engine::instance().player();
+  player.gain_exp(m_exp);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+std::string HackCommand::help() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  return create_help_str(this,
+"<exp>\n"
+"  Gives the player free arbitrary exp. This is a cheat put in for testing\n"
+                         );
 }

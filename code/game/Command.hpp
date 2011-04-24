@@ -148,6 +148,23 @@ class DrawCommand : public Command
   std::string s_draw_mode;
 };
 
+/**
+ * Allow user to give exp to player. Be sure to hide this in the
+ * release version. This is only for debugging purposes.
+ */
+class HackCommand : public Command
+{
+ public:
+  virtual void init(const std::vector<std::string>& args);
+
+  virtual void apply() const;
+
+  virtual std::string help() const;
+
+ private:
+  unsigned m_exp;
+};
+
 }
 
 #endif

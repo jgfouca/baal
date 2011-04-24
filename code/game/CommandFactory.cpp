@@ -24,6 +24,10 @@ CommandFactory::CommandFactory()
   // Populate command map, this is the only place where the list of all
   // commands is exposed
 
+  // TODO:
+  // This implementation (recycling/reinitializing heap objects) is
+  // error-prone and should probably be replace with a system similar to that
+  // of SpellFactory.
   m_cmd_map["help" ] = new HelpCommand;
   m_cmd_map["save" ] = new SaveCommand;
   m_cmd_map["end"  ] = new EndTurnCommand;
@@ -31,6 +35,7 @@ CommandFactory::CommandFactory()
   m_cmd_map["cast" ] = new SpellCommand;
   m_cmd_map["learn"] = new LearnCommand;
   m_cmd_map["draw" ] = new DrawCommand;
+  m_cmd_map["hack" ] = new HackCommand;
 
   // Set up aliases
   m_aliases["s"] = "save";
@@ -39,6 +44,7 @@ CommandFactory::CommandFactory()
   m_aliases["c"] = "cast";
   m_aliases["l"] = "learn";
   m_aliases["d"] = "draw";
+  m_aliases["h"] = "hack";
 }
 
 ///////////////////////////////////////////////////////////////////////////////

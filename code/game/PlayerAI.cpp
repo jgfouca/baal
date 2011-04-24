@@ -19,17 +19,24 @@ void PlayerAI::cycle_turn()
 ///////////////////////////////////////////////////////////////////////////////
 {
   Engine& engine = Engine::instance();
-
-  // Compute population and manage cities
-  m_population = 0;
   const World& world = engine.world();
   const std::vector<City*>& cities = world.cities();
+
+  // Manage cities. Note that this may cause additional cities to be created,
+  // so we need to store the number of cities at the start of the cycle.
+  unsigned num_cities_at_start = cities.size();
+  for (unsigned i = 0; i < num_cities_at_start; ++i) {
+    City* city = cities[i];;
+    city->cycle_turn();
+  }
+
+  // Compute population
+  m_population = 0;
   for (std::vector<City*>::const_iterator
        itr = cities.begin(); itr != cities.end(); ++itr) {
     City* city = *itr;
     m_population += city->population();
   }
-  Require(m_population > 0, "This map has no human presence!");
 
   // Adjust tech based on population
   unsigned tech_points = m_population / POP_PER_TECH_POINT;

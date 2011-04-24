@@ -110,18 +110,7 @@ void World::draw_text(std::ostream& out) const
 void World::cycle_turn()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // Phase 1 of World turn-cycle: Cities are cycled. We want to do this first
-  // so that cities feel the "pain" of baal's attacks; otherwise, the tiles
-  // would have a a chance to heal before they were harvested, lessening the
-  // effect of Baal's attacks. We use numeric iterators here because the
-  // cycling of cities can produce new cities;
-  unsigned num_cities_at_start = m_cities.size();
-  for (unsigned i = 0; i < num_cities_at_start; ++i) {
-    City* city = m_cities[i];;
-    city->cycle_turn();
-  }
-
-  // Phase 2: Generate anomalies.
+  // Phase 1: Generate anomalies.
   // TODO: How to handle overlapping anomalies of same category?
   clear_anomalies();
   for (unsigned row = 0; row < height(); ++row) {
@@ -142,7 +131,7 @@ void World::cycle_turn()
     }
   }
 
-  // Phase 3 of World turn-cycle: Simulate the inter-turn (long-term) weather
+  // Phase 2 of World turn-cycle: Simulate the inter-turn (long-term) weather
   // Every turn, the weather since the last turn will be randomly simulated.
   // There will be random abnormal areas, with the epicenter of the abnormality
   // having the most extreme deviations from the normal climate and peripheral
@@ -161,7 +150,7 @@ void World::cycle_turn()
     }
   }
 
-  // Phase 4: Increment time
+  // Phase 3: Increment time
   ++m_time;
 }
 
