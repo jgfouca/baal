@@ -45,6 +45,22 @@ namespace {
 
 SpellPrereqStaticInitializer static_prereq_init;
 
+// Given a tstorm's destructiveness, compute the level of the spawned disaster
+unsigned tstorm_spawn_helper(float destructiveness, float base_cost)
+{
+  float destructiveness_unspent = destructiveness;
+  unsigned level = 0;
+  for ( ; ; ++level) {
+    float next_level_cost = (level+1) * base_cost;
+    if (destructiveness_unspent >= next_level_cost) {
+      destructiveness_unspent -= next_level_cost;
+    }
+    else {
+      return level;
+    }
+  }
+}
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -147,18 +163,17 @@ unsigned Spell::kill(City& city,
   Require(pct_killed > 0.0, "Do not call this if no one killed");
 
   Engine& engine = Engine::instance();
-  Interface& interface = engine.interface();
 
-  if (pct_killed > 1.0) {
-    pct_killed = 1.0;
+  if (pct_killed > 100.0) {
+    pct_killed = 100.0;
   }
-  unsigned num_killed = city.population() * pct_killed;
+  unsigned num_killed = city.population() * (pct_killed / 100);
 
   city.kill(num_killed);
-  SPELL_REPORT(interface, m_name << " has killed: " << num_killed);
+  SPELL_REPORT("killed " << num_killed);
 
   if (city.population() < City::MIN_CITY_SIZE) {
-    SPELL_REPORT(interface, m_name << " has obliterated city: " << city.name());
+    SPELL_REPORT("obliterated city '" << city.name() << "'");
     engine.world().remove_city(city);
     city.kill(city.population());
     num_killed += city.population();
@@ -178,18 +193,13 @@ unsigned Spell::destroy_infra(WorldTile& tile, unsigned max_destroyed) const
 {
   Require(max_destroyed > 0, "Do not call this if nothing destroyed");
 
-  Engine& engine = Engine::instance();
-  Interface& interface = engine.interface();
-
   LandTile& land_tile = dynamic_cast<LandTile&>(tile);
   unsigned orig_infra = land_tile.infra_level();
   unsigned num_destroyed = // Cannot destroy infra that's not there
     (orig_infra < max_destroyed) ? orig_infra : max_destroyed;
   land_tile.destroy_infra(num_destroyed);
 
-  SPELL_REPORT(interface,
-               m_name << " has destroyed " <<
-               num_destroyed << " levels of infrastructure");
+  SPELL_REPORT("destroyed " << num_destroyed << " levels of infrastructure");
 
   // Convert to exp
   static const unsigned base_exp = 200;
@@ -202,8 +212,6 @@ void Spell::damage_tile(WorldTile& tile, float damage) const
 {
   Require(damage > 0.0, "Do not call this if nothing damaged");
 
-  Engine& engine = Engine::instance();
-  Interface& interface = engine.interface();
   LandTile& land_tile = dynamic_cast<LandTile&>(tile);
 
   if (damage > 1.0) {
@@ -211,8 +219,7 @@ void Spell::damage_tile(WorldTile& tile, float damage) const
   }
   land_tile.damage(damage);
 
-  SPELL_REPORT(interface,
-               m_name << " has caused " << damage*100 << "% damage to tile");
+  SPELL_REPORT("caused " << damage*100 << "% damage to tile");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -233,9 +240,7 @@ unsigned Spell::spawn(const std::string& spell_name, unsigned spell_level) const
   }
 
   if (verify_ok) {
-    Interface& interface = Engine::instance().interface();
-    SPELL_REPORT(interface,
-      m_name << " has caused a level " << spell_level << " " << spell_name);
+    SPELL_REPORT("caused a level " << spell_level << " " << spell_name);
 
     unsigned exp = CHAIN_REACTION_BONUS * spell.apply();
     delete &spell;
@@ -278,6 +283,8 @@ unsigned Hot::apply() const
   Atmosphere& atmos    = tile.atmosphere();
   PlayerAI& ai_player  = engine.ai_player();
 
+  // TODO: Dewpoint should enhance spell kill count
+
   unsigned exp = 0;
 
   // 3 cases: Ocean, Mountain, Land
@@ -289,12 +296,15 @@ unsigned Hot::apply() const
   unsigned warmup = m_spell_level * DEGREES_PER_LEVEL;
   int new_temp = prior_temp + warmup;
   atmos.set_temperature(new_temp);
+  SPELL_REPORT("raised temperature from " << prior_temp << " to " << new_temp);
 
   if (ocean_tile != NULL) {
     // Heat ocean surface up
     int prior_ocean_temp = ocean_tile->surface_temp();
     int new_ocean_temp = prior_ocean_temp + warmup * OCEAN_SURFACE_CHG_RATIO;
     ocean_tile->set_surface_temp(new_ocean_temp);
+    SPELL_REPORT("raised ocean surface temperature from " <<
+                 prior_ocean_temp << " to " << new_ocean_temp);
   }
   else if (mtn_tile != NULL) {
     // Check snowpack. A sudden meltoff of snowpack could cause a flood.
@@ -308,14 +318,22 @@ unsigned Hot::apply() const
 
   // This spell can kill if cast on a city and temps get high enough.
   City* city = tile.city();
-  if (city != NULL && new_temp > KILL_THRESHOLD) {
-    const float pct_killed =
-      std::pow(new_temp - KILL_THRESHOLD, EXPONENT) / DIVISOR / // base
-      std::sqrt(ai_player.tech_level()) /  // tech penalty
-      100; // convert to percent
+  if (city != NULL) {
+    if (new_temp > KILL_THRESHOLD) {
+      float base_kill_pct = std::pow(new_temp - KILL_THRESHOLD, EXPONENT) / DIVISOR;
+      float tech_penalty  = std::sqrt(ai_player.tech_level());
+      float pct_killed = base_kill_pct / tech_penalty;
 
-    // Reduce city pop by fraction
-    exp += kill(*city, pct_killed);
+      SPELL_REPORT("base kill % is " << base_kill_pct);
+      SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
+      SPELL_REPORT("final kill % is " << pct_killed);
+
+      // Reduce city pop by fraction
+      exp += kill(*city, pct_killed);
+    }
+    else {
+      SPELL_REPORT("fell below kill threshold " << KILL_THRESHOLD);
+    }
   }
 
   return exp;
@@ -350,6 +368,7 @@ unsigned Cold::apply() const
   unsigned cooldown = m_spell_level * DEGREES_PER_LEVEL;
   int new_temp = prior_temp - cooldown;
   atmos.set_temperature(new_temp);
+  SPELL_REPORT("reduced temperature from " << prior_temp << " to " << new_temp);
 
   if (ocean_tile != NULL) {
     // Cool ocean surface down
@@ -362,19 +381,32 @@ unsigned Cold::apply() const
     }
 
     ocean_tile->set_surface_temp(new_ocean_temp);
+    SPELL_REPORT("reduced ocean surface temperature from " <<
+                 prior_ocean_temp << " to " << new_ocean_temp);
   }
 
   // This spell can kill if cast on a city and temps get low enough.
   City* city = tile.city();
-  if (city != NULL && new_temp < KILL_THRESHOLD) {
-    const float pct_killed =
-      (std::pow(KILL_THRESHOLD - new_temp, EXPONENT) / DIVISOR) * // base
-      (city->famine() ? FAMINE_BONUS : 1.0) / // famine bonus
-      ai_player.tech_level() /  // tech penalty
-      100; // convert to percent
+  if (city != NULL) {
+    if (new_temp < KILL_THRESHOLD) {
+      float base_kill_pct = std::pow(KILL_THRESHOLD - new_temp, EXPONENT) / DIVISOR;
+      float wind_bonus = atmos.wind().m_speed * WIND_BONUS_PER_MPH;
+      float famine_bonus = city->famine() ? FAMINE_BONUS : 1.0;
+      float tech_penalty  = ai_player.tech_level();
+      float pct_killed = base_kill_pct * wind_bonus * famine_bonus / tech_penalty;
 
-    // Reduce city pop by kill-count
-    exp = kill(*city, pct_killed);
+      SPELL_REPORT("base kill % is " << base_kill_pct);
+      SPELL_REPORT("wind bonus (multiplier) is " << wind_bonus);
+      SPELL_REPORT("famine bonus (multiplier) is " << famine_bonus);
+      SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
+      SPELL_REPORT("final kill % is " << pct_killed);
+
+      // Reduce city pop by kill-count
+      exp = kill(*city, pct_killed);
+    }
+    else {
+      SPELL_REPORT("was above kill threshold " << KILL_THRESHOLD);
+    }
   }
 
   return exp;
@@ -424,12 +456,23 @@ unsigned Infect::apply() const
   }
 
   // Calculate num killed
-  const float pct_killed =
-    (KILL_PCT_PER_LEVEL * m_spell_level) * // base kill %
-    (1.0 + city->rank() * BONUS_PER_CITY_RANK) * // city rank bonus
-    (city->famine() ? FAMINE_BONUS : 1.0) * // famine bonus
-    extreme_temp_bonus / // extreme temp bonus (calculated above)
-    ai_player.tech_level(); // tech penalty
+  float base_kill_pct = KILL_PCT_PER_LEVEL * m_spell_level;
+  float city_size_bonus = 1.0 + city->rank() * BONUS_PER_CITY_RANK;
+  float famine_bonus = city->famine() ? FAMINE_BONUS : 1.0;
+  float tech_penalty = ai_player.tech_level();
+
+  const float pct_killed = base_kill_pct *
+                           city_size_bonus *
+                           extreme_temp_bonus *
+                           famine_bonus /
+                           tech_penalty;
+
+  SPELL_REPORT("base kill % is " << base_kill_pct);
+  SPELL_REPORT("city-size bonus (multiplier) is " << city_size_bonus);
+  SPELL_REPORT("extreme-temperature bonus (multiplier) is " << extreme_temp_bonus);
+  SPELL_REPORT("famine bonus (multiplier) is " << famine_bonus);
+  SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
+  SPELL_REPORT("final kill % is " << pct_killed);
 
   // Reduce city pop by kill-count
   exp += kill(*city, pct_killed);
@@ -463,6 +506,8 @@ unsigned WindSpell::apply() const
   unsigned speedup = m_spell_level * MPH_PER_LEVEL;
   Wind new_wind = prior_wind + speedup;
   atmos.set_wind(new_wind);
+  SPELL_REPORT("increased wind from " << prior_wind.m_speed <<
+               " to " << new_wind.m_speed);
 
   // Wind can destroy infrastructure
   if (tile.infra_level() > 0) {
@@ -472,20 +517,32 @@ unsigned WindSpell::apply() const
                                            MPH_PER_ADDITIONAL_INFRA_DEVASTATION );
       exp += destroy_infra(tile, max_infra_destroyed);
     }
+    else {
+      SPELL_REPORT("fell below the threshold of " << damage_threshold <<
+                   " required to destroy infrastructure");
+    }
   }
-  else {
-    // Check for the existence of a city
-    // This spell can kill if cast on a city and winds get high enough
-    City* city = tile.city();
-    if (city != NULL && new_wind.m_speed > KILL_THRESHOLD) {
-      const float pct_killed =
-        std::sqrt(static_cast<float>(new_wind.m_speed - KILL_THRESHOLD)) / // base
-        std::sqrt(ai_player.tech_level()) / // tech penalty
-        std::sqrt(city->defense()) / // city-defense penalty
-        100; // convert to percent
+
+  // Check for the existence of a city
+  // This spell can kill if cast on a city and winds get high enough
+  City* city = tile.city();
+  if (city != NULL) {
+    if (new_wind.m_speed > KILL_THRESHOLD) {
+      float base_kill_pct = std::sqrt(new_wind.m_speed - KILL_THRESHOLD);
+      float tech_penalty = std::sqrt(ai_player.tech_level());
+      float defense_penalty = std::sqrt(city->defense());
+      float pct_killed = base_kill_pct / tech_penalty / defense_penalty;
+
+      SPELL_REPORT("base kill % is " << base_kill_pct);
+      SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
+      SPELL_REPORT("city defense penalty (divisor) is " << defense_penalty);
+      SPELL_REPORT("final kill % is " << pct_killed);
 
       // Reduce city pop by kill-count
       exp += kill(*city, pct_killed);
+    }
+    else {
+      SPELL_REPORT("fell below the kill theshold " << KILL_THRESHOLD);
     }
   }
 
@@ -525,30 +582,50 @@ unsigned Fire::apply() const
   float soil_moisture = tile.soil_moisture();
 
   // Compute destructiveness of fire
-  float destructiveness =
-    m_spell_level * // base
-    std::pow(TEMP_EXP_BASE, temperature - TEMP_TIPPING_POINT) * // temperature influence
-    std::pow(WIND_EXP_BASE, wind_speed - WIND_TIPPING_POINT) * // wind infuence
-    std::pow(MOISTURE_EXP_BASE, (MOISTURE_TIPPING_POINT - soil_moisture) * 100); // moisture influence
+  float base_destructiveness = m_spell_level;
+  float temp_multiplier = std::pow(TEMP_EXP_BASE, temperature - TEMP_TIPPING_POINT);
+  float wind_multiplier = std::pow(WIND_EXP_BASE, wind_speed - WIND_TIPPING_POINT);
+  float moisture_multiplier =
+    std::pow(MOISTURE_EXP_BASE, (MOISTURE_TIPPING_POINT - soil_moisture) * 100);
+
+  float destructiveness = base_destructiveness *
+                          temp_multiplier *
+                          wind_multiplier *
+                          moisture_multiplier;
+
+  SPELL_REPORT("base destructiveness " << base_destructiveness);
+  SPELL_REPORT("temperature multiplier " << temp_multiplier);
+  SPELL_REPORT("wind multiplier " << wind_multiplier);
+  SPELL_REPORT("moisture multiplier " << moisture_multiplier);
+  SPELL_REPORT("total destructiveness " << destructiveness);
 
   // Fire can destroy infrastructure
   if (tile.infra_level() > 0) {
-    unsigned max_infra_destroyed =
-      destructiveness /
-      (DESTRUCTIVENESS_PER_INFRA + std::sqrt(ai_player.tech_level()));
+    float damage_threshold = DESTRUCTIVENESS_PER_INFRA + std::sqrt(ai_player.tech_level());
+    unsigned max_infra_destroyed = destructiveness / damage_threshold;
     if (max_infra_destroyed > 0) {
       exp += destroy_infra(tile, max_infra_destroyed);
     }
+    else {
+      SPELL_REPORT("fell below destructive threshold " << damage_threshold
+                   << " required to destroy infrastructure");
+    }
     damage_tile(tile, destructiveness / 100);
   }
-  else {
-    // Check for the existence of a city
-    // This spell can kill if cast on a city and winds get high enough
-    City* city = tile.city();
-    const float pct_killed =
-      destructiveness / // base
-      std::sqrt(ai_player.tech_level()) / // tech penalty
-      std::sqrt(city->defense()); // city-defense penalty
+
+  // Check for the existence of a city
+  // This spell can kill if cast on a city and winds get high enough
+  City* city = tile.city();
+  if (city != NULL) {
+    float base_kill_pct = destructiveness;
+    float tech_penalty = std::sqrt(ai_player.tech_level());
+    float defense_penalty = std::sqrt(city->defense());
+    float pct_killed = base_kill_pct / tech_penalty / defense_penalty;
+
+    SPELL_REPORT("base kill % is " << base_kill_pct);
+    SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
+    SPELL_REPORT("city defense penalty (divisor) is " << defense_penalty);
+    SPELL_REPORT("final kill % is " << pct_killed);
 
     // Reduce city pop by kill-count
     exp += kill(*city, pct_killed);
@@ -575,18 +652,6 @@ void Tstorm::verify_apply() const
 unsigned Tstorm::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  /**
-   * Spawn severe thunderstorms. These storms have a chance to cause
-   * weak floods, tornadoes, and high winds, making this a good spell for
-   * causing chain-reactions. Lightning can kill city dwellers and is
-   * the only way for a tstorm to directly get kills.
-   *
-   * Enhanced by high wind, high dewpoint, high temperature, low pressure, and
-   * high temperature differentials.
-   *
-   * This is a tier 2 spell
-   */
-
   Engine& engine       = Engine::instance();
   World& world         = engine.world();
   FoodTile& tile       = dynamic_cast<FoodTile&>(world.get_tile(m_location));
@@ -602,40 +667,63 @@ unsigned Tstorm::apply() const
   int pressure   = atmos.pressure();
 
   // Compute destructiveness of tstorm
-  float destructiveness =
-    m_spell_level * // base
-    std::pow(TEMP_EXP_BASE, temperature - TEMP_TIPPING_POINT) * // temperature influence
-    std::pow(WIND_EXP_BASE, wind_speed - WIND_TIPPING_POINT) * // wind infuence
-    std::pow(PRESSURE_EXP_BASE, pressure - PRESSURE_TIPPING_POINT); // moisture influence
+  float base_destructiveness = m_spell_level;
+  float temp_multiplier = std::pow(TEMP_EXP_BASE, temperature - TEMP_TIPPING_POINT);
+  float wind_multiplier = std::pow(WIND_EXP_BASE, wind_speed - WIND_TIPPING_POINT);
+  float pressure_multiplier = std::pow(PRESSURE_EXP_BASE, pressure - PRESSURE_TIPPING_POINT);
 
-  // TODO: In general, spells need to be much more verbose about
-  // what they're doing and why.
+  float destructiveness = base_destructiveness *
+                          temp_multiplier *
+                          wind_multiplier *
+                          pressure_multiplier;
+
+  SPELL_REPORT("base destructiveness " << base_destructiveness);
+  SPELL_REPORT("temperature multiplier " << temp_multiplier);
+  SPELL_REPORT("wind multiplier " << wind_multiplier);
+  SPELL_REPORT("pressure multiplier " << pressure_multiplier);
+  SPELL_REPORT("total destructiveness " << destructiveness);
 
   if (destructiveness > WIND_DESTRUCTIVENESS_THRESHOLD) {
-    unsigned wind_level = destructiveness / WIND_DESTRUCTIVENESS_THRESHOLD;
+    unsigned wind_level =
+      tstorm_spawn_helper(destructiveness, WIND_DESTRUCTIVENESS_THRESHOLD);
+    Require(wind_level > 0, "Problem in helper");
+
     exp += spawn(SpellFactory::WIND, wind_level);
   }
 
   if (destructiveness > FLOOD_DESTRUCTIVENESS_THRESHOLD) {
-    unsigned flood_level = destructiveness / FLOOD_DESTRUCTIVENESS_THRESHOLD;
+    unsigned flood_level =
+      tstorm_spawn_helper(destructiveness, FLOOD_DESTRUCTIVENESS_THRESHOLD);
+    Require(flood_level > 0, "Problem in helper");
+
     exp += spawn(SpellFactory::FLOOD, flood_level);
   }
 
   if (destructiveness > TORNADO_DESTRUCTIVENESS_THRESHOLD) {
-    unsigned tornado_level = destructiveness / TORNADO_DESTRUCTIVENESS_THRESHOLD;
+    unsigned tornado_level =
+      tstorm_spawn_helper(destructiveness, TORNADO_DESTRUCTIVENESS_THRESHOLD);
+    Require(tornado_level > 0, "Problem in helper");
+
     exp += spawn(SpellFactory::TORNADO, tornado_level);
   }
 
   // Check for the existence of a city
   // This spell can kill via lightning on a city
   City* city = tile.city();
-  const float pct_killed =
-    destructiveness * LIGHTING_PCT_KILL_PER_DESTRUCTIVENESS / // base
-    std::sqrt(ai_player.tech_level()) / // tech penalty
-    std::sqrt(city->defense()); // city-defense penalty
+  if (city != NULL) {
+    float base_kill_pct = destructiveness * LIGHTING_PCT_KILL_PER_DESTRUCTIVENESS;
+    float tech_penalty = std::sqrt(ai_player.tech_level());
+    float defense_penalty = std::sqrt(city->defense());
+    float pct_killed = base_kill_pct / tech_penalty / defense_penalty;
 
-  // Reduce city pop by kill-count
-  exp += kill(*city, pct_killed);
+    SPELL_REPORT("base kill % is " << base_kill_pct);
+    SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
+    SPELL_REPORT("city defense penalty (divisor) is " << defense_penalty);
+    SPELL_REPORT("final kill % is " << pct_killed);
+
+    // Reduce city pop by kill-count
+    exp += kill(*city, pct_killed);
+  }
 
   return exp;
 }

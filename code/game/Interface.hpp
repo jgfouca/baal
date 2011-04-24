@@ -39,13 +39,13 @@ class Interface
   bool m_end_turn;
 };
 
-#define SPELL_REPORT(interface, msg) \
-  do {                                                    \
-    std::ostringstream spell_report_oss;                  \
-    spell_report_oss << msg;                              \
-    interface.spell_report(spell_report_oss.str());       \
-  } while (false)
+#define SPELL_REPORT(msg)                                               \
+do {                                                                    \
+  std::ostringstream spell_report_oss;                                  \
+  spell_report_oss << m_name << ": " << msg;                            \
+  Engine::instance().interface().spell_report(spell_report_oss.str());  \
+} while (false)
 
-}
+} // namespace baal
 
 #endif

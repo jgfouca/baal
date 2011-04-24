@@ -265,7 +265,7 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
   * Documentation
   * No magic numbers
 * Make food req dependent on rank, not pop?
-* Need tracing infrastructure
+* Need tracing infrastructure (asp for AI)
 * Pressure needs to affect winds
 * Start to fill in Spell implementations
 * Find areas that define the game model and tag them with MODEL

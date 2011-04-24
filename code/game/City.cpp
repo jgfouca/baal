@@ -76,7 +76,7 @@ City::City(const std::string& name, const Location& location)
     m_next_rank_pop(CITY_STARTING_POP * CITY_RANK_UP_MULTIPLIER),
     m_production(0.0),
     m_location(location),
-    m_defense_level(0),
+    m_defense_level(1),
     m_famine(false)
 {}
 
@@ -289,7 +289,7 @@ void City::cycle_turn()
   else if (build_defenses) {
     // No settler expansion is possible, build city defenses. This is the
     // lowest priority item to build.
-    unsigned cost = (m_defense_level + 1) * CITY_DEF_PROD_COST;
+    unsigned cost = m_defense_level * CITY_DEF_PROD_COST;
     if (m_production >= cost) {
       ++m_defense_level;
       m_production -= cost;

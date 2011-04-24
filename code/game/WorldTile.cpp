@@ -234,6 +234,7 @@ void LandTile::build_infra()
 ///////////////////////////////////////////////////////////////////////////////
 {
   Require(m_infra_level < LAND_TILE_MAX_INFRA, "Infra is maxed");
+  Require(city() == NULL, "Cannot build infra if there is city here");
 
   m_infra_level++;
 }
@@ -264,6 +265,7 @@ Yield LandTile::yield() const
 void LandTile::place_city(City& city)
 ///////////////////////////////////////////////////////////////////////////////
 {
+  Require(infra_level() == 0, "Cannot put city on tile with infra");
   Require(supports_city(), "Tile does not support cities");
   Require(m_city == NULL, "Tile already had city: " << city.name());
   m_city = &city;

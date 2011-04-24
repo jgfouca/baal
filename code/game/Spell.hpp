@@ -182,6 +182,7 @@ class Cold : public Spell
   static const unsigned DEGREES_PER_LEVEL = 5;
   static const float OCEAN_SURFACE_CHG_RATIO = .35;
   static const int KILL_THRESHOLD = 0;
+  static const float WIND_BONUS_PER_MPH = 0.01;
   static const float FAMINE_BONUS = 2.0;
   static const float EXPONENT = 1.5;
   static const unsigned DIVISOR = 5;
@@ -216,7 +217,7 @@ class Infect : public Spell
 
   static const unsigned BASE_COST = 50;
   static const unsigned COST_INC = BASE_COST / 3;
-  static const float KILL_PCT_PER_LEVEL = 0.01;
+  static const float KILL_PCT_PER_LEVEL = 1.0;
   static const float BONUS_PER_CITY_RANK = 0.10;
   static const float FAMINE_BONUS = 2.0;
   static const int WARM_THRESHOLD = 90;
@@ -340,7 +341,7 @@ class Tstorm : public Spell
   static const float FLOOD_DESTRUCTIVENESS_THRESHOLD = 20.0;
   static const float TORNADO_DESTRUCTIVENESS_THRESHOLD = 40.0;
 
-  static const float LIGHTING_PCT_KILL_PER_DESTRUCTIVENESS = .02;
+  static const float LIGHTING_PCT_KILL_PER_DESTRUCTIVENESS = 2.0;
 
   static SpellPrereq PREREQ;
 };
