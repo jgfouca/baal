@@ -7,11 +7,16 @@
 #include "Command.hpp"
 #include "Player.hpp"
 #include "PlayerAI.hpp"
+#include "Util.hpp"
 
-#include <iostream>
 #include <string>
+#include <stdio.h>
+#include <readline/readline.h>
+#include <readline/history.h>
+#include <boost/algorithm/string.hpp>
 
 using namespace baal;
+using namespace boost;
 
 ///////////////////////////////////////////////////////////////////////////////
 InterfaceText::InterfaceText(std::ostream& out,
@@ -20,7 +25,9 @@ InterfaceText::InterfaceText(std::ostream& out,
  : Interface(),
    m_ostream(out),
    m_istream(in)
-{}
+{
+  initialize_readline();
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 void InterfaceText::draw()
@@ -75,29 +82,36 @@ void InterfaceText::interact()
   // Reset state
   m_end_turn = false;
 
+  // readline library is in C - here comes the diarrhea
+  static char *line = (char *)NULL;
+
   // Enter loop for this turn
   while(!m_end_turn) {
     // Grab a line of text
-    m_ostream <<  "% ";
-    m_ostream.flush();
-    std::string command_str;
-    if (!std::getline(m_istream, command_str)) {
+    line = readline("% ");
+    if (line == (char *)NULL){
       // User ctrl-d
       engine.quit();
       break;
     }
-    else if (command_str.empty()) {
-      continue;
+    else if (static_cast<int>(sizeof(line)) == 0) {
+      break;
     }
-
-    try {
-      const Command& command = cmd_factory.parse_command(command_str);
-      command.apply();
+    // add to history and process
+    if (line && *line){
+      add_history(line);
+      std::string command_str(line);
+      trim(command_str);
+      try {
+        const Command& command = cmd_factory.parse_command(command_str);
+        command.apply();
+      }
+      catch (UserError& error) {
+        m_ostream << "ERROR: " << error.what() << std::endl;
+        m_ostream << "\nType: 'help [command]' for assistence" << std::endl;
+      }
     }
-    catch (UserError& error) {
-      m_ostream << "ERROR: " << error.what() << std::endl;
-      m_ostream << "\nType: 'help [command]' for assistence" << std::endl;
-    }
+    free(line);
   }
 }
 

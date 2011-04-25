@@ -10,6 +10,7 @@
 #include "Player.hpp"
 #include "PlayerAI.hpp"
 
+#include <stdio.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -20,6 +21,8 @@ void initialize_readline ()
 ///////////////////////////////////////////////////////////////////////////////
 {
   rl_readline_name = "Baal";
+
+  // readline binding defines autocomplete behavior
   rl_attempted_completion_function = baal_completion;
 }
 
