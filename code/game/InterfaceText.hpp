@@ -30,7 +30,6 @@ class InterfaceText : public Interface
  private:
   std::ostream& m_ostream;
   std::istream& m_istream;
-
 };
 
 }

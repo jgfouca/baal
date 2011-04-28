@@ -27,7 +27,7 @@ class CommandFactory
 
   void aliases(const std::string& name, std::vector<std::string>& alias_rv) const;
 
-  const std::map<std::string, Command*> * const getCommandMap() const;
+  const std::map<std::string, Command*>& get_command_map() const { return m_cmd_map; }
 
  private:
   // Private constructor since this is singleton class

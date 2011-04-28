@@ -9,14 +9,14 @@
 #include "PlayerAI.hpp"
 #include "Util.hpp"
 
+#include <iostream>
 #include <string>
-#include <stdio.h>
+#include <cstring>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <boost/algorithm/string.hpp>
 
 using namespace baal;
-using namespace boost;
 
 ///////////////////////////////////////////////////////////////////////////////
 InterfaceText::InterfaceText(std::ostream& out,
@@ -83,25 +83,23 @@ void InterfaceText::interact()
   m_end_turn = false;
 
   // readline library is in C - here comes the diarrhea
-  static char *line = (char *)NULL;
+  char *line = NULL;
 
   // Enter loop for this turn
   while(!m_end_turn) {
     // Grab a line of text
     line = readline("% ");
-    if (line == (char *)NULL){
+    if (line == NULL){
       // User ctrl-d
       engine.quit();
       break;
     }
-    else if (static_cast<int>(sizeof(line)) == 0) {
-      break;
-    }
-    // add to history and process
-    if (line && *line){
+
+    // Add to history and process if not empty string
+    if (std::strlen(line) > 0) {
       add_history(line);
       std::string command_str(line);
-      trim(command_str);
+      boost::trim(command_str);
       try {
         const Command& command = cmd_factory.parse_command(command_str);
         command.apply();
