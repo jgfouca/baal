@@ -6,6 +6,7 @@
 
 #include <string>
 #include <iosfwd>
+#include <libxml/parser.h>
 
 // This file contains the classes having to do with Geology. The
 // classes here are just data-holders for the most part. As usual, we define
@@ -45,11 +46,15 @@ class Geology : public Drawable
 
   static bool is_geological(DrawMode mode);
 
+  xmlNodePtr to_xml();
+
  protected:
 
   virtual const char* color() const = 0;
 
   virtual std::string symbol() const = 0;
+
+  virtual const char* geology_type() const = 0;
 
   float m_tension;
   float m_magma;
@@ -75,6 +80,8 @@ class Divergent : public Geology
 
   virtual std::string symbol() const { return " <-->"; }
 
+  virtual const char* geology_type() const { return "Divergent"; }
+
  private:
   static const float DIVERGENT_MAGMA_BUILDUP   = 0.001;
   static const float DIVERGENT_TENSION_BUILDUP = 0.000;
@@ -98,6 +105,8 @@ class Subducting : public Geology
 
   virtual std::string symbol() const { return " -v<-"; }
 
+  virtual const char* geology_type() const { return "Subducting"; }
+
  private:
   static const float SUBDUCTING_MAGMA_BUILDUP   = 0.002;
   static const float SUBDUCTING_TENSION_BUILDUP = 0.002;
@@ -119,6 +128,8 @@ class Orogenic : public Geology
   virtual const char* color() const { return GREEN; }
 
   virtual std::string symbol() const { return " -><-"; }
+
+  virtual const char* geology_type() const { return "Orogenic"; }
 
  private:
   static const float OROGENIC_MAGMA_BUILDUP   = 0.002;
@@ -142,6 +153,8 @@ class Transform : public Geology
 
   virtual std::string symbol() const { return " vv^^"; }
 
+  virtual const char* geology_type() const { return "Transform"; }
+
  private:
   static const float TRANSFORM_MAGMA_BUILDUP   = 0.000;
   static const float TRANSFORM_TENSION_BUILDUP = 0.003;
@@ -163,6 +176,8 @@ class Inactive : public Geology
   virtual const char* color() const { return WHITE; }
 
   virtual std::string symbol() const { return "     "; }
+
+  virtual const char* geology_type() const { return "Inactive"; }
 
  private:
   static const float INACTIVE_MAGMA_BUILDUP   = 0.000;

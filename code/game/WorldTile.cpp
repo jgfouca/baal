@@ -23,6 +23,19 @@ Yield::Yield(float food, float prod)
   Require(prod >= 0, "Cannot have negative yields");
 }
 
+///////////////////////////////////////////////////////////////////////////////
+xmlNodePtr Yield::to_xml()
+///////////////////////////////////////////////////////////////////////////////
+{
+  xmlNodePtr Yield_node = xmlNewNode(NULL, BAD_CAST "Yield");
+  std::ostringstream m_food_oss, m_prod_oss;
+  m_food_oss << m_food;
+  m_prod_oss << m_prod;
+  xmlNewChild(Yield_node, NULL, BAD_CAST "m_food", BAD_CAST m_food_oss.str().c_str());
+  xmlNewChild(Yield_node, NULL, BAD_CAST "m_prod", BAD_CAST m_prod_oss.str().c_str());
+
+  return Yield_node;
+}
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -143,6 +156,23 @@ void WorldTile::work()
 {
   Require(!m_worked, "Tile already being worked");
   m_worked = true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+xmlNodePtr WorldTile::to_xml()///////////////////////////////////////////////////////////////////////////////
+{
+  xmlNodePtr WorldTile_node = xmlNewNode(NULL, BAD_CAST "Tile");
+
+  xmlAddChild(WorldTile_node, m_base_yield.to_xml());
+  xmlAddChild(WorldTile_node, m_climate.to_xml());
+  xmlAddChild(WorldTile_node, m_geology.to_xml());
+  xmlAddChild(WorldTile_node, m_atmosphere.to_xml());
+
+  std::ostringstream worked_oss;
+  worked_oss << m_worked;
+  xmlNewChild(WorldTile_node, NULL, BAD_CAST "m_worked", BAD_CAST worked_oss.str().c_str());
+
+  return WorldTile_node;
 }
 
 /*****************************************************************************/

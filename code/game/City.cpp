@@ -390,3 +390,40 @@ bool City::build_infra(LandTile& land_tile)
   }
   return false;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+xmlNodePtr City::to_xml()
+///////////////////////////////////////////////////////////////////////////////
+{
+  xmlNodePtr City_node = xmlNewNode(NULL, BAD_CAST "City");
+
+  std::ostringstream rank_oss;
+  rank_oss << m_rank;
+  xmlNewChild(City_node, NULL, BAD_CAST "m_rank", BAD_CAST rank_oss.str().c_str());
+
+  std::ostringstream population_oss;
+  population_oss << m_population;
+  xmlNewChild(City_node, NULL, BAD_CAST "m_population", BAD_CAST population_oss.str().c_str());
+
+  std::ostringstream next_rank_pop_oss;
+  next_rank_pop_oss << m_next_rank_pop;
+  xmlNewChild(City_node, NULL, BAD_CAST "m_next_rank_pop", BAD_CAST next_rank_pop_oss.str().c_str());
+
+  std::ostringstream production_oss;
+  production_oss << m_production;
+  xmlNewChild(City_node, NULL, BAD_CAST "m_production", BAD_CAST production_oss.str().c_str());
+
+  std::ostringstream location_oss;
+  location_oss << m_location;
+  xmlNewChild(City_node, NULL, BAD_CAST "m_location", BAD_CAST location_oss.str().c_str());
+
+  std::ostringstream defense_level_rank_oss;
+  defense_level_rank_oss << m_defense_level;
+  xmlNewChild(City_node, NULL, BAD_CAST "m_defense_level", BAD_CAST defense_level_rank_oss.str().c_str());
+
+  std::ostringstream famine_oss;
+  famine_oss << m_famine;
+  xmlNewChild(City_node, NULL, BAD_CAST "m_famine", BAD_CAST famine_oss.str().c_str());
+
+  return City_node;
+}

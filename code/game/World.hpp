@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <iosfwd>
+#include <libxml/parser.h>
 
 namespace baal {
 
@@ -73,6 +74,8 @@ class World : public Drawable
   void place_city(const Location& location);
 
   void remove_city(City& city);
+
+  xmlNodePtr to_xml();
 
  private:
 

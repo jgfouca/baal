@@ -5,6 +5,7 @@
 
 #include <string>
 #include <list>
+#include <libxml/parser.h>
 
 namespace baal {
 
@@ -30,6 +31,8 @@ class City
   bool famine() const { return m_famine; }
 
   unsigned defense() const { return m_defense_level; }
+
+  xmlNodePtr to_xml();
 
  private:
 

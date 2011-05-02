@@ -62,3 +62,10 @@ void PlayerAI::draw_text(std::ostream& out) const
       << "  tech level: " << BOLD_COLOR << GREEN << m_tech_level << CLEAR_ALL << "\n"
       << "  population: " << BOLD_COLOR << BLUE << m_population << CLEAR_ALL << "\n";
 }
+
+///////////////////////////////////////////////////////////////////////////////
+xmlNodePtr PlayerAI::to_xml()///////////////////////////////////////////////////////////////////////////////
+{
+  xmlNodePtr PlayerAI_node = xmlNewNode(NULL, BAD_CAST "PlayerAI - stub");
+  return PlayerAI_node;
+}

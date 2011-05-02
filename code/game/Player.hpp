@@ -5,6 +5,7 @@
 #include "Drawable.hpp"
 
 #include <string>
+#include <libxml/parser.h>
 
 namespace baal {
 
@@ -39,6 +40,8 @@ class Player : public Drawable
   unsigned level() const { return m_level; }
 
   const TalentTree& talents() const { return m_talents; }
+
+  xmlNodePtr to_xml();
 
 private:
   // Forbidden

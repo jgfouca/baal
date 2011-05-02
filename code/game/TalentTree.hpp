@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <libxml/parser.h>
 
 namespace baal {
 
@@ -31,6 +32,8 @@ class TalentTree
 
   void query_all_learnable_spells(std::vector<std::pair<std::string, unsigned> >& rv,
                                   const Player& player) const;
+
+  xmlNodePtr to_xml();
 
  private:
   void check_prereqs(const Spell& spell, const Player& player) const;

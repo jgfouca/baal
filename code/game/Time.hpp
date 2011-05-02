@@ -6,6 +6,7 @@
 #include <string>
 #include <iosfwd>
 #include <utility>
+#include <libxml/parser.h>
 
 namespace baal {
 
@@ -34,6 +35,8 @@ class Time : public Drawable
   Season season() const { return m_curr_season; }
 
   static std::pair<std::string, const char*> season_info(Season season);
+
+  xmlNodePtr to_xml();
 
   // Constants
   static const unsigned STARTING_YEAR         = 0;

@@ -99,3 +99,45 @@ void Player::draw_text(std::ostream& out) const
       << "  mana: " << BOLD_COLOR << BLUE << m_mana << "/" << m_max_mana << CLEAR_ALL << "\n"
       << "  exp: " << BOLD_COLOR << YELLOW << m_exp << "/" << m_next_level_cost << CLEAR_ALL << "\n";
 }
+
+///////////////////////////////////////////////////////////////////////////////
+xmlNodePtr Player::to_xml()
+///////////////////////////////////////////////////////////////////////////////
+{
+  xmlNodePtr Player_node = xmlNewNode(NULL, BAD_CAST "Player");
+
+  // std::string m_name;
+  // unsigned    m_mana;
+  // unsigned    m_max_mana;
+  // unsigned    m_mana_regen_rate;
+  // unsigned    m_exp;
+  // unsigned    m_level;
+  // unsigned    m_next_level_cost;
+  // TalentTree  m_talents;
+
+  xmlNewChild(Player_node, NULL, BAD_CAST "m_name", BAD_CAST m_name.c_str());
+
+  std::ostringstream m_mana_oss, m_max_mana_oss, m_mana_regen_rate_oss, m_exp_oss, m_level_oss, m_next_level_cost_oss;
+
+  m_mana_oss << m_mana;
+  xmlNewChild(Player_node, NULL, BAD_CAST "m_mana", BAD_CAST m_mana_oss.str().c_str());
+
+  m_max_mana_oss << m_max_mana;
+  xmlNewChild(Player_node, NULL, BAD_CAST "m_max_mana", BAD_CAST m_max_mana_oss.str().c_str());
+
+  m_mana_regen_rate_oss << m_mana_regen_rate;
+  xmlNewChild(Player_node, NULL, BAD_CAST "m_mana_regen_rate", BAD_CAST m_mana_regen_rate_oss.str().c_str());
+
+  m_exp_oss << m_exp;
+  xmlNewChild(Player_node, NULL, BAD_CAST "m_exp", BAD_CAST m_exp_oss.str().c_str());
+
+  m_level_oss << m_level;
+  xmlNewChild(Player_node, NULL, BAD_CAST "m_level", BAD_CAST m_level_oss.str().c_str());
+
+  m_next_level_cost_oss << m_next_level_cost;
+  xmlNewChild(Player_node, NULL, BAD_CAST "m_next_level_cost", BAD_CAST m_next_level_cost_oss.str().c_str());
+
+  xmlAddChild(Player_node, m_talents.to_xml());
+
+  return Player_node;
+}

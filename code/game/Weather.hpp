@@ -7,6 +7,7 @@
 
 #include <iosfwd>
 #include <vector>
+#include <libxml/parser.h>
 
 // This file contains the classes having to do with Weather. The
 // classes here are just data-holders for the most part. As usual, we define
@@ -74,6 +75,8 @@ class Climate
 
   Wind wind(Season season) const { return m_wind; }
 
+  xmlNodePtr to_xml();
+
  private:
   int   m_temperature; // in farenheit
   float m_rainfall;    // in inches/year
@@ -109,6 +112,8 @@ class Atmosphere : public Drawable
   void cycle_turn(const std::vector<const Anomaly*>& anomalies,
                   const Location& location,
                   Season season);
+
+  xmlNodePtr to_xml();
 
  private:
   int compute_dewpoint() const;
@@ -201,6 +206,8 @@ class Anomaly : public Drawable
 
   static const AnomalyCategory FIRST = TEMPERATURE;
   static const AnomalyCategory LAST  = PRESSURE;
+
+  xmlNodePtr to_xml() const;
 
   static const float PRECIP_CHANGE_PER_LEVEL = 0.25;
   static const int TEMP_CHANGE_PER_LEVEL = 7;

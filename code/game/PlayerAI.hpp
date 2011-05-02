@@ -3,6 +3,8 @@
 
 #include "Drawable.hpp"
 
+#include <libxml/parser.h>
+
 namespace baal {
 
 class City;
@@ -29,6 +31,8 @@ class PlayerAI : public Drawable
 
   float tech_yield_multiplier() const
   { return 1 + (m_tech_level - STARTING_TECH_LEVEL) * YIELD_GAIN_PER_TECH; }
+
+  xmlNodePtr to_xml();
 
  private:
   unsigned m_tech_level;

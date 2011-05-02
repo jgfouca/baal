@@ -197,7 +197,23 @@ void SaveCommand::init(const std::vector<std::string>& args)
 void SaveCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // TODO
+  // IN PROGRESS
+  Engine& engine = Engine::instance();
+  World&  world  = engine.world();
+  Player& player = engine.player();
+  //PlayerAI& ai_player = engine.ai_player();
+
+  xmlDocPtr doc = NULL;
+  xmlNodePtr root_node = NULL;
+  doc = xmlNewDoc(BAD_CAST "1.0");
+  root_node = xmlNewNode(NULL, BAD_CAST "baal_root");
+  xmlDocSetRootElement(doc, root_node);
+
+  xmlAddChild(root_node, world.to_xml());
+  xmlAddChild(root_node, player.to_xml());
+  //xmlAddChild(root_node, ai_player.to_xml());
+
+  xmlSaveFormatFileEnc(m_arg.c_str(), doc, "UTF-8", 1);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

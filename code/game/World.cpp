@@ -190,6 +190,59 @@ void World::remove_city(City& city)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+xmlNodePtr World::to_xml()
+///////////////////////////////////////////////////////////////////////////////
+{
+  xmlNodePtr World_node = xmlNewNode(NULL, BAD_CAST "World");
+
+  /*unsigned m_width;
+  unsigned m_height;
+  std::vector<std::vector<WorldTile*> > m_tiles;
+  Time m_time;
+  std::vector<const Anomaly*> m_recent_anomalies;
+  std::vector<City*> m_cities;*/
+
+  std::ostringstream width_oss;
+  width_oss << m_width;
+  xmlNewChild(World_node, NULL, BAD_CAST "m_width", BAD_CAST width_oss.str().c_str());
+
+  std::ostringstream height_oss;
+  height_oss << m_height;
+  xmlNewChild(World_node, NULL, BAD_CAST "m_height", BAD_CAST height_oss.str().c_str());
+
+  // I figure there's an easier Iterator here; not sure how to use it.
+  for (unsigned int row = 0; row < m_height; row++) {
+    for (unsigned int col = 0; col < m_width; col++) {
+      xmlNodePtr Tile_node = m_tiles[row][col]->to_xml();
+      std::ostringstream row_oss, col_oss;
+      row_oss << row;
+      col_oss << col;
+      xmlNewChild(Tile_node, NULL, BAD_CAST "row", BAD_CAST row_oss.str().c_str());
+      xmlNewChild(Tile_node, NULL, BAD_CAST "col", BAD_CAST col_oss.str().c_str());
+      xmlAddChild(World_node, Tile_node);
+    }
+  }
+
+  xmlAddChild(World_node, m_time.to_xml());
+
+  for (std::vector<const Anomaly*>::iterator itr = m_recent_anomalies.begin();
+       itr != m_recent_anomalies.end();
+       ++itr) {
+    const Anomaly* anomaly = *itr;
+    xmlAddChild(World_node, anomaly->to_xml());
+  }
+
+  for (std::vector<City*>::const_iterator itr = m_cities.begin();
+       itr != m_cities.end();
+       ++itr) {
+    City* city = *itr;
+    xmlAddChild(World_node, city->to_xml());
+  }
+
+  return World_node;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 void World::clear_anomalies()
 ///////////////////////////////////////////////////////////////////////////////
 {

@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <iosfwd>
+#include <libxml/parser.h>
 
 // We put all WorldTile classes in this header to avoid
 // generating a ton of header files.
@@ -32,6 +33,8 @@ struct Yield
 
   float m_food;
   float m_prod;
+
+  xmlNodePtr to_xml();
 
  private:
   Yield();
@@ -109,6 +112,8 @@ class WorldTile : public Drawable
 
   static const unsigned TILE_TEXT_HEIGHT = 5;
   static const unsigned TILE_TEXT_WIDTH = 5;
+
+  xmlNodePtr to_xml();
 
  protected:
 
