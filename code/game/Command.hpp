@@ -74,6 +74,11 @@ class EndTurnCommand : public Command
   virtual void apply() const;
 
   virtual std::string help() const;
+
+ private:
+  unsigned m_num_turns;
+
+  static const unsigned MAX_SKIP_TURNS = 100;
 };
 
 /**

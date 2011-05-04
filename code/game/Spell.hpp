@@ -3,15 +3,17 @@
 
 #include "SpellFactory.hpp"
 #include "BaalCommon.hpp"
+#include "BaalMath.hpp"
 
+#include <limits>
 #include <iosfwd>
 #include <vector>
+#include <tr1/functional>
 
 namespace baal {
 
 // We use this file to define all the spells. This will avoid
 // creation of lots of very small hpp/cpp files.
-
 
 class WorldTile;
 class City;
@@ -102,7 +104,7 @@ class Spell
   // Returns exp gained
   unsigned destroy_infra(WorldTile& tile, unsigned max_destroyed) const;
 
-  void damage_tile(WorldTile& tile, float damage) const;
+  void damage_tile(WorldTile& tile, float damage_pct) const;
 
   // Some disasters can spawn other disasters (chain reaction). This method
   // encompassed the implementation of this phenominon. The amount of exp
@@ -114,6 +116,10 @@ std::ostream& operator<<(std::ostream& out, const Spell& spell);
 
 // TODO - Do we want spells for controlling all the basic properties
 // of the atmosphere? Or do we want to leave some up to pure chance (pressure)?
+
+// Spell header components are designed to maximize tweakability from
+// the header file. TODO: should things like degrees-heated for Hot also be
+// represented by a function?
 
 /**
  * Increases the immediate temperature of a region. High temperatures can
@@ -136,7 +142,19 @@ class Hot : public Spell
             BASE_COST,
             COST_INC,
             PREREQ)
-  {}
+  {
+    // base_kill(temp) = (temp - KILL_THRESHOLD)^1.5 / 8;
+    m_base_kill_func = std::tr1::bind(baal::poly_growth,
+                                      std::tr1::placeholders::_1,
+                                      KILL_THRESHOLD,
+                                      1.5,
+                                      8);
+
+    // tech_penalty(tech_level) = sqrt(tech_level)
+    m_tech_penalty_func = std::tr1::bind(baal::sqrt,
+                                         std::tr1::placeholders::_1,
+                                         0.0); // no threshold
+  }
 
   virtual void verify_apply() const;
   virtual unsigned apply() const;
@@ -146,9 +164,11 @@ class Hot : public Spell
   static const unsigned DEGREES_PER_LEVEL = 7;
   static const float OCEAN_SURFACE_CHG_RATIO = .35;
   static const int KILL_THRESHOLD = 100;
-  static const float EXPONENT = 1.5;
-  static const unsigned DIVISOR = 5;
   static SpellPrereq PREREQ;
+
+ private:
+  std::tr1::function<float(float)> m_base_kill_func;
+  std::tr1::function<float(float)> m_tech_penalty_func;
 };
 
 /**
@@ -172,21 +192,43 @@ class Cold : public Spell
             BASE_COST,
             COST_INC,
             PREREQ)
-  {}
+  {
+    // base_kill(temp) = (KILL_THRESHOLD - temp)^1.5 / 8;
+    m_base_kill_func = std::tr1::bind(baal::poly_growth,
+                                      std::tr1::placeholders::_1,
+                                      -KILL_THRESHOLD,
+                                      1.5,
+                                      8);
+
+    // wind_bonus(speed) = 1.02^speed , diminishing returns at 40
+    m_wind_bonus_func = std::tr1::bind(baal::exp_growth,
+                                       std::tr1::placeholders::_1,
+                                       0.0,  // no threshold
+                                       1.02, // slow growth
+                                       40.0);
+
+    // tech_penalty(tech_level) = tech_level
+    m_tech_penalty_func = std::tr1::bind(baal::linear_growth,
+                                         std::tr1::placeholders::_1,
+                                         0.0, // no threshold
+                                         1.0); // no multiplier
+  }
 
   virtual void verify_apply() const;
   virtual unsigned apply() const;
 
   static const unsigned BASE_COST = 50;
   static const unsigned COST_INC = BASE_COST / 3;
-  static const unsigned DEGREES_PER_LEVEL = 5;
+  static const unsigned DEGREES_PER_LEVEL = 7;
   static const float OCEAN_SURFACE_CHG_RATIO = .35;
   static const int KILL_THRESHOLD = 0;
-  static const float WIND_BONUS_PER_MPH = 0.01;
   static const float FAMINE_BONUS = 2.0;
-  static const float EXPONENT = 1.5;
-  static const unsigned DIVISOR = 5;
   static SpellPrereq PREREQ;
+
+ private:
+  std::tr1::function<float(float)> m_base_kill_func;
+  std::tr1::function<float(float)> m_wind_bonus_func;
+  std::tr1::function<float(float)> m_tech_penalty_func;
 };
 
 /**
@@ -210,20 +252,51 @@ class Infect : public Spell
             BASE_COST,
             COST_INC,
             PREREQ)
-  {}
+  {
+    // base_kill(spell_level) = spell_level^1.3
+    m_base_kill_func = std::tr1::bind(baal::poly_growth,
+                                      std::tr1::placeholders::_1,
+                                      0.0, // no threshold
+                                      1.3,
+                                      1.0); // no divisor
+
+    // city_bonus(size) = 1.05^size
+    m_city_size_bonus_func =
+      std::tr1::bind(baal::exp_growth,
+                     std::tr1::placeholders::_1,
+                     0.0,  // no threshold
+                     1.05, // fast growth
+                     std::numeric_limits<float>::max()); // never diminishes
+
+    m_extreme_temp_bonus_func =
+      std::tr1::bind(baal::exp_growth,
+                     std::tr1::placeholders::_1,
+                     0.0,  // no threshold
+                     1.03, // medium growth
+                     std::numeric_limits<float>::max()); // never diminishes
+
+    // tech_penalty(tech_level) = tech_level
+    m_tech_penalty_func = std::tr1::bind(baal::linear_growth,
+                                         std::tr1::placeholders::_1,
+                                         0.0, // no threshold
+                                         1.0); // no multiplier
+  }
 
   virtual void verify_apply() const;
   virtual unsigned apply() const;
 
   static const unsigned BASE_COST = 50;
   static const unsigned COST_INC = BASE_COST / 3;
-  static const float KILL_PCT_PER_LEVEL = 1.0;
-  static const float BONUS_PER_CITY_RANK = 0.10;
   static const float FAMINE_BONUS = 2.0;
   static const int WARM_THRESHOLD = 90;
   static const int COLD_THRESHOLD = 30;
-  static const float BONUS_PER_DEGREE_BEYOND_THRESHOLD = 0.1;
   static SpellPrereq PREREQ;
+
+ private:
+  std::tr1::function<float(float)> m_base_kill_func;
+  std::tr1::function<float(float)> m_city_size_bonus_func;
+  std::tr1::function<float(float)> m_extreme_temp_bonus_func;
+  std::tr1::function<float(float)> m_tech_penalty_func;
 };
 
 /**
@@ -288,11 +361,13 @@ class Fire : public Spell
   virtual void verify_apply() const;
   virtual unsigned apply() const;
 
+  // TODO: Probably need some upper bound or diminishing returns once
+  // values are way beyond the tipping point.
   static const unsigned BASE_COST = 100;
   static const unsigned COST_INC = BASE_COST / 3;
   static const int TEMP_TIPPING_POINT = 75;
   static const float TEMP_EXP_BASE = 1.03;
-  static const int WIND_TIPPING_POINT = 10;
+  static const int WIND_TIPPING_POINT = 20;
   static const float WIND_EXP_BASE = 1.05;
   static const float MOISTURE_TIPPING_POINT = 0.75;
   static const float MOISTURE_EXP_BASE = 1.05; // per moisture pct
@@ -341,7 +416,7 @@ class Tstorm : public Spell
   static const float FLOOD_DESTRUCTIVENESS_THRESHOLD = 20.0;
   static const float TORNADO_DESTRUCTIVENESS_THRESHOLD = 40.0;
 
-  static const float LIGHTING_PCT_KILL_PER_DESTRUCTIVENESS = 2.0;
+  static const float LIGHTING_PCT_KILL_PER_DESTRUCTIVENESS = 0.2;
 
   static SpellPrereq PREREQ;
 };

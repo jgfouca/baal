@@ -18,7 +18,7 @@ class Interface
 {
  public:
   Interface()
-    : m_end_turn(false)
+    : m_end_turns(0)
   {}
 
   virtual void draw() = 0;
@@ -29,14 +29,14 @@ class Interface
 
   virtual void spell_report(const std::string& report) = 0;
 
-  void end_turn() { m_end_turn = true; }
+  void end_turn(unsigned num_turns = 1) { m_end_turns = num_turns; }
 
   virtual void human_wins() = 0;
 
   virtual void ai_wins() = 0;
 
  protected:
-  bool m_end_turn;
+  unsigned m_end_turns;
 };
 
 #define SPELL_REPORT(msg)                                               \

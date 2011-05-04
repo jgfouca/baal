@@ -101,7 +101,7 @@ std::string HelpCommand::help() const
 {
   return create_help_str(this,
 "[command]\n"
-"  Returns info/syntax help for a command\n"
+"  Returns info/syntax help for a command or all commands if no argument\n"
                          );
 }
 
@@ -111,14 +111,27 @@ std::string HelpCommand::help() const
 void EndTurnCommand::init(const std::vector<std::string>& args)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  RequireUser(args.empty(), "The end command takes no arguments");
+  RequireUser(args.size() <= 1, "The end command takes at most one argument");
+
+  if (!args.empty()) {
+    // Parse num turns
+    std::istringstream iss(args[0]);
+    iss >> m_num_turns;
+    RequireUser(!iss.fail(), "Argument not a valid integer");
+
+    RequireUser(m_num_turns > 0 && m_num_turns <= MAX_SKIP_TURNS,
+                "num-turns must be between 0 and " << MAX_SKIP_TURNS);
+  }
+  else {
+    m_num_turns = 1;
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void EndTurnCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Engine::instance().interface().end_turn();
+  Engine::instance().interface().end_turn(m_num_turns);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -126,8 +139,8 @@ std::string EndTurnCommand::help() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   return create_help_str(this,
-"\n"
-"  Ends the current turn\n"
+"[num-turns]\n"
+"  Ends the current turn. Optional arg to skip ahead many turns\n"
                          );
 }
 

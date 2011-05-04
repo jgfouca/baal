@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <limits>
 
 using std::ostream;
 using namespace baal;
@@ -207,19 +208,19 @@ unsigned Spell::destroy_infra(WorldTile& tile, unsigned max_destroyed) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void Spell::damage_tile(WorldTile& tile, float damage) const
+void Spell::damage_tile(WorldTile& tile, float damage_pct) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Require(damage > 0.0, "Do not call this if nothing damaged");
+  if (damage_pct > 0.0) {
+    LandTile& land_tile = dynamic_cast<LandTile&>(tile);
 
-  LandTile& land_tile = dynamic_cast<LandTile&>(tile);
+    if (damage_pct > 100.0) {
+      damage_pct = 100.0;
+    }
+    land_tile.damage(damage_pct);
 
-  if (damage > 1.0) {
-    damage = 1.0;
+    SPELL_REPORT("caused " << damage_pct << "% damage to tile");
   }
-  land_tile.damage(damage);
-
-  SPELL_REPORT("caused " << damage*100 << "% damage to tile");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -320,9 +321,10 @@ unsigned Hot::apply() const
   City* city = tile.city();
   if (city != NULL) {
     if (new_temp > KILL_THRESHOLD) {
-      float base_kill_pct = std::pow(new_temp - KILL_THRESHOLD, EXPONENT) / DIVISOR;
-      float tech_penalty  = std::sqrt(ai_player.tech_level());
-      float pct_killed = base_kill_pct / tech_penalty;
+      float base_kill_pct = m_base_kill_func(new_temp);
+      float tech_penalty  = m_tech_penalty_func(ai_player.tech_level());
+
+      const float pct_killed = base_kill_pct / tech_penalty;
 
       SPELL_REPORT("base kill % is " << base_kill_pct);
       SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
@@ -389,11 +391,13 @@ unsigned Cold::apply() const
   City* city = tile.city();
   if (city != NULL) {
     if (new_temp < KILL_THRESHOLD) {
-      float base_kill_pct = std::pow(KILL_THRESHOLD - new_temp, EXPONENT) / DIVISOR;
-      float wind_bonus = atmos.wind().m_speed * WIND_BONUS_PER_MPH;
-      float famine_bonus = city->famine() ? FAMINE_BONUS : 1.0;
-      float tech_penalty  = ai_player.tech_level();
-      float pct_killed = base_kill_pct * wind_bonus * famine_bonus / tech_penalty;
+      float base_kill_pct = m_base_kill_func(-new_temp);
+      float wind_bonus    = m_wind_bonus_func(atmos.wind().m_speed);
+      float famine_bonus  = city->famine() ? FAMINE_BONUS : 1.0;
+      float tech_penalty  = m_tech_penalty_func(ai_player.tech_level());
+
+      const float pct_killed =
+        base_kill_pct * wind_bonus * famine_bonus / tech_penalty;
 
       SPELL_REPORT("base kill % is " << base_kill_pct);
       SPELL_REPORT("wind bonus (multiplier) is " << wind_bonus);
@@ -444,22 +448,21 @@ unsigned Infect::apply() const
   Require(city != NULL, "Verification did not catch NULL city");
 
   // Calculate extreme temperature bonus
-  float extreme_temp_bonus = 1.0;
+  int degrees_extreme = 0;
   int curr_temp = atmos.temperature();
   if (curr_temp < COLD_THRESHOLD) {
-    extreme_temp_bonus +=
-      (BONUS_PER_DEGREE_BEYOND_THRESHOLD * (COLD_THRESHOLD - curr_temp));
+    degrees_extreme = COLD_THRESHOLD - curr_temp;
   }
   else if (curr_temp > WARM_THRESHOLD) {
-    extreme_temp_bonus +=
-      (BONUS_PER_DEGREE_BEYOND_THRESHOLD * (curr_temp - WARM_THRESHOLD));
+    degrees_extreme = curr_temp - WARM_THRESHOLD;
   }
 
   // Calculate num killed
-  float base_kill_pct = KILL_PCT_PER_LEVEL * m_spell_level;
-  float city_size_bonus = 1.0 + city->rank() * BONUS_PER_CITY_RANK;
-  float famine_bonus = city->famine() ? FAMINE_BONUS : 1.0;
-  float tech_penalty = ai_player.tech_level();
+  float base_kill_pct      = m_base_kill_func(m_spell_level);
+  float city_size_bonus    = m_city_size_bonus_func(city->rank());
+  float extreme_temp_bonus = m_extreme_temp_bonus_func(degrees_extreme);
+  float famine_bonus       = city->famine() ? FAMINE_BONUS : 1.0;
+  float tech_penalty       = m_tech_penalty_func(ai_player.tech_level());
 
   const float pct_killed = base_kill_pct *
                            city_size_bonus *
@@ -610,7 +613,7 @@ unsigned Fire::apply() const
       SPELL_REPORT("fell below destructive threshold " << damage_threshold
                    << " required to destroy infrastructure");
     }
-    damage_tile(tile, destructiveness / 100);
+    damage_tile(tile, destructiveness);
   }
 
   // Check for the existence of a city

@@ -79,14 +79,11 @@ void InterfaceText::interact()
   // Get handle to command factory
   const CommandFactory& cmd_factory = CommandFactory::instance();
 
-  // Reset state
-  m_end_turn = false;
-
   // readline library is in C - here comes the diarrhea
   char *line = NULL;
 
   // Enter loop for this turn
-  while(!m_end_turn) {
+  while(m_end_turns == 0) {
     // Grab a line of text
     line = readline("% ");
     if (line == NULL){
@@ -111,6 +108,8 @@ void InterfaceText::interact()
     }
     free(line);
   }
+
+  --m_end_turns;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

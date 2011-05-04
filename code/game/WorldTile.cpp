@@ -230,11 +230,11 @@ LandTile::~LandTile()
 void LandTile::damage(float dmg)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Require(dmg > 0.0 && dmg < 1.0, "Invalid value for damage: " << dmg);
+  Require(dmg >= 0.0 && dmg <= 1.0, "Invalid value for damage: " << dmg);
 
   m_hp *= (1.0 - dmg);
 
-  Require(m_hp > 0.0 && m_hp < 1.0, "Invariant for hp failed: " << m_hp);
+  Require(m_hp >= 0.0 && m_hp <= 1.0, "Invariant for hp failed: " << m_hp);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
