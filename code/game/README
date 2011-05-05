@@ -261,6 +261,7 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 * Disaster balancing:
   * Sort out disaster stacking (ex: wind + tstorm-generated-wind)
   * Implement diminishing returns (ex: wind + fire)
+* Should city defenses be destroyable?
 * Seasons need to affect atmosphere
 * Implement dewpoint
 * Pressure needs to affect winds

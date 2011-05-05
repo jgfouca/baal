@@ -1,7 +1,11 @@
 #ifndef BaalMath_hpp
 #define BaalMath_hpp
 
+#include <limits>
+
 namespace baal {
+
+const float MAX_FLOAT = std::numeric_limits<float>::max();
 
 /**
  * Important math function used by many spells. This represents an exponential

@@ -192,19 +192,22 @@ unsigned Spell::kill(City& city,
 unsigned Spell::destroy_infra(WorldTile& tile, unsigned max_destroyed) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Require(max_destroyed > 0, "Do not call this if nothing destroyed");
+  if (max_destroyed > 0) {
+    LandTile& land_tile = dynamic_cast<LandTile&>(tile);
+    unsigned orig_infra = land_tile.infra_level();
+    unsigned num_destroyed = // Cannot destroy infra that's not there
+      (orig_infra < max_destroyed) ? orig_infra : max_destroyed;
+    land_tile.destroy_infra(num_destroyed);
 
-  LandTile& land_tile = dynamic_cast<LandTile&>(tile);
-  unsigned orig_infra = land_tile.infra_level();
-  unsigned num_destroyed = // Cannot destroy infra that's not there
-    (orig_infra < max_destroyed) ? orig_infra : max_destroyed;
-  land_tile.destroy_infra(num_destroyed);
+    SPELL_REPORT("destroyed " << num_destroyed << " levels of infrastructure");
 
-  SPELL_REPORT("destroyed " << num_destroyed << " levels of infrastructure");
-
-  // Convert to exp
-  static const unsigned base_exp = 200;
-  return std::pow(2.0, num_destroyed) * base_exp;
+    // Convert to exp
+    static const unsigned base_exp = 200;
+    return std::pow(2.0, num_destroyed) * base_exp;
+  }
+  else {
+    return 0;
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -508,20 +511,27 @@ unsigned WindSpell::apply() const
   Wind prior_wind = atmos.wind();
   unsigned speedup = m_spell_level * MPH_PER_LEVEL;
   Wind new_wind = prior_wind + speedup;
+  unsigned new_wind_speed = new_wind.m_speed;
   atmos.set_wind(new_wind);
   SPELL_REPORT("increased wind from " << prior_wind.m_speed <<
-               " to " << new_wind.m_speed);
+               " to " << new_wind_speed);
 
   // Wind can destroy infrastructure
   if (tile.infra_level() > 0) {
-    unsigned damage_threshold = BASE_DAMAGE_THRESHOLD + ai_player.tech_level();
-    if (new_wind.m_speed > damage_threshold) {
-      unsigned max_infra_destroyed = 1 + ( (new_wind.m_speed - damage_threshold) /
-                                           MPH_PER_ADDITIONAL_INFRA_DEVASTATION );
+    if (new_wind_speed > DAMAGE_THRESHOLD) {
+      float base_infra_destroyed = m_base_infra_destroy_func(new_wind_speed);
+      float tech_penalty         = m_tech_penalty_func(ai_player.tech_level());
+
+      const unsigned max_infra_destroyed =
+        static_cast<unsigned>(round(base_infra_destroyed / tech_penalty));
+
+      SPELL_REPORT("base infra damage % is " << base_infra_destroyed);
+      SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
+
       exp += destroy_infra(tile, max_infra_destroyed);
     }
     else {
-      SPELL_REPORT("fell below the threshold of " << damage_threshold <<
+      SPELL_REPORT("fell below the threshold of " << DAMAGE_THRESHOLD <<
                    " required to destroy infrastructure");
     }
   }
@@ -530,11 +540,14 @@ unsigned WindSpell::apply() const
   // This spell can kill if cast on a city and winds get high enough
   City* city = tile.city();
   if (city != NULL) {
-    if (new_wind.m_speed > KILL_THRESHOLD) {
-      float base_kill_pct = std::sqrt(new_wind.m_speed - KILL_THRESHOLD);
-      float tech_penalty = std::sqrt(ai_player.tech_level());
-      float defense_penalty = std::sqrt(city->defense());
-      float pct_killed = base_kill_pct / tech_penalty / defense_penalty;
+    if (new_wind_speed > KILL_THRESHOLD) {
+      float base_kill_pct   = m_base_kill_func(new_wind_speed);
+      float tech_penalty    = m_tech_penalty_func(ai_player.tech_level());
+      float defense_penalty = m_defense_penalty_func(city->defense());
+
+      const float pct_killed = base_kill_pct /
+                               tech_penalty  /
+                               defense_penalty;
 
       SPELL_REPORT("base kill % is " << base_kill_pct);
       SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
@@ -585,16 +598,16 @@ unsigned Fire::apply() const
   float soil_moisture = tile.soil_moisture();
 
   // Compute destructiveness of fire
-  float base_destructiveness = m_spell_level;
-  float temp_multiplier = std::pow(TEMP_EXP_BASE, temperature - TEMP_TIPPING_POINT);
-  float wind_multiplier = std::pow(WIND_EXP_BASE, wind_speed - WIND_TIPPING_POINT);
-  float moisture_multiplier =
-    std::pow(MOISTURE_EXP_BASE, (MOISTURE_TIPPING_POINT - soil_moisture) * 100);
+  float base_destructiveness = m_base_destructiveness_func(m_spell_level);
+  float temp_multiplier      = m_temp_effect_func(temperature);
+  float wind_multiplier      = m_wind_effect_func(wind_speed);
+  float pct_beyond_dry       = (MOISTURE_TIPPING_POINT - soil_moisture) * 100;
+  float moisture_multiplier  = m_moisture_effect_func(pct_beyond_dry);
 
-  float destructiveness = base_destructiveness *
-                          temp_multiplier *
-                          wind_multiplier *
-                          moisture_multiplier;
+  const float destructiveness = base_destructiveness *
+                                temp_multiplier *
+                                wind_multiplier *
+                                moisture_multiplier;
 
   SPELL_REPORT("base destructiveness " << base_destructiveness);
   SPELL_REPORT("temperature multiplier " << temp_multiplier);
@@ -604,15 +617,17 @@ unsigned Fire::apply() const
 
   // Fire can destroy infrastructure
   if (tile.infra_level() > 0) {
-    float damage_threshold = DESTRUCTIVENESS_PER_INFRA + std::sqrt(ai_player.tech_level());
-    unsigned max_infra_destroyed = destructiveness / damage_threshold;
-    if (max_infra_destroyed > 0) {
-      exp += destroy_infra(tile, max_infra_destroyed);
-    }
-    else {
-      SPELL_REPORT("fell below destructive threshold " << damage_threshold
-                   << " required to destroy infrastructure");
-    }
+    float base_infra_destroyed = m_base_infra_destroy_func(destructiveness);
+    float tech_penalty         = m_tech_penalty_func(ai_player.tech_level());
+
+    const unsigned max_infra_destroyed =
+      static_cast<unsigned>(round(base_infra_destroyed / tech_penalty));
+
+    SPELL_REPORT("base infra damage % is " << base_infra_destroyed);
+    SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
+
+    exp += destroy_infra(tile, max_infra_destroyed);
+
     damage_tile(tile, destructiveness);
   }
 
@@ -620,10 +635,13 @@ unsigned Fire::apply() const
   // This spell can kill if cast on a city and winds get high enough
   City* city = tile.city();
   if (city != NULL) {
-    float base_kill_pct = destructiveness;
-    float tech_penalty = std::sqrt(ai_player.tech_level());
-    float defense_penalty = std::sqrt(city->defense());
-    float pct_killed = base_kill_pct / tech_penalty / defense_penalty;
+    float base_kill_pct   = m_base_kill_func(destructiveness);
+    float tech_penalty    = m_tech_penalty_func(ai_player.tech_level());
+    float defense_penalty = m_defense_penalty_func(city->defense());
+
+    const float pct_killed = base_kill_pct /
+                             tech_penalty  /
+                             defense_penalty;
 
     SPELL_REPORT("base kill % is " << base_kill_pct);
     SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);

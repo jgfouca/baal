@@ -5,7 +5,6 @@
 #include "BaalCommon.hpp"
 #include "BaalMath.hpp"
 
-#include <limits>
 #include <iosfwd>
 #include <vector>
 #include <tr1/functional>
@@ -261,19 +260,18 @@ class Infect : public Spell
                                       1.0); // no divisor
 
     // city_bonus(size) = 1.05^size
-    m_city_size_bonus_func =
-      std::tr1::bind(baal::exp_growth,
-                     std::tr1::placeholders::_1,
-                     0.0,  // no threshold
-                     1.05, // fast growth
-                     std::numeric_limits<float>::max()); // never diminishes
+    m_city_size_bonus_func = std::tr1::bind(baal::exp_growth,
+                                            std::tr1::placeholders::_1,
+                                            0.0,  // no threshold
+                                            1.05, // fast growth
+                                            MAX_FLOAT); // never diminishes
 
-    m_extreme_temp_bonus_func =
-      std::tr1::bind(baal::exp_growth,
-                     std::tr1::placeholders::_1,
-                     0.0,  // no threshold
-                     1.03, // medium growth
-                     std::numeric_limits<float>::max()); // never diminishes
+    // extreme_temp_bonus(degrees_extreme) = 1.03^degrees_extreme
+    m_extreme_temp_bonus_func = std::tr1::bind(baal::exp_growth,
+                                               std::tr1::placeholders::_1,
+                                               0.0,  // no threshold
+                                               1.03, // medium growth
+                                               MAX_FLOAT); // never diminishes
 
     // tech_penalty(tech_level) = tech_level
     m_tech_penalty_func = std::tr1::bind(baal::linear_growth,
@@ -302,7 +300,7 @@ class Infect : public Spell
 /**
  * Increases the immediate wind speed of a region. High wind speeds can
  * kill, but this spell is generally more useful in combinations rather
- * than a direct damage spell. High wind speeds can damage farm
+ * than a direct damage spell. High wind speeds can damage
  * infrastructure.
  *
  * Enhanced by high winds. Decreased by AI tech level. Decreased by city
@@ -321,7 +319,31 @@ class WindSpell : public Spell
             BASE_COST,
             COST_INC,
             PREREQ)
-  {}
+  {
+    // base_kill(speed) = 1.03^(speed - KILL_THRESHOLD)
+    m_base_kill_func = std::tr1::bind(baal::exp_growth,
+                                      std::tr1::placeholders::_1,
+                                      KILL_THRESHOLD,
+                                      1.03, // medium growth
+                                      MAX_FLOAT); // never dimishes
+
+    // base_infra_destroyed(speed) = 1.03^(speed - DAMAGE_THRESHOLD)
+    m_base_infra_destroy_func = std::tr1::bind(baal::exp_growth,
+                                               std::tr1::placeholders::_1,
+                                               DAMAGE_THRESHOLD, // threshold
+                                               1.03, // medium growth
+                                               MAX_FLOAT); // never diminishes
+
+    // defense_penalty(defense_level) = sqrt(tech_level)
+    m_defense_penalty_func = std::tr1::bind(baal::sqrt,
+                                            std::tr1::placeholders::_1,
+                                            0.0); // no threshold
+
+    // tech_penalty(tech_level) = sqrt(tech_level)
+    m_tech_penalty_func = std::tr1::bind(baal::sqrt,
+                                         std::tr1::placeholders::_1,
+                                         0.0); // no threshold
+  }
 
   virtual void verify_apply() const;
   virtual unsigned apply() const;
@@ -329,10 +351,15 @@ class WindSpell : public Spell
   static const unsigned BASE_COST = 50;
   static const unsigned COST_INC = BASE_COST / 3;
   static const unsigned MPH_PER_LEVEL = 20;
-  static const unsigned BASE_DAMAGE_THRESHOLD = 60;
-  static const unsigned MPH_PER_ADDITIONAL_INFRA_DEVASTATION = 30;
+  static const unsigned DAMAGE_THRESHOLD = 60;
   static const unsigned KILL_THRESHOLD = 80;
   static SpellPrereq PREREQ;
+
+ private:
+  std::tr1::function<float(float)> m_base_kill_func;
+  std::tr1::function<float(float)> m_base_infra_destroy_func;
+  std::tr1::function<float(float)> m_defense_penalty_func;
+  std::tr1::function<float(float)> m_tech_penalty_func;
 };
 
 /**
@@ -356,13 +383,65 @@ class Fire : public Spell
             BASE_COST,
             COST_INC,
             PREREQ)
-  {}
+  {
+    // base_destructiveness(spell_level) = spell_level^1.3
+    m_base_destructiveness_func = std::tr1::bind(baal::poly_growth,
+                                                 std::tr1::placeholders::_1,
+                                                 0.0, // no threshold
+                                                 1.3,
+                                                 1.0); // no divisor
+
+    // wind_effect(speed) = 1.05^(speed - tipping_pt)
+    m_wind_effect_func =
+      std::tr1::bind(baal::exp_growth,
+                     std::tr1::placeholders::_1,
+                     WIND_TIPPING_POINT,
+                     1.05, // fast growth
+                     30.0); // diminishes at 30 mph beyond the tipping pint
+
+    // temp_effect(temp) = 1.03^(temp - tipping_pt)
+    m_temp_effect_func = std::tr1::bind(baal::exp_growth,
+                                        std::tr1::placeholders::_1,
+                                        TEMP_TIPPING_POINT,
+                                        1.03, // medium growth
+                                        MAX_FLOAT); // never diminishes
+
+    // moisture_effect(moisture_deficit%) = 1.03^(moisture_deficit%)
+    m_moisture_effect_func =
+      std::tr1::bind(baal::exp_growth,
+                     std::tr1::placeholders::_1,
+                     0.0, // no threshold
+                     1.05, // fast growth
+                     40.0); // diminishes at 30% below dry
+
+
+    // base_infra_destroyed(destructiveness) = 1.05^(destructiveness)
+    m_base_infra_destroy_func = std::tr1::bind(baal::exp_growth,
+                                               std::tr1::placeholders::_1,
+                                               0.0, // no threshold
+                                               1.05, // fast growth
+                                               MAX_FLOAT); // never diminishes
+
+    // base_kill(destructiveness) = destructiveness
+    m_base_kill_func = std::tr1::bind(baal::linear_growth,
+                                      std::tr1::placeholders::_1,
+                                      0.0, // no threshold
+                                      1.0); // no multiplier
+
+    // defense_penalty(defense_level) = sqrt(tech_level)
+    m_defense_penalty_func = std::tr1::bind(baal::sqrt,
+                                            std::tr1::placeholders::_1,
+                                            0.0); // no threshold
+
+    // tech_penalty(tech_level) = sqrt(tech_level)
+    m_tech_penalty_func = std::tr1::bind(baal::sqrt,
+                                         std::tr1::placeholders::_1,
+                                         0.0); // no threshold
+  }
 
   virtual void verify_apply() const;
   virtual unsigned apply() const;
 
-  // TODO: Probably need some upper bound or diminishing returns once
-  // values are way beyond the tipping point.
   static const unsigned BASE_COST = 100;
   static const unsigned COST_INC = BASE_COST / 3;
   static const int TEMP_TIPPING_POINT = 75;
@@ -374,6 +453,16 @@ class Fire : public Spell
   static const float DESTRUCTIVENESS_PER_INFRA = 5.0;
 
   static SpellPrereq PREREQ;
+
+ private:
+  std::tr1::function<float(float)> m_base_destructiveness_func;
+  std::tr1::function<float(float)> m_temp_effect_func;
+  std::tr1::function<float(float)> m_wind_effect_func;
+  std::tr1::function<float(float)> m_moisture_effect_func;
+  std::tr1::function<float(float)> m_base_kill_func;
+  std::tr1::function<float(float)> m_base_infra_destroy_func;
+  std::tr1::function<float(float)> m_defense_penalty_func;
+  std::tr1::function<float(float)> m_tech_penalty_func;
 };
 
 /**
