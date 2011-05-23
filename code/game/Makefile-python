@@ -1,0 +1,12 @@
+include ../common.mk
+
+.PHONY: clean check test
+
+check:
+	for pyfile in $$(/bin/ls -1 *.py); do   echo $$pyfile; pylint --errors-only $$pyfile || break ; done
+
+test:
+	for pyfile in $$(/bin/ls -1 *.py); do   echo $$pyfile; ./$$pyfile || break ; done
+
+clean:
+	rm -f *~ *.pyc *.pyo
