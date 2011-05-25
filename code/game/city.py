@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from baal_common import *
+from baal_common import prequire
 
 ###############################################################################
 class City(object):
@@ -18,7 +18,7 @@ class City(object):
     __MAX_GROWTH_MODIFIER   = 4.0
     __CITY_RANK_UP_MULTIPLIER = 2
     __CITY_STARTING_POP = 1000
-    __MIN_CITY_SIZE = City.__CITY_STARTING_POP / 5
+    __MIN_CITY_SIZE = __CITY_STARTING_POP / 5
     __POP_THAT_EATS_ONE_FOOD = 1000
     __FOOD_FROM_CITY_CENTER = 1.0
     __PROD_FROM_CITY_CENTER = 1.0

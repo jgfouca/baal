@@ -36,18 +36,27 @@ _DEBUG = True
 ###############################################################################
 def prequire(expr, *msg_args):
 ###############################################################################
+    """
+    Use this to express a required program-error check
+    """
     if (not expr):
         raise ProgramError("".join([str(arg) for arg in msg_args]))
 
 ###############################################################################
 def passert(expr, *msg_args):
 ###############################################################################
+    """
+    Use this to express a debug-only program-error check
+    """
     if (_DEBUG):
         prequire(expr, *msg_args)
 
 ###############################################################################
 def urequire(expr, *msg_args):
 ###############################################################################
+    """
+    Use this to check for user error
+    """
     if (not expr):
         raise UserError("".join([str(arg) for arg in msg_args]))
 
@@ -99,15 +108,19 @@ class Location(object):
         self.row = row
         self.col = col
 
-    @classmethod
     ###########################################################################
+    @classmethod
     def parse(cls, str_):
     ###########################################################################
         """
-        Init from string. String is expected to be of form: 'row,col'
+        Init from string. String is expected to be of form: 'row,col'.
+        This should raise a *user* exception if there's a problem with the
+        string format.
         """
         try:
-            row, col = str_.split(",")
+            row_s, col_s = str_.split(",")
+            row = int(row_s)
+            col = int(col_s)
         except Exception:
             urequire(False,
                      "String ", str_, " was not in expected form 'row,col'")

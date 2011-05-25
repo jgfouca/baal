@@ -6,7 +6,7 @@ This file contains some simple mathematical functions
 
 import math
 
-from baal_common import *
+from baal_common import prequire
 
 ###############################################################################
 def exp_growth(value, threshold, base, diminishing_returns):
