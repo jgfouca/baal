@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from baal_common import prequire,urequire
+from baal_common import prequire, urequire
 from command import Command
 
 ###############################################################################
@@ -13,7 +13,7 @@ class CommandFactory(object):
 
     # Class variables
     __cmd_map = _create_cmd_map()
-    
+
     ###########################################################################
     @classmethod
     def parse_command(cls, text):
@@ -22,7 +22,7 @@ class CommandFactory(object):
         Given some command text, create a Command object
         """
         # Get command name
-        tokens = test.split()
+        tokens = text.split()
         prequire(tokens, "Empty string made it into CommandFactory")
         name = tokens[0]
 
@@ -65,7 +65,7 @@ class CommandFactory(object):
 def _create_cmd_map():
 ###############################################################################
     rv = {}
-    for cmd_cls in Command.__subclasses():
+    for cmd_cls in Command.__subclasses__():
         _no_dup_insert(rv, cmd_cls.name(), cmd_cls)
         for alias in cmd_cls.aliases():
             _no_dup_insert(rv, alias, cmd_cls)

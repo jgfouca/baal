@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
-from baal_common import prequire
+from baal_common import prequire, Location
+from engine import engine
 
 ###############################################################################
 class City(object):
@@ -95,8 +96,7 @@ class City(object):
         prequire(self.__population > 0,
                  "This city has no people and should have been deleted")
 
-        engine = Engine.instance()
-        world  = engine.world()
+        world  = engine().world()
         my_row, my_col = self.__location.unpack()
 
         # Gather resources based on nearby worked tiles. At this time,
@@ -144,7 +144,7 @@ class City(object):
         # Remaining workers are specialists that contribute production
         prod_gathered += num_workers * \
                          City.__PROD_FROM_SPECIALIST * \
-                         engine.ai_player().tech_yield_multiplier()
+                         engine().ai_player().tech_yield_multiplier()
 
         # Accumulate production
         self.__prod_bank += prod_gathered
@@ -285,7 +285,7 @@ class City(object):
     ###########################################################################
         prequire(tile.can_build_infra(), "Error in build eval")
 
-        infra_level = tile.infra_level()       
+        infra_level = tile.infra_level()
         next_infra_level = infra_level + 1
         prod_cost = next_infra_level * City.__INFRA_PROD_COST
         if (prod_cost < self.__prod_bank):
@@ -325,7 +325,7 @@ def _ordered_insert(tiles, tile):
 ###############################################################################
 def _is_too_close_to_any_city(location, distance):
 ###############################################################################
-    for city in Engine.instance().world().cities():
+    for city in engine().world().cities():
         row, col = location.unpack()
         city_row, city_col = city.location().unpack()
         if (abs(row - city_row) <= distance and
@@ -355,7 +355,7 @@ def _compute_nearby_food_and_prod_tiles(location,
     Returns a 2-ple of (food-tiles, production-tiles); both lists are sorted
     from highest to lowest based on yield. Only unworked tiles are added.
     """
-    world = Engine.instance().world()
+    world = engine().world()
     food_tiles = [] # sorted highest to lowest
     prod_tiles = [] # sorted highest to lowest
     row, col = location.unpack()

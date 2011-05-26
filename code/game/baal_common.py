@@ -16,7 +16,7 @@ class UserError(Exception):
     """
     Doesn't do anything different from any other exception type, just used to
     indentify user error. In general, these should always be caught and
-    handled. Please do not raise these directly, use the 
+    handled. Please do not raise these directly, use the
     """
     pass
 
@@ -67,7 +67,7 @@ def urequire(expr, *msg_args):
 # Available colors
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
-# Private 
+# Private
 _COLOR_MAP = ["30m", "31m", "32m", "33m", "34m", "35m", "36m", "37m"]
 _BOLD_COLOR_PREFIX = "\033[1;"
 _CLEAR = "\033[0m""\033[0m"
@@ -101,7 +101,7 @@ class Location(object):
     """
     A named pair defining a location in a 2D space
     """
-    
+
     ###########################################################################
     def __init__(self, row, col):
     ###########################################################################

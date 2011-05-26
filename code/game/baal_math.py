@@ -11,7 +11,7 @@ from baal_common import prequire
 ###############################################################################
 def exp_growth(value, threshold, base, diminishing_returns):
 ###############################################################################
-    prequire(base >= 1.01 && base <= 1.10, "Invalid base: ", base)
+    prequire(base >= 1.01 and base <= 1.10, "Invalid base: ", base)
 
     x = value - threshold
 
@@ -25,7 +25,9 @@ def exp_growth(value, threshold, base, diminishing_returns):
     else:
         beyond_dim = x - diminishing_returns
 
-        # Compute divisor of exponent based on base
+        # Compute divisor of exponent based on base; IE divisor of 2 would
+        # give sqrt behavior. The idea is for the more-slowly growing functions
+        # to plateou faster.
         divisor = 2.0
         if (base <= 1.02):
             divisor = 5.0

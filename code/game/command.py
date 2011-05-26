@@ -2,7 +2,11 @@
 
 import time
 
-from baal_common import prequire,urequire
+from spell_factory import SpellFactory
+from baal_common import prequire, urequire, Location, UserError
+from command_factory import CommandFactory
+from engine import engine
+from drawable import draw_mode_to_str, END, str_to_draw_mode, set_draw_mode
 
 ###############################################################################
 class Command(object):
@@ -13,7 +17,7 @@ class Command(object):
     Commands. Subclasses of Command are automatically added to the
     CommandFactory.
     """
-    
+
     def __init__(self): prequire(False, "Do not instantiate Command")
 
     #
@@ -29,7 +33,7 @@ class Command(object):
     #
     # Class-method API
     #
-    
+
     @classmethod
     def name(cls):
         """
@@ -61,7 +65,7 @@ class HelpCommand(Command):
     __NAME    = "help"
     __ALIASES = ("h",)
     __USAGE   = \
-"""%s [command]
+"""%s [<command>]
   Returns info/syntax help for a command or all commands if no argument
 """ % __NAME
 
@@ -69,7 +73,7 @@ class HelpCommand(Command):
     def __init__(self, args):
     ###########################################################################
         urequire(len(args) <= 1,
-                 HelpCommand.__NAME, " takes at most one argument")
+                 HelpCommand.name(), " takes at most one argument")
 
         self.__cmd = None
         if (args):
@@ -79,7 +83,7 @@ class HelpCommand(Command):
     ###########################################################################
     def apply(self):
     ###########################################################################
-        interface = Engine.instance().interface()
+        interface = engine().interface()
 
         # If user provided arg, give help for that cmd, otherwise give help for
         # all commands.
@@ -106,16 +110,16 @@ class EndTurnCommand(Command):
     __NAME    = "end"
     __ALIASES = ("n",)
     __USAGE   = \
-"""%s [num-turns]
+"""%s [<num-turns>]
   Ends the current turn. Optional arg to skip ahead many turns
 """ % __NAME
-    __MAX_SKIP_TURNS = 100;
+    __MAX_SKIP_TURNS = 100
 
     ###########################################################################
     def __init__(self, args):
     ###########################################################################
         cls = self.__class__
-        urequire(len(args) <= 1, cls.__NAME, " takes at most one argument")
+        urequire(len(args) <= 1, cls.name(), " takes at most one argument")
 
         self.__num_turns = 1
         if (args):
@@ -123,7 +127,7 @@ class EndTurnCommand(Command):
             try:
                 self.__num_turns = int(args[0])
             except ValueError:
-                urequire(False, "'%s'" % args[0], " is not a valid integer")
+                urequire(False, "'%s' is not a valid integer" % args[0])
             urequire(self.__num_turns > 0 and
                      self.__num_turns <= cls.__MAX_SKIP_TURNS,
                      "num-turns must be between 0 and ", cls.__MAX_SKIP_TURNS)
@@ -131,7 +135,7 @@ class EndTurnCommand(Command):
     ###########################################################################
     def apply(self):
     ###########################################################################
-        Engine.instance().interface().end_turn(self.__num_turns)
+        engine().interface().end_turn(self.__num_turns)
 
     @classmethod
     def name(cls): return cls.__NAME
@@ -158,14 +162,13 @@ class QuitCommand(Command):
     def __init__(self, args):
     ###########################################################################
         cls = self.__class__
-        urequire(len(args) == 0, cls.__NAME, " takes no arguments")
+        urequire(len(args) == 0, cls.name(), " takes no arguments")
 
     ###########################################################################
     def apply(self):
     ###########################################################################
-        engine = Engine.instance()
-        engine.interface().end_turn()
-        engine.quit()
+        engine().interface().end_turn()
+        engine().quit()
 
     @classmethod
     def name(cls): return cls.__NAME
@@ -184,7 +187,7 @@ class SaveCommand(Command):
     __NAME    = "save"
     __ALIASES = ("s",)
     __USAGE   = \
-"""%s [filename]
+"""%s [<filename>]
   Saves the game; if no name provided, a name based on data/time will be used.
 """ % __NAME
 
@@ -192,12 +195,12 @@ class SaveCommand(Command):
     def __init__(self, args):
     ###########################################################################
         cls = self.__class__
-        urequire(len(args) <= 1, cls.__NAME, " takes at most one argument")
+        urequire(len(args) <= 1, cls.name(), " takes at most one argument")
 
         if (args):
-            m_savegame = args[0]
+            self.__savegame = args[0]
         else:
-            m_savegame = time.strftime("baal_%Y-%m-%d__%H:%M:%S.save")
+            self.__savegame = time.strftime("baal_%Y-%m-%d__%H:%M:%S.save")
 
     ###########################################################################
     def apply(self):
@@ -230,43 +233,42 @@ class CastCommand(Command):
     def __init__(self, args):
     ###########################################################################
         cls = self.__class__
-        urequire(len(args) == 3, cls.__NAME, " takes three arguments")
+        urequire(len(args) == 3, cls.name(), " takes three arguments")
 
         # Get spell name
-        m_spell_name = args[0]
+        self.__spell_name = args[0]
 
         # Parse spell level
         try:
-            m_spell_level = int(args[1])
+            self.__spell_level = int(args[1])
         except ValueError:
-            urequire(False, "arg ", "'%s'" % args[1], " not a valid integer")
+            urequire(False, "arg ", "'%s' is not a valid integer" % args[1])
 
         # Parse location
         try:
-            m_spell_location = Location.parse(args[2])
+            self.__spell_location = Location.parse(args[2])
         except UserError:
-            urequire(False, "arg ", "'%s'" % args[2]. " not a valid location")
+            urequire(False, "arg ", "'%s' not a valid location" % args[2])
 
     ###########################################################################
     def apply(self):
     ###########################################################################
-        engine = Engine.instance()
-        world  = engine.world()
-        player = engine.player()
+        world  = engine().world()
+        player = engine().player()
 
         # Ensure location is in-bounds
-        urequire(world.in_bounds(m_spell_location),
-                 "Location ", m_spell_location, " out of bounds. ",
+        urequire(world.in_bounds(self.__spell_location),
+                 "Location ", self.__spell_location, " out of bounds. ",
                  "Max row is: ", world.height() - 1,
                  ", max col is: ", world.width() - 1)
 
         # Create the spell.
-        spell = SpellFactory.create_spell(m_spell_name,
-                                          m_spell_level,
-                                          m_spell_location)
+        spell = SpellFactory.create_spell(self.__spell_name,
+                                          self.__spell_level,
+                                          self.__spell_location)
 
         # Verify that player can cast this spell (can throw)
-        player.verify_cast(spell);
+        player.verify_cast(spell)
 
         # Verify that it makes sense to cast this exact spell (can throw)
         spell.verify_apply()
@@ -297,14 +299,149 @@ class CastCommand(Command):
     def help(cls):
     ###########################################################################
         full_usage = "%s  Castable spells:\n" % cls.__USAGE
-        
+
         # Add info on castable spells to usage string
-        castable_spells = \
-            Engine.instance().player().talents().query_all_castable_spells()
-        for spell_name, spell_level in sorted(castable_spells):
-            full_usage += "    %s : %d" % (spell_name, spell_level)
-            
+        for spell_name, spell_level in engine().player().talents():
+            full_usage += "    %s : %d\n" % (spell_name, spell_level)
+
         return _create_help_str(cls, full_usage)
+
+###############################################################################
+class LearnCommand(Command):
+###############################################################################
+
+    # Class variables
+    __NAME    = "learn"
+    __ALIASES = ("l",)
+    __USAGE   = \
+"""%s <spell-name>
+  Player learns spell of type <spell-name>. If spell already known, then
+  skill in this spell is increased by one.
+""" % __NAME
+
+    ###########################################################################
+    def __init__(self, args):
+    ###########################################################################
+        cls = self.__class__
+        urequire(len(args) == 1, cls.name(), " takes one argument")
+
+        self.__spell_cls = SpellFactory.get(args[0])
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        engine().player().learn(self.__spell_cls.name())
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def aliases(cls): return cls.__ALIASES
+
+    ###########################################################################
+    @classmethod
+    def help(cls):
+    ###########################################################################
+        full_usage = "%s  Learnable spells:\n" % cls.__USAGE
+
+        # Add info on learnable spells to usage string
+        for spell_name, spell_level in engine().player().talents().learnable():
+            full_usage += "    %s%s" % (spell_name,
+                                        "" if spell_level == 1 else " (new)")
+
+        return _create_help_str(cls, full_usage)
+
+###############################################################################
+class DrawCommand(Command):
+###############################################################################
+
+    # Class variables
+    __NAME    = "draw"
+    __ALIASES = ("d", "show")
+    __USAGE   = \
+"""%s [<draw-mode>]
+  Re-draw the world; if arg is provided, draw mode is switched to that mode.
+  Available draw modes:
+    %s
+""" % (__NAME,
+       "\n    ".join([draw_mode_to_str(mode) for mode in range(0, END)]))
+
+    ###########################################################################
+    def __init__(self, args):
+    ###########################################################################
+        cls = self.__class__
+        urequire(len(args) <= 1, cls.name(), " takes at most one argument")
+
+        # Parse draw mode
+        self.__new_mode = None
+        if (args):
+            self.__new_mode = str_to_draw_mode(args[0])
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        if (self.__new_mode is not None):
+            set_draw_mode(self.__new_mode)
+
+        engine().interface().draw() # redraw
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def aliases(cls): return cls.__ALIASES
+
+    @classmethod
+    def help(cls): return _create_help_str(cls, cls.__USAGE)
+
+###############################################################################
+class HackCommand(Command):
+###############################################################################
+
+    # Class variables
+    __NAME    = "hack"
+    __ALIASES = ("h",)
+    __USAGE   = \
+"""%s [<exp>]
+  Gives the player free arbitrary exp. If no arg is provided, enough exp is
+  awarded to get the player to the next level. This is a cheat put in for
+  testing.
+""" % __NAME
+
+    ###########################################################################
+    def __init__(self, args):
+    ###########################################################################
+        cls = self.__class__
+        urequire(len(args) <= 1, cls.name(), " takes at most one argument")
+
+        # Parse exp
+        self.__exp = None
+        if (args):
+            try:
+                self.__exp = int(args[0])
+            except ValueError:
+                urequire(False, "'%s' is not a valid integer" % args[0])
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        player = engine().player()
+
+        if (self.__exp is not None):
+            exp_gained = self.__exp
+        else:
+            exp_gained = player.next_level_cost() - player.exp()
+
+        engine().player().gain_exp(exp_gained)
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def aliases(cls): return cls.__ALIASES
+
+    @classmethod
+    def help(cls): return _create_help_str(cls, cls.__USAGE)
 
 #
 # Internal methods
