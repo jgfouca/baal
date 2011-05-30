@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from baal_common import prequire, urequire
+from baal_common import prequire, urequire, subclasses
 from command import Command
 
 ###############################################################################
@@ -40,7 +40,7 @@ class CommandFactory(object):
         """
         Iterate over the command classes.
         """
-        real_names = [cmd.name() for cmd in Command.__subclasses__()]
+        real_names = [cmd.name() for cmd in subclasses(Command)]
         for cmd_name, cmd_cls in sorted(cls.__cmd_map.iteritems()):
             # Filter out alias entries
             if (cmd_name in real_names):
@@ -65,7 +65,7 @@ class CommandFactory(object):
 def _create_cmd_map():
 ###############################################################################
     rv = {}
-    for cmd_cls in Command.__subclasses__():
+    for cmd_cls in subclasses(Command):
         _no_dup_insert(rv, cmd_cls.name(), cmd_cls)
         for alias in cmd_cls.aliases():
             _no_dup_insert(rv, alias, cmd_cls)

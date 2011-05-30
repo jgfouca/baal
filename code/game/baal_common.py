@@ -70,7 +70,7 @@ BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 # Private
 _COLOR_MAP = ["30m", "31m", "32m", "33m", "34m", "35m", "36m", "37m"]
 _BOLD_COLOR_PREFIX = "\033[1;"
-_CLEAR = "\033[0m""\033[0m"
+_CLEAR = "\033[0m"
 
 ###############################################################################
 def cprint(color, *args):
@@ -90,8 +90,21 @@ def cprint(color, *args):
 #
 
 ###############################################################################
+def subclasses(cls):
+###############################################################################
+    """
+    Get the subclasses of a class. Pylint flags this if you try to call it on
+    a class directly, so we use this free function instead.
+    """
+    return cls.__subclasses__()
+
+###############################################################################
 def clear_screen():
 ###############################################################################
+    """
+    Clears the screen; useful for text-based graphical interfaces to keep
+    things in a constant screen-position.
+    """
     # TODO: Re-implement with curses for better portability
     subprocess.call("clear")
 

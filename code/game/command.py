@@ -6,7 +6,8 @@ from spell_factory import SpellFactory
 from baal_common import prequire, urequire, Location, UserError
 from command_factory import CommandFactory
 from engine import engine
-from drawable import draw_mode_to_str, END, str_to_draw_mode, set_draw_mode
+from drawable import DrawMode
+import drawable
 
 ###############################################################################
 class Command(object):
@@ -364,7 +365,7 @@ class DrawCommand(Command):
   Available draw modes:
     %s
 """ % (__NAME,
-       "\n    ".join([draw_mode_to_str(mode) for mode in range(0, END)]))
+       "\n    ".join([str(mode) for mode in DrawMode]))
 
     ###########################################################################
     def __init__(self, args):
@@ -375,13 +376,14 @@ class DrawCommand(Command):
         # Parse draw mode
         self.__new_mode = None
         if (args):
-            self.__new_mode = str_to_draw_mode(args[0])
+            self.__new_mode = DrawMode(args[0])
 
     ###########################################################################
     def apply(self):
     ###########################################################################
         if (self.__new_mode is not None):
-            set_draw_mode(self.__new_mode)
+            # DrawCommand has the right to change draw mode
+            drawable._set_draw_mode(self.__new_mode)
 
         engine().interface().draw() # redraw
 
