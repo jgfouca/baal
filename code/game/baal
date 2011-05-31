@@ -1,0 +1,53 @@
+#! /usr/bin/env python
+
+import argparse
+
+from configuration import Configuration
+from interface_factory import InterfaceFactory
+from world_factory import WorldFactory
+from engine import engine
+
+###############################################################################
+def _main():
+###############################################################################
+    # Grab config info from the various factories
+
+    text_interface    = InterfaceFactory.TEXT_INTERFACE
+    gfx_interface     = InterfaceFactory.GRAPHICAL_INTERFACE
+    default_interface = InterfaceFactory.DEFAULT_INTERFACE
+
+    default_world        = WorldFactory.DEFAULT_WORLD
+
+    parser = argparse.ArgumentParser(description="Play Ba'al!")
+
+    parser.add_argument("-i", "--interface",
+                        dest="interface",
+                        action="store_const",
+                        choices=(text_interface, gfx_interface, default_interface),
+                        default=default_interface,
+                        help="Choose the game interface")
+
+    parser.add_argument("-w", "--world",
+                        dest="world",
+                        action="store_const",
+                        default=default_world,
+                        help="Choose the game world. Provide a filename to "
+                        "load a world from a file. Provide 'r' to randomly "
+                        "generate a world. Provide an integer to select a "
+                        "hardcoded world-fixture.")
+
+    parser.add_argument("-p", "--player",
+                        dest="player",
+                        action="store_const",
+                        default="",
+                        help="Choose player name")
+
+    args = parser.parse_args()
+
+    # Create and initialize global configuration from args
+    Configuration._create(args.interface, args.world, args.player)
+
+    # Start the game
+    engine().play()
+
+if __name__ == "__main__": _main()
