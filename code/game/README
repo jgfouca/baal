@@ -261,7 +261,9 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 * Port to python!
 * Enforce private API more-strictly? Have private API implementations take
   the calling object as an argument and then probe the object for the "right"
-  to make the call it's trying to make.
+  to make the call it's trying to make. Most non-const methods should be
+  protected this way.
+* Should unit-tests be separated from the code?
 * City-nearby-tiles iterator would be very nice (encapsulate what it means
   to be nearby a city)
 * Use pygame to produce basic 2D graphics
