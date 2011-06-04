@@ -11,28 +11,8 @@ class City(object):
     """
 
     #
-    # Class constants
+    # Public API
     #
-
-    # City growth/food/production constants
-    __CITY_BASE_GROWTH_RATE = 0.01 # 1% per turn
-    __MAX_GROWTH_MODIFIER   = 4.0
-    __CITY_RANK_UP_MULTIPLIER = 2
-    __CITY_STARTING_POP = 1000
-    __MIN_CITY_SIZE = __CITY_STARTING_POP / 5
-    __POP_THAT_EATS_ONE_FOOD = 1000
-    __FOOD_FROM_CITY_CENTER = 1.0
-    __PROD_FROM_CITY_CENTER = 1.0
-    __PROD_FROM_SPECIALIST  = 1.0
-
-    # Constants for production-costs of various buildable items
-    __SETTLER_PROD_COST  = 200
-    __INFRA_PROD_COST    = 50
-    __CITY_DEF_PROD_COST = 400
-
-    # AI constants
-    __TOO_MANY_FOOD_WORKERS = 0.66
-    __PROD_BEFORE_SETTLER   = 7.0
 
     ###########################################################################
     def __init__(self, name, location):
@@ -63,7 +43,7 @@ class City(object):
     def defense(self): return self.__defense
 
     #
-    # Public API
+    # Modification API
     #
 
     def cycle_turn(self):
@@ -83,6 +63,30 @@ class City(object):
         Kill off some of this city's citizens
         """
         return self.__kill_impl(killed)
+
+    #
+    # Class constants
+    #
+
+    # City growth/food/production constants
+    __CITY_BASE_GROWTH_RATE = 0.01 # 1% per turn
+    __MAX_GROWTH_MODIFIER   = 4.0
+    __CITY_RANK_UP_MULTIPLIER = 2
+    __CITY_STARTING_POP = 1000
+    __MIN_CITY_SIZE = __CITY_STARTING_POP / 5
+    __POP_THAT_EATS_ONE_FOOD = 1000
+    __FOOD_FROM_CITY_CENTER = 1.0
+    __PROD_FROM_CITY_CENTER = 1.0
+    __PROD_FROM_SPECIALIST  = 1.0
+
+    # Constants for production-costs of various buildable items
+    __SETTLER_PROD_COST  = 200
+    __INFRA_PROD_COST    = 50
+    __CITY_DEF_PROD_COST = 400
+
+    # AI constants
+    __TOO_MANY_FOOD_WORKERS = 0.66
+    __PROD_BEFORE_SETTLER   = 7.0
 
     #
     # Implementation
@@ -264,7 +268,7 @@ class City(object):
     ###########################################################################
     def __to_xml_impl(self):
     ###########################################################################
-        # TODO
+        # TODO - Aaron
         return ""
 
     ###########################################################################

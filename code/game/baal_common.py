@@ -78,12 +78,12 @@ def cprint(color, *args):
     """
     USAGE: cprint(RED, "one is: ", 1)
     """
-    if (curses.has_colors()):
-        print _BOLD_COLOR_PREFIX + _COLOR_MAP[color] + \
-            "".join([str(arg) for arg in args]) + \
-            _CLEAR
-    else:
-        print "".join([str(arg) for arg in args])
+    #if (curses.has_colors()):
+    print _BOLD_COLOR_PREFIX + _COLOR_MAP[color] + \
+        "".join([str(arg) for arg in args]) + \
+        _CLEAR
+    #else:
+    #    print "".join([str(arg) for arg in args])
 
 #
 # Misc API

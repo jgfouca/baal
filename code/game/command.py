@@ -119,8 +119,7 @@ class EndTurnCommand(Command):
     ###########################################################################
     def __init__(self, args):
     ###########################################################################
-        cls = self.__class__
-        urequire(len(args) <= 1, cls.name(), " takes at most one argument")
+        urequire(len(args) <= 1, self.name(), " takes at most one argument")
 
         self.__num_turns = 1
         if (args):
@@ -130,8 +129,8 @@ class EndTurnCommand(Command):
             except ValueError:
                 urequire(False, "'%s' is not a valid integer" % args[0])
             urequire(self.__num_turns > 0 and
-                     self.__num_turns <= cls.__MAX_SKIP_TURNS,
-                     "num-turns must be between 0 and ", cls.__MAX_SKIP_TURNS)
+                     self.__num_turns <= self.__MAX_SKIP_TURNS,
+                     "num-turns must be between 0 and ", self.__MAX_SKIP_TURNS)
 
     ###########################################################################
     def apply(self):
@@ -162,8 +161,7 @@ class QuitCommand(Command):
     ###########################################################################
     def __init__(self, args):
     ###########################################################################
-        cls = self.__class__
-        urequire(len(args) == 0, cls.name(), " takes no arguments")
+        urequire(len(args) == 0, self.name(), " takes no arguments")
 
     ###########################################################################
     def apply(self):
@@ -195,8 +193,7 @@ class SaveCommand(Command):
     ###########################################################################
     def __init__(self, args):
     ###########################################################################
-        cls = self.__class__
-        urequire(len(args) <= 1, cls.name(), " takes at most one argument")
+        urequire(len(args) <= 1, self.name(), " takes at most one argument")
 
         if (args):
             self.__savegame = args[0]
@@ -233,8 +230,7 @@ class CastCommand(Command):
     ###########################################################################
     def __init__(self, args):
     ###########################################################################
-        cls = self.__class__
-        urequire(len(args) == 3, cls.name(), " takes three arguments")
+        urequire(len(args) == 3, self.name(), " takes three arguments")
 
         # Get spell name
         self.__spell_name = args[0]
@@ -323,8 +319,7 @@ class LearnCommand(Command):
     ###########################################################################
     def __init__(self, args):
     ###########################################################################
-        cls = self.__class__
-        urequire(len(args) == 1, cls.name(), " takes one argument")
+        urequire(len(args) == 1, self.name(), " takes one argument")
 
         self.__spell_cls = SpellFactory.get(args[0])
 
@@ -370,8 +365,7 @@ class DrawCommand(Command):
     ###########################################################################
     def __init__(self, args):
     ###########################################################################
-        cls = self.__class__
-        urequire(len(args) <= 1, cls.name(), " takes at most one argument")
+        urequire(len(args) <= 1, self.name(), " takes at most one argument")
 
         # Parse draw mode
         self.__new_mode = None
@@ -413,8 +407,7 @@ class HackCommand(Command):
     ###########################################################################
     def __init__(self, args):
     ###########################################################################
-        cls = self.__class__
-        urequire(len(args) <= 1, cls.name(), " takes at most one argument")
+        urequire(len(args) <= 1, self.name(), " takes at most one argument")
 
         # Parse exp
         self.__exp = None

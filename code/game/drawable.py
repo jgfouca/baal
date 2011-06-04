@@ -52,7 +52,7 @@ class DrawMode(object):
     ###########################################################################
     def __init__(self, value):
     ###########################################################################
-        cls = DrawMode
+        cls = self.__class__
         if (type(value) == str):
             value = value.upper()
             urequire(value in cls, "Invalid draw-mode string: ", value)
@@ -122,7 +122,6 @@ class DrawMode(object):
     @classmethod
     def _in_hook(cls, value):
     ###########################################################################
-        cls = DrawMode
         if (type(value) == str):
             return value.upper() in cls._names()
         elif (type(value) == int):
@@ -134,7 +133,7 @@ class DrawMode(object):
     # Private getters to make pylint happy
 
     @classmethod
-    def _names(cls): return cls.__NAMES
+    def _names(cls): return tuple(cls.__NAMES)
 
     def _value(self): return self.__value
 
@@ -172,7 +171,7 @@ class Drawable(object):
     TODO: Drawing design needs to be reviewed
     """
 
-    def __init__(self): prequire(False, "Do not instatiate Drawable")
+    def __init__(self): prequire(False, "Do not instantiate Drawable")
 
     #
     # Public API
