@@ -2,10 +2,6 @@
 
 import unittest
 
-from interface_factory import InterfaceFactory
-from world_factory import WorldFactory
-from player import Player
-from player_ai import PlayerAI
 from baal_common import prequire, ProgramError
 
 ###############################################################################
@@ -68,9 +64,15 @@ class Engine(object):
         """
         Do not call. Use free function to get a handle to an Engine
         """
+        # Dump imports here to avoid circular imports
+        from interface import create_interface
+        from world_factory import WorldFactory
+        from player import Player
+        from player_ai import PlayerAI
+
         prequire(getattr(caller, Engine.ALLOW_CREATION, False),
                  "Illegal attempt to create Engine")
-        self.__interface = InterfaceFactory.create()
+        self.__interface = create_interface()
         self.__world     = WorldFactory.create()
         self.__player    = Player()
         self.__ai_player = PlayerAI()
@@ -148,7 +150,7 @@ class TestEngine(unittest.TestCase):
     def test_engine(self):
     ###########################################################################
         # Test that we cannot create instances of Engine
-        self.assertRaises(ProgramError, Engine)
+        self.assertRaises(ProgramError, Engine, self)
 
         # TODO - Add more
 

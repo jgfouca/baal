@@ -3,6 +3,34 @@
 from baal_common import prequire, urequire, subclasses
 from command import Command
 
+class _CommandFactoryMeta(type):
+    def __iter__(mcs): return CommandFactory._iter_hook()
+
+#
+# Internal methods
+#
+
+###############################################################################
+def _create_cmd_map():
+###############################################################################
+    rv = {}
+    for cmd_cls in subclasses(Command):
+        _no_dup_insert(rv, cmd_cls.name(), cmd_cls)
+        for alias in cmd_cls.aliases():
+            _no_dup_insert(rv, alias, cmd_cls)
+
+    return rv
+
+###############################################################################
+def _no_dup_insert(dict_, key, item):
+###############################################################################
+    prequire(key not in dict_, "Found duplicate key: ", key)
+    dict_[key] = item
+
+#
+# Class
+#
+
 ###############################################################################
 class CommandFactory(object):
 ###############################################################################
@@ -10,6 +38,7 @@ class CommandFactory(object):
     A CommandFactory creates commands. It encapsulates the knowledge of the
     set of available commands.
     """
+    __metaclass__ = _CommandFactoryMeta
 
     # Class variables
     __cmd_map = _create_cmd_map()
@@ -35,16 +64,17 @@ class CommandFactory(object):
 
     ###########################################################################
     @classmethod
-    def iter_commands(cls):
+    def _iter_hook(cls):
     ###########################################################################
         """
-        Iterate over the command classes.
+        Iterate over the command classes. Do not call directly... invoke by
+        'for cls in CommandFactory'.
         """
         real_names = [cmd.name() for cmd in subclasses(Command)]
-        for cmd_name, cmd_cls in sorted(cls.__cmd_map.iteritems()):
-            # Filter out alias entries
-            if (cmd_name in real_names):
-                yield cmd_cls
+        # Filter out alias entries
+        return iter([cmdcls
+                     for cmdname, cmdcls in sorted(cls.__cmd_map.iteritems())
+                     if cmdname in real_names])
 
     ###########################################################################
     @classmethod
@@ -56,27 +86,6 @@ class CommandFactory(object):
         urequire(name in cls.__cmd_map,
                  "'%s'" % name, " is not a valid command")
         return cls.__cmd_map[name]
-
-#
-# Internal methods
-#
-
-###############################################################################
-def _create_cmd_map():
-###############################################################################
-    rv = {}
-    for cmd_cls in subclasses(Command):
-        _no_dup_insert(rv, cmd_cls.name(), cmd_cls)
-        for alias in cmd_cls.aliases():
-            _no_dup_insert(rv, alias, cmd_cls)
-
-    return rv
-
-###############################################################################
-def _no_dup_insert(dict_, key, item):
-###############################################################################
-    prequire(key not in dict_, "Found duplicate key: ", key)
-    dict_[key] = item
 
 #
 # Tests

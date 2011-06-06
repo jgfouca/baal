@@ -2,23 +2,21 @@
 
 import unittest
 
-from baal_common import prequire, urequire, UserError, ProgramError
+from baal_common import prequire, urequire, UserError, ProgramError, SmartEnum
 
-###############################################################################
+# TODO: is it possible to make SmartEnums even slicker? It would be nice if
+# we could auto-generate the meta class.
+
 class _DrawModeMeta(type):
-###############################################################################
-    def __iter__(mcs):
-        return DrawMode._iter_hook()
+    def __iter__(mcs): return DrawMode._iter_hook()
 
-    def __contains__(mcs, value):
-        return DrawMode._in_hook(value)
+    def __contains__(mcs, value): return DrawMode._in_hook(value)
 
 ###############################################################################
-class DrawMode(object):
+class DrawMode(SmartEnum):
 ###############################################################################
     """
     Describes which draw mode we're in.
-    TODO: It is even worth support the int API for this class?
     """
 
     # Allows us to change how the class works. In this case, I want to be able
@@ -43,99 +41,10 @@ class DrawMode(object):
     DEWPOINT = range(12)
 
     # Derive names from class members.
-    __NAMES = [ name for name in dir() if name.isupper() and name.isalpha() ]
+    _NAMES = [ name for name in dir() if name.isupper() and name.isalpha() ]
 
-    #
-    # Public API
-    #
-
-    ###########################################################################
     def __init__(self, value):
-    ###########################################################################
-        cls = self.__class__
-        if (type(value) == str):
-            value = value.upper()
-            urequire(value in cls, "Invalid draw-mode string: ", value)
-            self.__value = cls._names().index(value)
-        elif (type(value) == int):
-            urequire(value in cls, "Invalid draw-mode int: ", value)
-            self.__value = value
-        else:
-            prequire(False, "Must initialize with string or int, ",
-                     "received: ", type(value))
-
-    ###########################################################################
-    def __eq__(self, rhs):
-    ###########################################################################
-        """
-        Flexible equality. Can compare with string, int, or another DrawMode.
-        """
-        if (type(rhs) == str):
-            rhs = rhs.upper()
-            if (rhs in DrawMode._names()):
-                return self.__value == DrawMode._names().index(rhs)
-            else:
-                return False
-        elif (type(rhs) == int):
-            return self.__value == rhs
-        elif (type(rhs) == DrawMode):
-            return self.__value == rhs.__value
-        else:
-            prequire(False, "Can only compare with str, int, or DrawMode, ",
-                     "received: ", type(rhs))
-
-    ###########################################################################
-    def __ne__(self, rhs):
-    ###########################################################################
-        """
-        Flexible inequality. See __eq__
-        """
-        return not self == rhs
-
-    ###########################################################################
-    def __str__(self):
-    ###########################################################################
-        """
-        Return the name of the enum value
-        """
-        return DrawMode._names()[self.__value]
-
-    ###########################################################################
-    def __int__(self):
-    ###########################################################################
-        """
-        Return the raw enum value
-        """
-        return self.__value
-
-    #
-    # Private API
-    #
-
-    ###########################################################################
-    @classmethod
-    def _iter_hook(cls):
-    ###########################################################################
-        return iter([DrawMode(name) for name in cls._names()])
-
-    ###########################################################################
-    @classmethod
-    def _in_hook(cls, value):
-    ###########################################################################
-        if (type(value) == str):
-            return value.upper() in cls._names()
-        elif (type(value) == int):
-            return value >= 0 and value < len(cls._names())
-        else:
-            prequire(False, "Only makes sense to check membership with string "
-                     "or int, received: ", type(value))
-
-    # Private getters to make pylint happy
-
-    @classmethod
-    def _names(cls): return tuple(cls.__NAMES)
-
-    def _value(self): return self.__value
+        super(self.__class__, self).__init__(value)
 
 # Finish DrawMode initialization
 for name in DrawMode._names():

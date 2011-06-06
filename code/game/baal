@@ -3,7 +3,7 @@
 import argparse
 
 from configuration import Configuration
-from interface_factory import InterfaceFactory
+from interface import Interfaces
 from world_factory import WorldFactory
 from engine import engine
 
@@ -12,10 +12,6 @@ def _main():
 ###############################################################################
     # Grab config info from the various factories
 
-    text_interface    = InterfaceFactory.TEXT_INTERFACE
-    gfx_interface     = InterfaceFactory.GRAPHICAL_INTERFACE
-    default_interface = InterfaceFactory.DEFAULT_INTERFACE
-
     default_world        = WorldFactory.DEFAULT_WORLD
 
     parser = argparse.ArgumentParser(description="Play Ba'al!")
@@ -23,8 +19,8 @@ def _main():
     parser.add_argument("-i", "--interface",
                         dest="interface",
                         action="store_const",
-                        choices=(text_interface, gfx_interface, default_interface),
-                        default=default_interface,
+                        choices=([str(item) for item in Interfaces]),
+                        default=[str(item) for item in Interfaces][0],
                         help="Choose the game interface")
 
     parser.add_argument("-w", "--world",

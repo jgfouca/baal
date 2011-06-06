@@ -160,6 +160,115 @@ class Location(object):
         return self.row, self.col
 
 #
+# Smart Enum Class API
+#
+
+###############################################################################
+class SmartEnum(object):
+###############################################################################
+    """
+    Inheriting from this class will get you most of what you need to create a
+    smart enum class. You'll still need to set up the metaclass and the enum
+    values.
+
+    TODO: It is even worth support the int API for this class?
+    """
+
+    _NAMES = None # Intended to be overidden
+
+    #
+    # Public API
+    #
+
+    ###########################################################################
+    def __init__(self, value):
+    ###########################################################################
+        cls = self.__class__
+        if (type(value) == str):
+            value = value.upper()
+            urequire(value in cls, "Invalid draw-mode string: ", value)
+            self.__value = cls._names().index(value)
+        elif (type(value) == int):
+            urequire(value in cls, "Invalid draw-mode int: ", value)
+            self.__value = value
+        else:
+            prequire(False, "Must initialize with string or int, ",
+                     "received: ", type(value))
+
+    ###########################################################################
+    def __eq__(self, rhs):
+    ###########################################################################
+        """
+        Flexible equality. Can compare with string, int, or another enum.
+        """
+        if (type(rhs) == str):
+            rhs = rhs.upper()
+            if (rhs in self._names()):
+                return self.__value == self._names().index(rhs)
+            else:
+                return False
+        elif (type(rhs) == int):
+            return self.__value == rhs
+        elif (type(rhs) == self.__class__):
+            return self.__value == rhs.__value
+        else:
+            prequire(False, "Can only compare with str, int, or DrawMode, ",
+                     "received: ", type(rhs))
+
+    ###########################################################################
+    def __ne__(self, rhs):
+    ###########################################################################
+        """
+        Flexible inequality. See __eq__
+        """
+        return not self == rhs
+
+    ###########################################################################
+    def __str__(self):
+    ###########################################################################
+        """
+        Return the name of the enum value
+        """
+        return self._names()[self.__value]
+
+    ###########################################################################
+    def __int__(self):
+    ###########################################################################
+        """
+        Return the raw enum value
+        """
+        return self.__value
+
+    #
+    # Private API
+    #
+
+    ###########################################################################
+    @classmethod
+    def _iter_hook(cls):
+    ###########################################################################
+        return iter([cls(name) for name in cls._names()])
+
+    ###########################################################################
+    @classmethod
+    def _in_hook(cls, value):
+    ###########################################################################
+        if (type(value) == str):
+            return value.upper() in cls._names()
+        elif (type(value) == int):
+            return value >= 0 and value < len(cls._names())
+        else:
+            prequire(False, "Only makes sense to check membership with string "
+                     "or int, received: ", type(value))
+
+    # Private getters to make pylint happy
+
+    @classmethod
+    def _names(cls): return tuple(cls._NAMES)
+
+    def _value(self): return self.__value
+
+#
 # Tests
 #
 

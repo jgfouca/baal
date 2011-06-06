@@ -4,7 +4,6 @@ import time
 
 from spell_factory import SpellFactory
 from baal_common import prequire, urequire, Location, UserError
-from command_factory import CommandFactory
 from engine import engine
 from drawable import DrawMode
 import drawable
@@ -79,6 +78,7 @@ class HelpCommand(Command):
         self.__cmd = None
         if (args):
             # Verify arg is a valid command name and get handle to cmd class
+            from command_factory import CommandFactory
             self.__cmd = CommandFactory.get(args[0])
 
     ###########################################################################
@@ -91,7 +91,8 @@ class HelpCommand(Command):
         if (self.__cmd is not None):
             interface.help(self.__cmd.help())
         else:
-            for cmd_cls in CommandFactory.iter_commands():
+            from command_factory import CommandFactory
+            for cmd_cls in CommandFactory:
                 interface.help(cmd_cls.help())
 
     @classmethod
@@ -396,7 +397,7 @@ class HackCommand(Command):
 
     # Class variables
     __NAME    = "hack"
-    __ALIASES = ("h",)
+    __ALIASES = ()
     __USAGE   = \
 """%s [<exp>]
   Gives the player free arbitrary exp. If no arg is provided, enough exp is
