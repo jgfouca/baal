@@ -11,20 +11,10 @@ class City(object):
     """
 
     #
-    # Public API
+    # ==== Public API ====
     #
 
-    ###########################################################################
-    def __init__(self, name, location):
-    ###########################################################################
-        self.__name = name
-        self.__rank = 1
-        self.__population = City.__CITY_STARTING_POP
-        self.__next_rank_pop = self.__population * City.__CITY_RANK_UP_MULTIPLIER
-        self.__prod_bank = 0.0
-        self.__location = location
-        self.__defense = 1
-        self.__famine = False
+    def __init__(self, name, location): self.__init_impl(name, location)
 
     #
     # Getter API
@@ -65,7 +55,7 @@ class City(object):
         return self.__kill_impl(killed)
 
     #
-    # Class constants
+    # ==== Class constants ====
     #
 
     # City growth/food/production constants
@@ -89,8 +79,20 @@ class City(object):
     __PROD_BEFORE_SETTLER   = 7.0
 
     #
-    # Implementation
+    # ==== Implementation ====
     #
+
+    ###########################################################################
+    def __init_impl(self, name, location):
+    ###########################################################################
+        self.__name = name
+        self.__rank = 1
+        self.__population = City.__CITY_STARTING_POP
+        self.__next_rank_pop = self.__population * City.__CITY_RANK_UP_MULTIPLIER
+        self.__prod_bank = 0.0
+        self.__location = location
+        self.__defense = 1
+        self.__famine = False
 
     ###########################################################################
     def __cycle_turn_impl(self):
@@ -146,9 +148,9 @@ class City(object):
                 prod_gathered += tile.yield_().prod
 
         # Remaining workers are specialists that contribute production
-        prod_gathered += num_workers * \
-                         City.__PROD_FROM_SPECIALIST * \
-                         engine().ai_player().tech_yield_multiplier()
+        base_specialist_prod = num_workers * City.__PROD_FROM_SPECIALIST
+        prod_gathered += \
+            engine().ai_player().get_adjusted_yield(base_specialist_prod)
 
         # Accumulate production
         self.__prod_bank += prod_gathered

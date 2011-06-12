@@ -41,21 +41,10 @@ class Geology(Drawable):
     """
 
     #
-    # Public API
+    # ==== Public API ====
     #
 
-    ###########################################################################
-    def __init__(self, plate_movement):
-    ###########################################################################
-        self.__tension = 0.0
-        self.__magma   = 0.0
-        self.__plate_movement = plate_movement
-        self.__tension_buildup = self._base_tension_buildup() * plate_movement
-        self.__magma_buildup = self._base_magma_buildup() * plate_movement
-
-        prequire(plate_movement >= 0.0, "Broken precondition")
-        prequire(self._base_tension_buildup() >= 0.0, "Broken precondition")
-        prequire(self._base_magma_buildup() >= 0.0, "Broken precondition")
+    def __init__(self, plate_movement): self.__init_impl(plate_movement)
 
     #
     # Getters / Queries
@@ -86,7 +75,7 @@ class Geology(Drawable):
         return self.__cycle_turn_impl()
 
     #
-    # Protected Abstract API
+    # ==== Protected Abstract API ====
     #
 
     @classmethod
@@ -102,8 +91,21 @@ class Geology(Drawable):
     def _base_tension_buildup(cls): prequire(False, "Must override")
 
     #
-    # Implementation
+    # ==== Implementation ====
     #
+
+    ###########################################################################
+    def __init_impl(self, plate_movement):
+    ###########################################################################
+        self.__tension = 0.0
+        self.__magma   = 0.0
+        self.__plate_movement = plate_movement
+        self.__tension_buildup = self._base_tension_buildup() * plate_movement
+        self.__magma_buildup = self._base_magma_buildup() * plate_movement
+
+        prequire(plate_movement >= 0.0, "Broken precondition")
+        prequire(self._base_tension_buildup() >= 0.0, "Broken precondition")
+        prequire(self._base_magma_buildup() >= 0.0, "Broken precondition")
 
     ###########################################################################
     def __to_xml_impl(self):

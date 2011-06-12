@@ -5,7 +5,8 @@ import unittest
 from baal_common import prequire, urequire, UserError, ProgramError, SmartEnum
 
 # TODO: is it possible to make SmartEnums even slicker? It would be nice if
-# we could auto-generate the meta class.
+# we could auto-generate the meta class instead of having to have a custom
+# meta class for each smart enum.
 
 class _DrawModeMeta(type):
     def __iter__(mcs): return DrawMode._iter_hook()

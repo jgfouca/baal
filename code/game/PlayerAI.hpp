@@ -10,7 +10,7 @@ namespace baal {
 class City;
 
 /**
- * Manager the "global" (higher-than-city) affairs of the AI. Since most
+ * Manages the "global" (higher-than-city) affairs of the AI. Since most
  * of the AI's "thought" goes into city management, most of the AI code is
  * actually in the City class.
  */

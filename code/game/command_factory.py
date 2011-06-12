@@ -43,6 +43,10 @@ class CommandFactory(object):
     # Class variables
     __cmd_map = _create_cmd_map()
 
+    #
+    # Public API
+    #
+
     ###########################################################################
     @classmethod
     def parse_command(cls, text):
@@ -64,6 +68,21 @@ class CommandFactory(object):
 
     ###########################################################################
     @classmethod
+    def get(cls, name):
+    ###########################################################################
+        """
+        Get Command class object associate with name.
+        """
+        urequire(name in cls.__cmd_map,
+                 "'%s'" % name, " is not a valid command")
+        return cls.__cmd_map[name]
+
+    #
+    # Private API
+    #
+
+    ###########################################################################
+    @classmethod
     def _iter_hook(cls):
     ###########################################################################
         """
@@ -75,17 +94,6 @@ class CommandFactory(object):
         return iter([cmdcls
                      for cmdname, cmdcls in sorted(cls.__cmd_map.iteritems())
                      if cmdname in real_names])
-
-    ###########################################################################
-    @classmethod
-    def get(cls, name):
-    ###########################################################################
-        """
-        Get Command class object associate with name.
-        """
-        urequire(name in cls.__cmd_map,
-                 "'%s'" % name, " is not a valid command")
-        return cls.__cmd_map[name]
 
 #
 # Tests

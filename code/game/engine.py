@@ -27,7 +27,7 @@ class Engine(object):
     ALLOW_CREATION = "_allow_engine_creation"
 
     #
-    # Public API
+    # ==== Public API ====
     #
 
     def play(self):
@@ -55,7 +55,13 @@ class Engine(object):
     def ai_player(self): return self.__ai_player
 
     #
-    # Private API
+    # ==== Class constants ====
+    #
+
+    __AI_WINS_AT_TECH_LEVEL = 100
+
+    #
+    # ==== Private API / Implemetation ====
     #
 
     ###########################################################################
@@ -117,7 +123,8 @@ class Engine(object):
             if (self.__ai_player.population() == 0):
                 self.__interface.human_wins()
                 break
-            elif (self.__ai_player.tech_level() >= 100):
+            elif (self.__ai_player.tech_level() >=
+                  self.__class__.__AI_WINS_AT_TECH_LEVEL):
                 self.__interface.ai_wins()
                 break
 

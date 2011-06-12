@@ -18,13 +18,11 @@ class Configuration(object):
     __instance = None
 
     #
-    # Public API
+    # ==== Public API ====
     #
 
-    ###########################################################################
     @classmethod
     def instance(cls):
-    ###########################################################################
         """
         Retrieve singleton instance. Note this does *not* construct the
         singleton if it does not exist; the private creation class method
@@ -33,7 +31,9 @@ class Configuration(object):
         prequire(cls.__instance is not None, "Uninitialized global instance")
         return cls.__instance
 
+    #
     # Getters for config pieces
+    #
 
     def interface_config(self): return self.__interface_config
 
@@ -42,7 +42,7 @@ class Configuration(object):
     def player_config(self): return self.__player_config
 
     #
-    # Private API
+    # ==== Private API ====
     #
 
     ###########################################################################

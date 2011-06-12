@@ -21,6 +21,10 @@ class Command(object):
     def __init__(self): prequire(False, "Do not instantiate Command")
 
     #
+    # ==== Public API ====
+    #
+
+    #
     # Instance API
     #
 
