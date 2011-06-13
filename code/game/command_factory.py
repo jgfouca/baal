@@ -1,35 +1,10 @@
 #! /usr/bin/env python
 
-from baal_common import prequire, urequire, subclasses
+from baal_common import prequire, urequire, create_subclass_map, subclasses
 from command import Command
 
 class _CommandFactoryMeta(type):
     def __iter__(mcs): return CommandFactory._iter_hook()
-
-#
-# Internal methods
-#
-
-###############################################################################
-def _create_cmd_map():
-###############################################################################
-    rv = {}
-    for cmd_cls in subclasses(Command):
-        _no_dup_insert(rv, cmd_cls.name(), cmd_cls)
-        for alias in cmd_cls.aliases():
-            _no_dup_insert(rv, alias, cmd_cls)
-
-    return rv
-
-###############################################################################
-def _no_dup_insert(dict_, key, item):
-###############################################################################
-    prequire(key not in dict_, "Found duplicate key: ", key)
-    dict_[key] = item
-
-#
-# Class
-#
 
 ###############################################################################
 class CommandFactory(object):
@@ -41,7 +16,7 @@ class CommandFactory(object):
     __metaclass__ = _CommandFactoryMeta
 
     # Class variables
-    __cmd_map = _create_cmd_map()
+    __cmd_map = create_subclass_map(Command, include_aliases=True)
 
     #
     # Public API
@@ -59,12 +34,8 @@ class CommandFactory(object):
         prequire(tokens, "Empty string made it into CommandFactory")
         name = tokens[0]
 
-        # Check that command name is valid
-        urequire(name in cls.__cmd_map,
-               "'%s'" % name, " is not a valid command. Type 'help' for help.")
-
         # Instantiate and return new Command object
-        return cls.__cmd_map[name](tokens[1:])
+        return cls.get(name)(tokens[1:])
 
     ###########################################################################
     @classmethod
@@ -74,7 +45,7 @@ class CommandFactory(object):
         Get Command class object associate with name.
         """
         urequire(name in cls.__cmd_map,
-                 "'%s'" % name, " is not a valid command")
+               "'%s'" % name, " is not a valid command. Type 'help' for help.")
         return cls.__cmd_map[name]
 
     #

@@ -61,8 +61,13 @@ class Command(object):
         """
         prequire(False, "Called abstract version of help")
 
+#
+# Command implementations. The rest of the system does not care about anything
+# below. Only the abstract base class (Command) should be exposed.
+#
+
 ###############################################################################
-class HelpCommand(Command):
+class _HelpCommand(Command):
 ###############################################################################
 
     # Class variables
@@ -76,8 +81,7 @@ class HelpCommand(Command):
     ###########################################################################
     def __init__(self, args):
     ###########################################################################
-        urequire(len(args) <= 1,
-                 HelpCommand.name(), " takes at most one argument")
+        urequire(len(args) <= 1, self.name(), " takes at most one argument")
 
         self.__cmd = None
         if (args):
@@ -109,7 +113,7 @@ class HelpCommand(Command):
     def help(cls): return _create_help_str(cls, cls.__USAGE)
 
 ###############################################################################
-class EndTurnCommand(Command):
+class _EndTurnCommand(Command):
 ###############################################################################
 
     # Class variables
@@ -152,7 +156,7 @@ class EndTurnCommand(Command):
     def help(cls): return _create_help_str(cls, cls.__USAGE)
 
 ###############################################################################
-class QuitCommand(Command):
+class _QuitCommand(Command):
 ###############################################################################
 
     # Class variables
@@ -184,7 +188,7 @@ class QuitCommand(Command):
     def help(cls): return _create_help_str(cls, cls.__USAGE)
 
 ###############################################################################
-class SaveCommand(Command):
+class _SaveCommand(Command):
 ###############################################################################
 
     # Class variables
@@ -221,7 +225,7 @@ class SaveCommand(Command):
     def help(cls): return _create_help_str(cls, cls.__USAGE)
 
 ###############################################################################
-class CastCommand(Command):
+class _CastCommand(Command):
 ###############################################################################
 
     # Class variables
@@ -309,7 +313,7 @@ class CastCommand(Command):
         return _create_help_str(cls, full_usage)
 
 ###############################################################################
-class LearnCommand(Command):
+class _LearnCommand(Command):
 ###############################################################################
 
     # Class variables
@@ -353,7 +357,7 @@ class LearnCommand(Command):
         return _create_help_str(cls, full_usage)
 
 ###############################################################################
-class DrawCommand(Command):
+class _DrawCommand(Command):
 ###############################################################################
 
     # Class variables
@@ -396,7 +400,7 @@ class DrawCommand(Command):
     def help(cls): return _create_help_str(cls, cls.__USAGE)
 
 ###############################################################################
-class HackCommand(Command):
+class _HackCommand(Command):
 ###############################################################################
 
     # Class variables

@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from baal_common import prequire, Location
+from baal_common import prequire, Location, check_access
 from engine import engine
 
 ###############################################################################
@@ -17,7 +17,7 @@ class City(object):
     def __init__(self, name, location): self.__init_impl(name, location)
 
     #
-    # Getter API
+    # Query / Getter API
     #
 
     def name(self): return self.__name
@@ -32,27 +32,23 @@ class City(object):
 
     def defense(self): return self.__defense
 
+    def to_xml(self): return self.__to_xml_impl()
+
     #
     # Modification API
     #
 
-    def cycle_turn(self):
+    def cycle_turn(self, caller):
         """
         Tell this city that the turn is cycling
         """
-        return self.__cycle_turn_impl()
+        return self.__cycle_turn_impl(caller)
 
-    def to_xml(self):
-        """
-        Convert this city's state to XML
-        """
-        return self.__to_xml_impl()
-
-    def kill(self, killed):
+    def kill(self, caller, killed):
         """
         Kill off some of this city's citizens
         """
-        return self.__kill_impl(killed)
+        return self.__kill_impl(caller, killed)
 
     #
     # ==== Class constants ====
@@ -63,7 +59,7 @@ class City(object):
     __MAX_GROWTH_MODIFIER   = 4.0
     __CITY_RANK_UP_MULTIPLIER = 2
     __CITY_STARTING_POP = 1000
-    __MIN_CITY_SIZE = __CITY_STARTING_POP / 5
+    MIN_CITY_SIZE = __CITY_STARTING_POP / 5
     __POP_THAT_EATS_ONE_FOOD = 1000
     __FOOD_FROM_CITY_CENTER = 1.0
     __PROD_FROM_CITY_CENTER = 1.0
@@ -77,6 +73,10 @@ class City(object):
     # AI constants
     __TOO_MANY_FOOD_WORKERS = 0.66
     __PROD_BEFORE_SETTLER   = 7.0
+
+    # Access-limiting vars
+    ALLOW_CITY_KILL  = "_allow_city_kill"
+    ALLOW_CITY_CYCLE = "_allow_city_cycle"
 
     #
     # ==== Implementation ====
@@ -95,9 +95,11 @@ class City(object):
         self.__famine = False
 
     ###########################################################################
-    def __cycle_turn_impl(self):
+    def __cycle_turn_impl(self, caller):
     ###########################################################################
         # TODO: This method is still too big, break it up more
+
+        check_access(caller, self.__class__.ALLOW_CITY_CYCLE)
 
         prequire(self.__population > 0,
                  "This city has no people and should have been deleted")
@@ -274,8 +276,10 @@ class City(object):
         return ""
 
     ###########################################################################
-    def __kill_impl(self, killed):
+    def __kill_impl(self, caller, killed):
     ###########################################################################
+        check_access(caller, self.__class__.ALLOW_CITY_KILL)
+
         prequire(self.__population >= killed, "Invalid killed: ", killed)
 
         self.__population -= killed

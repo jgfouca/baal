@@ -2,7 +2,7 @@
 
 import unittest
 
-from baal_common import prequire, ProgramError
+from baal_common import prequire, ProgramError, check_access
 
 ###############################################################################
 class Engine(object):
@@ -24,7 +24,7 @@ class Engine(object):
     __initializing = False
 
     # Access-limiting vars
-    ALLOW_CREATION = "_allow_engine_creation"
+    ALLOW_ENGINE_CREATION = "_allow_engine_creation"
 
     #
     # ==== Public API ====
@@ -76,8 +76,8 @@ class Engine(object):
         from player import Player
         from player_ai import PlayerAI
 
-        prequire(getattr(caller, Engine.ALLOW_CREATION, False),
-                 "Illegal attempt to create Engine")
+        check_access(caller, Engine.ALLOW_ENGINE_CREATION)
+
         self.__interface = create_interface()
         self.__world     = WorldFactory.create()
         self.__player    = Player()
@@ -129,7 +129,7 @@ class Engine(object):
                 break
 
 # Engine class can create engines
-setattr(Engine, Engine.ALLOW_CREATION, True)
+setattr(Engine, Engine.ALLOW_ENGINE_CREATION, True)
 
 #
 # Free function API

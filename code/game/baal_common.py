@@ -90,6 +90,11 @@ def cprint(color, *args):
 #
 
 ###############################################################################
+def check_access(caller, attr_key):
+###############################################################################
+    prequire(getattr(caller, attr_key, False), "Illegal access")
+
+###############################################################################
 def subclasses(cls):
 ###############################################################################
     """
@@ -97,6 +102,30 @@ def subclasses(cls):
     a class directly, so we use this free function instead.
     """
     return cls.__subclasses__()
+
+###############################################################################
+def create_subclass_map(cls, include_aliases=False):
+###############################################################################
+    """
+    Given a class, create a map that maps the names of all subclasses of cls
+    to the class-object of the subclass. Useful for factory classes. Expects
+    that cls.name() is callable for all subclasses. If include_aliases is
+    True, the subclasses must also support the aliases() classmethod.
+    """
+    rv = {}
+    for subcls in subclasses(cls):
+        _no_dup_insert(rv, subcls.name(), subcls)
+        if (include_aliases):
+            for alias in subcls.aliases():
+                _no_dup_insert(rv, alias, subcls)
+
+    return rv
+
+###############################################################################
+def _no_dup_insert(dict_, key, item):
+###############################################################################
+    prequire(key not in dict_, "Found duplicate key: ", key)
+    dict_[key] = item
 
 ###############################################################################
 def clear_screen():
