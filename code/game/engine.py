@@ -111,7 +111,7 @@ class Engine(object):
 
             # Human player takes turn
             self.__interface.interact()
-            self.__player.cycle_turn()
+            self.__player.cycle_turn(self)
 
             # AI player takes turn
             self.__ai_player.cycle_turn()

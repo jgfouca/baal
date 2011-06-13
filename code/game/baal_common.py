@@ -137,6 +137,10 @@ def clear_screen():
     # TODO: Re-implement with curses for better portability
     subprocess.call("clear")
 
+#
+# Location API
+#
+
 ###############################################################################
 class Location(object):
 ###############################################################################

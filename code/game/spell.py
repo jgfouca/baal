@@ -83,7 +83,9 @@ class Spell(object):
     def apply(self):
         """
         Apply the casting of this spell to the game state.
-        This should NEVER throw.
+        This should NEVER throw. verify_apply should have been called prior
+        to ensure the casting of this spell is valid from the spell's point
+        of view.
         """
         prequire(False, "Called abstract version of apply")
 
@@ -145,7 +147,7 @@ class Spell(object):
     ###########################################################################
     def __cost_impl(self):
     ###########################################################################
-        return self.cost_func()(self.base_cost(), self.level())
+        return self.cost_func()(self, self.level())
 
     ###########################################################################
     def __str_impl(self):
@@ -270,7 +272,7 @@ class Hot(Spell):
 
     __NAME = "hot"
     __BASE_COST = 50
-    __COST_FUNC = lambda base, level: base * pow(1.3, level - 1) # 30% per lvl
+    __COST_FUNC = lambda cls, level: cls.base_cost() * pow(1.3, level - 1) # 30% per lvl
     __PREREQS = SpellPrereq(1, ()) # No prereqs
 
     #

@@ -21,7 +21,7 @@ class Player : public Drawable
 
   void learn(const Spell& spell);
 
-  void verify_cast(const Spell& spell);
+  void verify_cast(const Spell& spell) const;
 
   void cast(const Spell& spell);
 
