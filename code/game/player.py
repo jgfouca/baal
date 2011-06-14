@@ -95,15 +95,21 @@ class Player(Drawable):
     __STARTING_MANA            = 100
     __FIRST_LEVELUP_EXP_COST   = 100
     __MANA_REGEN_RATE          = 1.0 / 20
-    __MANA_POOL_FUNC           = \
-        lambda cls, level: cls.__STARTING_MANA * pow(1.4, level - 1) # 40% gain per lvl
-    __EXP_LEVEL_COST_FUNC  = \
-        lambda cls, level: cls.__FIRST_LEVELUP_EXP_COST * pow(1.4, level - 1) # 40% gain per lvl
     __DEFAULT_PLAYER_NAME      = "human"
     ALLOW_PLAYER_CYCLE_TURN    = "_allow_player_cycle_turn"
     ALLOW_PLAYER_CAST          = "_allow_player_cast"
     ALLOW_PLAYER_LEARN         = "_allow_player_learn"
     ALLOW_PLAYER_GAIN_EXP      = "_allow_player_gain_exp"
+
+    @classmethod
+    def __MANA_POOL_FUNC(cls, level):
+        # 40% gain per lvl
+        return cls.__STARTING_MANA * pow(1.4, level - 1)
+
+    @classmethod
+    def __EXP_LEVEL_COST_FUNC(cls, level):
+        # 40% gain per lvl
+        return cls.__FIRST_LEVELUP_EXP_COST * pow(1.4, level - 1)
 
     #
     # ==== Implementation ====
@@ -209,7 +215,8 @@ class Player(Drawable):
 
         # Check exp invariant
         prequire(self.__exp < self.__next_level_cost,
-          "exp(", self.__exp,  ") > next_level_cost(", self.__next_level_cost, ")")
+                 "exp(", self.__exp,  ") > ",
+                 "next_level_cost(", self.__next_level_cost, ")")
 
         # Check mana invariant
         prequire(self.__mana <= self.__max_mana,

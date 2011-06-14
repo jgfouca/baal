@@ -65,18 +65,24 @@ class PlayerAI(Drawable):
     __STARTING_TECH_LEVEL = 1
     __FIRST_TECH_LEVEL_COST = 1000
 
-    # We express arbitrary rule choices as lambdas to facilitate tweakability
+    # We express arbitrary rule choices as short classmethods that are
+    # treated like callable constants to facilitate tweakability
 
-    __TECH_NEXT_LEVEL_COST_FUNC = \
-        lambda cls, tech_level: cls.__FIRST_TECH_LEVEL_COST * poly_growth(tech_level - cls.__STARTING_TECH_LEVEL, 1.5, 1) \
-        # tech_level ^ 1.5
+    @classmethod
+    def __TECH_NEXT_LEVEL_COST_FUNC(cls, tech_level):
+        # first * tech_level ^ 1.5
+        return cls.__FIRST_TECH_LEVEL_COST * \
+            poly_growth(tech_level - cls.__STARTING_TECH_LEVEL, 1.5, 1)
 
-    __TECH_POINT_FUNC = \
-        lambda cls, population: population / 100 # 1 tech point per 100 people
+    @classmethod
+    def __TECH_POINT_FUNC(cls, population):
+        return population / 100 # 1 tech point per 100 people
 
-    __ADJUSTED_YIELD_FUNC = \
-        lambda cls, tile_yield, tech_level: tile_yield * (1 + ((tech_level - cls.__STARTING_TECH_LEVEL) * 0.1)) \
+    @classmethod
+    def __ADJUSTED_YIELD_FUNC(cls, tile_yield, tech_level):
         # 10% per tech level
+        return tile_yield * \
+            (1 + ((tech_level - cls.__STARTING_TECH_LEVEL) * 0.1))
 
     #
     # ==== Implementaion ====
@@ -96,7 +102,7 @@ class PlayerAI(Drawable):
     def __get_adjusted_yield_impl(self, tile_yield):
     ###########################################################################
         cls = self.__class__
-        return cls.__ADJUSTED_YIELD_FUNC(cls, tile_yield, self.tech_level())
+        return cls.__ADJUSTED_YIELD_FUNC(tile_yield, self.tech_level())
 
     ###########################################################################
     def __to_xml_impl(self):
@@ -137,7 +143,7 @@ class PlayerAI(Drawable):
             self.__population += city.population()
 
         # Adjust tech based on population
-        tech_points = cls.__TECH_POINT_FUNC(cls, self.population())
+        tech_points = cls.__TECH_POINT_FUNC(self.population())
         self.__tech_points += tech_points
 
         # Check if level-up in tech
@@ -145,7 +151,7 @@ class PlayerAI(Drawable):
             self.__tech_level += 1
             self.__tech_points -= self.__next_tech_level_cost # rollover points
             self.__next_tech_level_cost = \
-                cls.__TECH_NEXT_LEVEL_COST_FUNC(cls, self.tech_level())
+                cls.__TECH_NEXT_LEVEL_COST_FUNC(self.tech_level())
 
         # Tech invariants
         prequire(self.__tech_points < self.__next_tech_level_cost,
