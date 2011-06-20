@@ -350,7 +350,7 @@ class _LearnCommand(Command):
         full_usage = "%s  Learnable spells:\n" % cls.__USAGE
 
         # Add info on learnable spells to usage string
-        for spell_name, spell_level in engine().player().talents().learnable():
+        for spell_name, spell_level in engine().player().learnable():
             full_usage += "    %s%s" % (spell_name,
                                         "" if spell_level == 1 else " (new)")
 

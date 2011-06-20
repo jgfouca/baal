@@ -11,7 +11,8 @@ import unittest
 
 from drawable import Drawable, DrawMode, curr_draw_mode, _set_draw_mode
 from baal_common import prequire, ProgramError, cprint, \
-                        GREEN, YELLOW, BLUE, RED, WHITE
+                        GREEN, YELLOW, BLUE, RED, WHITE, \
+                        set_prequire_handler, raising_prequire_handler
 from world_tile import WorldTile
 
 #
@@ -308,6 +309,9 @@ class TestGeology(unittest.TestCase):
     ###########################################################################
     def test_geology(self):
     ###########################################################################
+        # Change to raising handler for unit-testing
+        set_prequire_handler(raising_prequire_handler)
+
         plate_movement = 3
 
         # Test that we cannot create instances of Geology

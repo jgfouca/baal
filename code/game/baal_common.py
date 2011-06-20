@@ -4,7 +4,7 @@
 This file contains various commonly used free functions and data structures
 """
 
-import curses, subprocess
+import curses, subprocess, pdb
 
 #
 # API for error handling
@@ -34,13 +34,34 @@ class ProgramError(Exception):
 _DEBUG = True
 
 ###############################################################################
+def debugger_prequire_handler(str_):
+###############################################################################
+    print str_
+    pdb.set_trace()
+
+###############################################################################
+def raising_prequire_handler(str_):
+###############################################################################
+    raise ProgramError(str_)
+
+_PREQUIRE_HANDLER = debugger_prequire_handler
+
+###############################################################################
+def set_prequire_handler(new_handler):
+###############################################################################
+    global _PREQUIRE_HANDLER
+    _PREQUIRE_HANDLER = new_handler
+
+###############################################################################
 def prequire(expr, *msg_args):
 ###############################################################################
     """
-    Use this to express a required program-error check
+    Use this to express a required program-error check. In general, this will
+    launch the python debugger, but that makes prequire not usable within
+    unit-tests, so we need a way to change behavior.
     """
     if (not expr):
-        raise ProgramError("".join([str(arg) for arg in msg_args]))
+        _PREQUIRE_HANDLER("".join([str(arg) for arg in msg_args]))
 
 ###############################################################################
 def passert(expr, *msg_args):

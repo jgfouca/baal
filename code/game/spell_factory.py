@@ -5,6 +5,9 @@ import unittest
 from baal_common import create_subclass_map, urequire, Location
 from spell import Spell
 
+class _SpellFactoryMeta(type):
+    def __iter__(mcs): return SpellFactory._iter_hook()
+
 ###############################################################################
 class SpellFactory(object):
 ###############################################################################
@@ -22,7 +25,7 @@ class SpellFactory(object):
 
     ###########################################################################
     @classmethod
-    def create_spell(cls, name, level, location):
+    def create_spell(cls, name, level, location=None):
     ###########################################################################
         return cls.get(name)(level, location)
 
@@ -36,6 +39,16 @@ class SpellFactory(object):
         urequire(name in cls.__spell_map,
                  "'%s'" % name, " is not a valid spell.")
         return cls.__spell_map[name]
+
+    ###########################################################################
+    @classmethod
+    def _iter_hook(cls):
+    ###########################################################################
+        """
+        Iterate over valid spell names.
+        """
+        spell_names = [spell_cls.name() for spell_cls in cls.__spell_map]
+        return sorted(spell_names)
 
 #
 # Tests

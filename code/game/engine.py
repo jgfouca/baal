@@ -2,7 +2,8 @@
 
 import unittest
 
-from baal_common import prequire, ProgramError, check_access
+from baal_common import prequire, ProgramError, check_access, \
+    set_prequire_handler, raising_prequire_handler
 
 ###############################################################################
 class Engine(object):
@@ -156,6 +157,9 @@ class TestEngine(unittest.TestCase):
     ###########################################################################
     def test_engine(self):
     ###########################################################################
+        # Change to raising handler for unit-testing
+        set_prequire_handler(raising_prequire_handler)
+
         # Test that we cannot create instances of Engine
         self.assertRaises(ProgramError, Engine, self)
 

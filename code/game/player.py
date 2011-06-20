@@ -6,7 +6,8 @@ from drawable import Drawable
 from configuration import Configuration
 from talents import Talents
 from baal_common import urequire, prequire, check_access, cprint, \
-    GREEN, BLUE, YELLOW, ProgramError, UserError, Location
+    GREEN, BLUE, YELLOW, ProgramError, UserError, Location, \
+    set_prequire_handler, raising_prequire_handler
 
 ###############################################################################
 class Player(Drawable):
@@ -25,7 +26,17 @@ class Player(Drawable):
     # Getter / Query API
     #
 
-    def talents(self): return self.__talents
+    def talents(self):
+        """
+        Iterate over known spells
+        """
+        return iter(self.__talents)
+
+    def learnable(self):
+        """
+        Iterate over learnable spells
+        """
+        return self.__talents.learnable()
 
     def next_level_cost(self): return self.__next_level_cost
 
@@ -92,14 +103,14 @@ class Player(Drawable):
     # ==== Class constants ====
     #
 
+    #
+    # Tweakable constants
+    #
+
     __STARTING_MANA            = 100
     __FIRST_LEVELUP_EXP_COST   = 100
     __MANA_REGEN_RATE          = 1.0 / 20
     __DEFAULT_PLAYER_NAME      = "human"
-    ALLOW_PLAYER_CYCLE_TURN    = "_allow_player_cycle_turn"
-    ALLOW_PLAYER_CAST          = "_allow_player_cast"
-    ALLOW_PLAYER_LEARN         = "_allow_player_learn"
-    ALLOW_PLAYER_GAIN_EXP      = "_allow_player_gain_exp"
 
     @classmethod
     def __MANA_POOL_FUNC(cls, level):
@@ -110,6 +121,15 @@ class Player(Drawable):
     def __EXP_LEVEL_COST_FUNC(cls, level):
         # 40% gain per lvl
         return cls.__FIRST_LEVELUP_EXP_COST * pow(1.4, level - 1)
+
+    #
+    # Modification-control keys
+    #
+
+    ALLOW_PLAYER_CYCLE_TURN    = "_allow_player_cycle_turn"
+    ALLOW_PLAYER_CAST          = "_allow_player_cast"
+    ALLOW_PLAYER_LEARN         = "_allow_player_learn"
+    ALLOW_PLAYER_GAIN_EXP      = "_allow_player_gain_exp"
 
     #
     # ==== Implementation ====
@@ -127,7 +147,7 @@ class Player(Drawable):
         self.__exp = 0
         self.__level = 1
         self.__next_level_cost = cls.__FIRST_LEVELUP_EXP_COST
-        self.__talents = Talents()
+        self.__talents = Talents(self)
 
     ###########################################################################
     def __verify_cast_impl(self, spell):
@@ -135,7 +155,7 @@ class Player(Drawable):
         urequire(spell.cost() <= self.__mana,
                  "Spell requires ", spell.cost(),
                  " mana, player only has ", self.__mana, " mana")
-        urequire(self.__talents.has(spell), "Player cannot cast spell ", spell)
+        urequire(spell in self.__talents, "Player cannot cast spell ", spell)
 
     ###########################################################################
     def __to_xml_impl(self):
@@ -191,7 +211,7 @@ class Player(Drawable):
     ###########################################################################
         check_access(caller, self.ALLOW_PLAYER_LEARN)
 
-        self.__talents.add(name, self);
+        self.__talents.add(name)
 
     ###########################################################################
     def __gain_exp_impl(self, caller, exp):
@@ -233,8 +253,12 @@ class TestPlayer(unittest.TestCase):
     ###########################################################################
     def test_player(self):
     ###########################################################################
+        # Change to raising handler for unit-testing
+        set_prequire_handler(raising_prequire_handler)
+
         Configuration._create("", "", "")
         player = Player()
+        spell = "hot"
 
         exp_needed = player.next_level_cost() - player.exp()
 
@@ -246,14 +270,14 @@ class TestPlayer(unittest.TestCase):
 
         from spell_factory import SpellFactory
 
-        hot_spell_1 = SpellFactory.create_spell("hot", 1, Location(0,0))
+        hot_spell_1 = SpellFactory.create_spell(spell, 1)
 
         # TODO - Uncomment once Talents are implemented
         #self.assertRaises(UserError, player.verify_cast, hot_spell_1)
 
-        self.assertRaises(ProgramError, player.learn, self, "hot")
+        self.assertRaises(ProgramError, player.learn, self, spell)
         setattr(self, Player.ALLOW_PLAYER_LEARN, True)
-        player.learn(self, "hot")
+        player.learn(self, spell)
 
         player.verify_cast(hot_spell_1)
 

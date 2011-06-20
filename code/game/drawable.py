@@ -2,7 +2,8 @@
 
 import unittest
 
-from baal_common import prequire, urequire, UserError, ProgramError, SmartEnum
+from baal_common import prequire, urequire, UserError, ProgramError, \
+    SmartEnum, set_prequire_handler, raising_prequire_handler
 
 # TODO: is it possible to make SmartEnums even slicker? It would be nice if
 # we could auto-generate the meta class instead of having to have a custom
@@ -102,6 +103,9 @@ class TestDrawMode(unittest.TestCase):
     ###########################################################################
     def test_draw_mode(self):
     ###########################################################################
+        # Change to raising handler for unit-testing
+        set_prequire_handler(raising_prequire_handler)
+
         # Check bad object creation
         self.assertRaises(UserError, DrawMode, "asdasd")
         self.assertRaises(UserError, DrawMode, 98712983)

@@ -237,8 +237,12 @@ class SpellPrereq(object):
     """
 
     def __init__(self, min_player_level, must_know_spells):
-        self.min_player_level = min_player_level
-        self.must_know_spells = tuple(must_know_spells)
+        self.__min_player_level = min_player_level
+        self.__must_know_spells = tuple(must_know_spells)
+
+    def min_player_level(self): return self.__min_player_level
+
+    def must_know_spells(self): return self.__must_know_spells
 
 # TODO - Do we want spells for controlling all the basic properties
 # of the atmosphere? Or do we want to leave some up to pure chance (pressure)?
@@ -253,7 +257,7 @@ class SpellPrereq(object):
 #
 
 ###############################################################################
-class Hot(Spell):
+class _Hot(Spell):
 ###############################################################################
     """
     Increases the immediate temperature of a region. High temperatures can
@@ -274,6 +278,173 @@ class Hot(Spell):
     __BASE_COST = 50
     __COST_FUNC = lambda cls, level: cls.base_cost() * pow(1.3, level - 1) # 30% per lvl
     __PREREQS = SpellPrereq(1, ()) # No prereqs
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def cost_func(cls): return cls.__COST_FUNC
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # No-op. This spell can be cast anywhere, anytime.
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+###############################################################################
+class _Cold(Spell):
+###############################################################################
+    """
+    Decreases the immediate temperature of a region. Cold temperatures can
+    kill people in cities or kill crops. This spell is not
+    intended to be a primary damage dealer; instead, you should be using this
+    spell to enhance the more-powerful spells.
+
+    Enhanced by low temps, low dewpoints. Decreased by AI tech level.
+
+    This is a tier 1 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "cold"
+    __BASE_COST = 50
+    __COST_FUNC = lambda cls, level: cls.base_cost() * pow(1.3, level - 1) # 30% per lvl
+    __PREREQS = SpellPrereq(1, ()) # No prereqs
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def cost_func(cls): return cls.__COST_FUNC
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # No-op. This spell can be cast anywhere, anytime.
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+###############################################################################
+class _Fire(Spell):
+###############################################################################
+    """
+    Starts a fire at a location. Fires will kill people in cities and
+    destroy infrastructure.
+    TODO: has a chance to spead?
+
+    Enhanced by high wind, low dewpoint, high temperature, and low soil
+    moisture. Reduced by city defense and tech level.
+
+    This is a tier 2 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "fire"
+    __BASE_COST = 100
+    __COST_FUNC = lambda cls, level: cls.base_cost() * pow(1.3, level - 1) # 30% per lvl
+    __PREREQS = SpellPrereq(5, ((_Hot.name(), 1),) ) # Requires hot
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def cost_func(cls): return cls.__COST_FUNC
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # No-op. This spell can be cast anywhere, anytime.
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+
+###############################################################################
+class _Earthquake(Spell):
+###############################################################################
+    """
+    Will cause an earthquake to occur. Devastates nearby cities and
+    infrastructure.
+
+    Enhanced by plate tension.
+
+    This is a tier 5 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "quake"
+    __BASE_COST = 800
+    __COST_FUNC = lambda cls, level: cls.base_cost() * pow(1.3, level - 1) # 30% per lvl
+    __PREREQS = SpellPrereq(20, ()) # Requires player level 20, no spell prereqs
 
     #
     # Public API

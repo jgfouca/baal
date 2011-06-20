@@ -2,7 +2,8 @@
 
 import inspect, unittest
 
-from baal_common import prequire, ProgramError
+from baal_common import prequire, ProgramError, set_prequire_handler, \
+    raising_prequire_handler
 
 ###############################################################################
 class Configuration(object):
@@ -78,6 +79,9 @@ class TestConfiguration(unittest.TestCase):
     ###########################################################################
     def test_configuration(self):
     ###########################################################################
+        # Change to raising handler for unit-testing
+        set_prequire_handler(raising_prequire_handler)
+
         # Check trying to grab instance before calling _create
         self.assertRaises(ProgramError, Configuration.instance)
 
