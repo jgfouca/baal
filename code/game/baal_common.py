@@ -293,6 +293,18 @@ class SmartEnum(object):
         """
         return self.__value
 
+    ###########################################################################
+    def next(self):
+    ###########################################################################
+        """
+        Change the value of this enum to the next value in the series.
+        """
+        if (self.__value == len(self._names()) - 1):
+            raise StopIteration
+        else:
+            self.__value += 1
+            return self
+
     #
     # Private API
     #

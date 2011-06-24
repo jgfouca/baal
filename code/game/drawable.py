@@ -158,6 +158,14 @@ class TestDrawMode(unittest.TestCase):
             self.assertEqual(draw_mode_obj, draw_mode)
             num_iterations += 1
 
+        # Check iteration of instance
+        ditr = iter(DrawMode)
+        first = ditr.next()
+        second = ditr.next()
+        self.assertEqual(first, civ_dm_1)
+        civ_dm_1.next()
+        self.assertEqual(second, civ_dm_1)
+
         self.assertEqual(num_iterations, len(DrawMode._names()))
 
     ###########################################################################
