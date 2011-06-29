@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 
-import inspect, unittest
+import unittest
 
 from baal_common import prequire, ProgramError, set_prequire_handler, \
-    raising_prequire_handler
+    raising_prequire_handler, check_callers
 
 ###############################################################################
 class Configuration(object):
@@ -53,16 +53,14 @@ class Configuration(object):
         prequire(cls.__instance is None, "Already created")
         cls.__instance = Configuration(interface_config,
                                        world_config,
-                                       player_config,
-                                       inspect.currentframe())
+                                       player_config)
         return cls.__instance
 
     ###########################################################################
-    def __init__(self, interface_config, world_config, player_config, caller):
+    def __init__(self, interface_config, world_config, player_config):
     ###########################################################################
-        prequire(inspect.getframeinfo(caller).function == "_create",
-                 "This is a private constructor; "
-                 "use _create to create a configuration object")
+        # Should only ever be called by _create
+        check_callers(["_create"])
 
         self.__interface_config = interface_config
         self.__world_config = world_config
@@ -91,8 +89,7 @@ class TestConfiguration(unittest.TestCase):
         self.assertRaises(ProgramError, Configuration._create, "", "", "")
 
         # Check attempt to create Configuration directly
-        self.assertRaises(ProgramError, Configuration,
-                          "", "", "", inspect.currentframe())
+        self.assertRaises(ProgramError, Configuration, "", "", "")
 
         # Verify config values
         self.assertEqual(instance.interface_config(), "interface")

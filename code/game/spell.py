@@ -2,7 +2,7 @@
 
 import unittest
 
-from baal_common import prequire, urequire, UserError
+from baal_common import prequire, urequire, UserError, grant_access
 from city import City
 from engine import engine
 
@@ -226,7 +226,7 @@ class Spell(object):
         return 0 # No exp if spell could not be applied
 
 # We allow Spell to be able to kill
-setattr(Spell, City.ALLOW_CITY_KILL, True)
+grant_access(Spell, City.ALLOW_CITY_KILL)
 
 ###############################################################################
 class SpellPrereq(object):

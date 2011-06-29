@@ -38,17 +38,17 @@ class City(object):
     # Modification API
     #
 
-    def cycle_turn(self, caller):
+    def cycle_turn(self):
         """
         Tell this city that the turn is cycling
         """
-        return self.__cycle_turn_impl(caller)
+        return self.__cycle_turn_impl()
 
-    def kill(self, caller, killed):
+    def kill(self, killed):
         """
         Kill off some of this city's citizens
         """
-        return self.__kill_impl(caller, killed)
+        return self.__kill_impl(killed)
 
     #
     # ==== Class constants ====
@@ -95,11 +95,11 @@ class City(object):
         self.__famine = False
 
     ###########################################################################
-    def __cycle_turn_impl(self, caller):
+    def __cycle_turn_impl(self):
     ###########################################################################
         # TODO: This method is still too big, break it up more
 
-        check_access(caller, self.__class__.ALLOW_CITY_CYCLE)
+        check_access(self.__class__.ALLOW_CITY_CYCLE)
 
         prequire(self.__population > 0,
                  "This city has no people and should have been deleted")
@@ -276,9 +276,9 @@ class City(object):
         return ""
 
     ###########################################################################
-    def __kill_impl(self, caller, killed):
+    def __kill_impl(self, killed):
     ###########################################################################
-        check_access(caller, self.__class__.ALLOW_CITY_KILL)
+        check_access(self.__class__.ALLOW_CITY_KILL)
 
         prequire(self.__population >= killed, "Invalid killed: ", killed)
 

@@ -43,8 +43,8 @@ class Time(Drawable):
     Encapsulates how time elapses in the system.
     """
 
-    #                                                                           
-    # ==== Public API ====                                                      
+    #
+    # ==== Public API ====
     #
 
     def __init__(self): self.__init_impl()
@@ -66,7 +66,7 @@ class Time(Drawable):
     def draw_text(self): return self.__draw_text_impl()
 
     def draw_graphics(self): return self.__draw_graphics_impl()
-    
+
     #
     # Modifying API
     #
@@ -112,7 +112,7 @@ class Time(Drawable):
         elif (self.__season == "fall"):
             color = YELLOW
         else:
-            prequire("Unhandled season ", self.__season)
+            prequire(False, "Unhandled season ", self.__season)
 
         cprint(color, self.__season, ", Year ", self.__year)
 

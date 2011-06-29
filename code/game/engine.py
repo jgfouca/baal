@@ -2,8 +2,9 @@
 
 import unittest
 
-from baal_common import prequire, ProgramError, check_access, \
-    set_prequire_handler, raising_prequire_handler
+from baal_common import prequire, ProgramError, check_access, grant_access, \
+    set_prequire_handler, raising_prequire_handler, check_callers
+from configuration import Configuration
 
 ###############################################################################
 class Engine(object):
@@ -23,9 +24,6 @@ class Engine(object):
 
     __instance = None
     __initializing = False
-
-    # Access-limiting vars
-    ALLOW_ENGINE_CREATION = "_allow_engine_creation"
 
     #
     # ==== Public API ====
@@ -66,7 +64,7 @@ class Engine(object):
     #
 
     ###########################################################################
-    def __init__(self, caller):
+    def __init__(self):
     ###########################################################################
         """
         Do not call. Use free function to get a handle to an Engine
@@ -77,7 +75,11 @@ class Engine(object):
         from player import Player
         from player_ai import PlayerAI
 
-        check_access(caller, Engine.ALLOW_ENGINE_CREATION)
+        # This should only be invoked through _instance which should only
+        # be invoked through engine(). We cannot use the check_access system
+        # here because that system cannot be used to grant access to a free
+        # function.
+        check_callers(["_instance", "engine"])
 
         self.__interface = create_interface()
         self.__world     = WorldFactory.create()
@@ -96,7 +98,7 @@ class Engine(object):
             prequire(not cls.__initializing,
                      "Engine instantiation has re-entered itself")
             cls.__initializing = True
-            cls.__instance = Engine(cls)
+            cls.__instance = Engine()
             cls.__initializing = False
 
         return cls.__instance
@@ -112,7 +114,7 @@ class Engine(object):
 
             # Human player takes turn
             self.__interface.interact()
-            self.__player.cycle_turn(self)
+            self.__player.cycle_turn()
 
             # AI player takes turn
             self.__ai_player.cycle_turn()
@@ -128,9 +130,6 @@ class Engine(object):
                   self.__class__.__AI_WINS_AT_TECH_LEVEL):
                 self.__interface.ai_wins()
                 break
-
-# Engine class can create engines
-setattr(Engine, Engine.ALLOW_ENGINE_CREATION, True)
 
 #
 # Free function API
@@ -161,7 +160,14 @@ class TestEngine(unittest.TestCase):
         set_prequire_handler(raising_prequire_handler)
 
         # Test that we cannot create instances of Engine
-        self.assertRaises(ProgramError, Engine, self)
+        self.assertRaises(ProgramError, Engine)
+
+        # Create configuration
+        from interface import Interfaces
+        config = Configuration._create(str(Interfaces.TEXT), "", "")
+
+        # Grab global instance
+        eng = engine()
 
         # TODO - Add more
 

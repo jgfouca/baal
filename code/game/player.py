@@ -7,7 +7,7 @@ from configuration import Configuration
 from talents import Talents
 from baal_common import urequire, prequire, check_access, cprint, \
     GREEN, BLUE, YELLOW, ProgramError, UserError, Location, \
-    set_prequire_handler, raising_prequire_handler
+    set_prequire_handler, raising_prequire_handler, grant_access
 
 ###############################################################################
 class Player(Drawable):
@@ -69,35 +69,35 @@ class Player(Drawable):
     # Modification API
     #
 
-    def cycle_turn(self, caller):
+    def cycle_turn(self):
         """
         Inform this player that the turn has cycled.
         """
-        return self.__cycle_turn_impl(caller)
+        return self.__cycle_turn_impl()
 
-    def cast(self, caller, spell):
+    def cast(self, spell):
         """
         Adjust player state appropriately assuming that spell was cast. This
         method should never throw a user error. verify_cast should have been
         called prior to ensure that the casting of this spell is valid from
         this player's point-of-view.
         """
-        return self.__cast_impl(caller, spell)
+        return self.__cast_impl(spell)
 
-    def learn(self, caller, name):
+    def learn(self, name):
         """
         Have this player learn a spell by name. If the player already
         knows the spell, the player's skill in that spell will be
         increased by one.  This method will throw a user error if the
         player cannot learn the spell.
         """
-        return self.__learn_impl(caller, name)
+        return self.__learn_impl(name)
 
-    def gain_exp(self, caller, exp):
+    def gain_exp(self, exp):
         """
         Inform the player that they have gained some exp.
         """
-        return self.__gain_exp_impl(caller, exp)
+        return self.__gain_exp_impl(exp)
 
     #
     # ==== Class constants ====
@@ -182,9 +182,9 @@ class Player(Drawable):
         pass
 
     ###########################################################################
-    def __cycle_turn_impl(self, caller):
+    def __cycle_turn_impl(self):
     ###########################################################################
-        check_access(caller, self.ALLOW_PLAYER_CYCLE_TURN)
+        check_access(self.ALLOW_PLAYER_CYCLE_TURN)
 
         self.__mana += self.__mana_regen_rate
         if (self.__mana > self.__max_mana):
@@ -195,9 +195,9 @@ class Player(Drawable):
                "m_mana(", self.__mana, ") > m_max_mana(", self.__max_mana, ")")
 
     ###########################################################################
-    def __cast_impl(self, caller, spell):
+    def __cast_impl(self, spell):
     ###########################################################################
-        check_access(caller, self.ALLOW_PLAYER_CAST)
+        check_access(self.ALLOW_PLAYER_CAST)
 
         self.__mana -= spell.cost()
 
@@ -207,16 +207,16 @@ class Player(Drawable):
                  "mana(", self.__mana, ") > max_mana(", self.__max_mana, ")")
 
     ###########################################################################
-    def __learn_impl(self, caller, name):
+    def __learn_impl(self, name):
     ###########################################################################
-        check_access(caller, self.ALLOW_PLAYER_LEARN)
+        check_access(self.ALLOW_PLAYER_LEARN)
 
         self.__talents.add(name)
 
     ###########################################################################
-    def __gain_exp_impl(self, caller, exp):
+    def __gain_exp_impl(self, exp):
     ###########################################################################
-        check_access(caller, self.ALLOW_PLAYER_GAIN_EXP)
+        check_access(self.ALLOW_PLAYER_GAIN_EXP)
 
         self.__exp += exp
 
@@ -262,10 +262,10 @@ class TestPlayer(unittest.TestCase):
 
         exp_needed = player.next_level_cost() - player.exp()
 
-        self.assertRaises(ProgramError, player.gain_exp, self, exp_needed)
+        self.assertRaises(ProgramError, player.gain_exp, exp_needed)
 
-        setattr(self, Player.ALLOW_PLAYER_GAIN_EXP, True)
-        player.gain_exp(self, exp_needed)
+        grant_access(self, Player.ALLOW_PLAYER_GAIN_EXP)
+        player.gain_exp(exp_needed)
         self.assertEqual(player.level(), 2)
 
         from spell_factory import SpellFactory
@@ -275,15 +275,15 @@ class TestPlayer(unittest.TestCase):
         # TODO - Uncomment once Talents are implemented
         #self.assertRaises(UserError, player.verify_cast, hot_spell_1)
 
-        self.assertRaises(ProgramError, player.learn, self, spell)
-        setattr(self, Player.ALLOW_PLAYER_LEARN, True)
-        player.learn(self, spell)
+        self.assertRaises(ProgramError, player.learn, spell)
+        grant_access(self, Player.ALLOW_PLAYER_LEARN)
+        player.learn(spell)
 
         player.verify_cast(hot_spell_1)
 
-        self.assertRaises(ProgramError, player.cast, self, hot_spell_1)
-        setattr(self, Player.ALLOW_PLAYER_CAST, True)
-        player.cast(self, hot_spell_1)
+        self.assertRaises(ProgramError, player.cast, hot_spell_1)
+        grant_access(self, Player.ALLOW_PLAYER_CAST)
+        player.cast(hot_spell_1)
 
         self.assertEqual(player.mana(), player.max_mana() - hot_spell_1.cost())
 

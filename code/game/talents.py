@@ -2,7 +2,7 @@
 
 import unittest
 
-from baal_common import prequire, urequire, UserError
+from baal_common import prequire, urequire, UserError, grant_access
 from spell_factory import SpellFactory
 from spell import Spell
 
@@ -210,12 +210,12 @@ class TestTalents(unittest.TestCase):
         not_a_spell = "lol"
 
         # Give ourselves ability to add exp to player
-        setattr(self, Player.ALLOW_PLAYER_GAIN_EXP, True)
+        grant_access(self, Player.ALLOW_PLAYER_GAIN_EXP)
 
         # Get player up to level 10
         for i in xrange(9):
             exp_needed = player.next_level_cost() - player.exp()
-            player.gain_exp(self, exp_needed)
+            player.gain_exp(exp_needed)
 
         self.assertEqual(player.level(), 10)
 

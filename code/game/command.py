@@ -284,13 +284,13 @@ class _CastCommand(Command):
         try:
             # Let the player object know that the spell has been cast
             # and to adjust it's state accordingly.
-            player.cast(self, spell)
+            player.cast(spell)
 
             # Apply the spell to the world
             exp = spell.apply()
 
             # Give player experience
-            player.gain_exp(self, exp)
+            player.gain_exp(exp)
         except UserError, e:
             prequire(False, "User error interrupted atomic operations: ", e)
 
@@ -335,7 +335,7 @@ class _LearnCommand(Command):
     ###########################################################################
     def apply(self):
     ###########################################################################
-        engine().player().learn(self, self.__spell_cls.name())
+        engine().player().learn(self.__spell_cls.name())
 
     @classmethod
     def name(cls): return cls.__NAME
@@ -436,7 +436,7 @@ class _HackCommand(Command):
         else:
             exp_gained = player.next_level_cost() - player.exp()
 
-        engine().player().gain_exp(self, exp_gained)
+        engine().player().gain_exp(exp_gained)
 
     @classmethod
     def name(cls): return cls.__NAME

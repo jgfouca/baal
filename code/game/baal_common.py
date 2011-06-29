@@ -4,7 +4,7 @@
 This file contains various commonly used free functions and data structures
 """
 
-import curses, subprocess, pdb
+import curses, subprocess, pdb, inspect
 
 #
 # API for error handling
@@ -107,13 +107,82 @@ def cprint(color, *args):
     #    print "".join([str(arg) for arg in args])
 
 #
-# Misc API
+# API for access-checking
 #
 
 ###############################################################################
-def check_access(caller, attr_key):
+def check_callers(func_name_list):
 ###############################################################################
-    prequire(getattr(caller, attr_key, False), "Illegal access")
+    """
+    Use this function to check that a function is called only by other
+    specific functions. Each item in the list will represent a function in
+    the expected call stack.
+    """
+    curr_frame = inspect.currentframe()
+    outer_frames = inspect.getouterframes(curr_frame)
+    for idx, expected_func_name in enumerate(func_name_list):
+        func_name = inspect.getframeinfo(outer_frames[idx+2][0]).function
+        prequire(func_name == expected_func_name,
+                 "Expected '", expected_func_name, "' found '", func_name, "'")
+
+###############################################################################
+def get_data_from_frame(frame):
+###############################################################################
+    """
+    Given a stack frame, return the (obj, class) where obj is either self or
+    cls and class is the class involved.
+    """
+    # Get tuple of arg values from the frame of interest, the third value in
+    # the tuple is the locals dictionary from that frame
+    local_vals = inspect.getargvalues(frame)[3]
+
+    # Try to pull the self/cls object from the locals
+    prequire("self" in local_vals or "cls" in local_vals,
+             "Can only call protected methods from a class/member function")
+    if ("self" in local_vals):
+        self_obj = local_vals["self"]
+        return (self_obj, self_obj.__class__)
+    else:
+        return (local_vals["cls"], local_vals["cls"])
+
+###############################################################################
+def check_access(attr_key):
+###############################################################################
+
+    #
+    # Get reference to 'self' or 'cls' object from caller of caller
+    #
+
+    curr_frame = inspect.currentframe()
+
+    # Get caller frame, first item in list is frame object
+    caller_frame = inspect.getouterframes(curr_frame)[1][0]
+
+    # Figure out caller class
+    caller_class = get_data_from_frame(caller_frame)[1]
+
+    # Iterate up the stack until we find the class that called the protected
+    # method.
+    for frame_id in xrange(2, 10000):
+        frame = inspect.getouterframes(curr_frame)[frame_id][0]
+        obj_of_interest, frame_class = get_data_from_frame(frame)
+        if (frame_class != caller_class):
+            break
+
+    #
+    # Check
+    #
+
+    prequire(getattr(obj_of_interest, attr_key, False), "Illegal access")
+
+###############################################################################
+def grant_access(obj, attr_key):
+###############################################################################
+    setattr(obj, attr_key, True)
+
+#
+# Misc API
+#
 
 ###############################################################################
 def subclasses(cls):
@@ -240,10 +309,10 @@ class SmartEnum(object):
         cls = self.__class__
         if (type(value) == str):
             value = value.upper()
-            urequire(value in cls, "Invalid draw-mode string: ", value)
+            urequire(value in cls, "Invalid enum string: ", value)
             self.__value = cls._names().index(value)
         elif (type(value) == int):
-            urequire(value in cls, "Invalid draw-mode int: ", value)
+            urequire(value in cls, "Invalid enum int: ", value)
             self.__value = value
         else:
             prequire(False, "Must initialize with string or int, ",
@@ -266,7 +335,7 @@ class SmartEnum(object):
         elif (type(rhs) == self.__class__):
             return self.__value == rhs.__value
         else:
-            prequire(False, "Can only compare with str, int, or DrawMode, ",
+            prequire(False, "Can only compare with str, int, or enum, ",
                      "received: ", type(rhs))
 
     ###########################################################################
