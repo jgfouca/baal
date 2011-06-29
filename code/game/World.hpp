@@ -26,8 +26,6 @@ class World : public Drawable
 
   ~World();
 
-  void cycle_turn();
-
   bool in_bounds(const Location& location) const {
     return location.row < m_height && location.col < m_width;
   }
@@ -68,6 +66,8 @@ class World : public Drawable
   virtual void draw_graphics() const { /* TODO */ }
 
   // Modification API
+
+  void cycle_turn();
 
   void place_city(const std::string& name, const Location& location);
 
