@@ -200,7 +200,7 @@ class TestTalents(unittest.TestCase):
         from player import Player
         from configuration import Configuration
 
-        Configuration._create("", "", "")
+        Configuration._create()
         player = Player()
         talents = Talents(player)
         tier1_spell_name = "hot"

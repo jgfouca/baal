@@ -4,7 +4,6 @@ import argparse
 
 from configuration import Configuration
 from interface import Interfaces
-from world_factory import WorldFactory
 from engine import engine
 
 ###############################################################################
@@ -20,13 +19,13 @@ def _main():
                         dest="interface",
                         action="store_const",
                         choices=([str(item) for item in Interfaces]),
-                        default=[str(item) for item in Interfaces][0],
+                        default="",
                         help="Choose the game interface")
 
     parser.add_argument("-w", "--world",
                         dest="world",
                         action="store_const",
-                        default=default_world,
+                        default="",
                         help="Choose the game world. Provide a filename to "
                         "load a world from a file. Provide 'r' to randomly "
                         "generate a world. Provide an integer to select a "
@@ -41,7 +40,9 @@ def _main():
     args = parser.parse_args()
 
     # Create and initialize global configuration from args
-    Configuration._create(args.interface, args.world, args.player)
+    Configuration._create(interface_config=args.interface,
+                          world_config=args.world,
+                          player_config=args.player)
 
     # Start the game
     engine().play()

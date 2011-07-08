@@ -106,6 +106,30 @@ class Interface(object):
         """
         prequire(False, "Must override")
 
+#
+# Free Function API
+#
+
+###############################################################################
+def create_interface():
+###############################################################################
+    interface = Interfaces(Configuration.instance().interface_config())
+
+    # First is default
+    if (interface == ""):
+        interface = [str(item) for item in Interfaces][0]
+
+    if (interface == Interfaces.TEXT):
+        return TextInterface()
+    elif (interface == Interfaces.GRAPHICS):
+        return GraphicInterface()
+    else:
+        prequire(False, "Missing support for ", interface)
+
+#
+# Internal-only below
+#
+
 ###############################################################################
 def _readline_completer(text, state):
 ###############################################################################
@@ -212,22 +236,6 @@ class GraphicInterface(Interface):
     pass
 
 #
-# Free Function API
-#
-
-###############################################################################
-def create_interface():
-###############################################################################
-    interface = Interfaces(Configuration.instance().interface_config())
-
-    if (interface == Interfaces.TEXT):
-        return TextInterface()
-    elif (interface == Interfaces.GRAPHICS):
-        return GraphicInterface()
-    else:
-        prequire(False, "Missing support for ", interface)
-
-#
 # Tests
 #
 
@@ -239,7 +247,7 @@ class TestInterface(unittest.TestCase):
     def test_interface(self):
     ###########################################################################
         # Test create_interface
-        Configuration._create(str(Interfaces.TEXT), "", "")
+        Configuration._create(interface_config=str(Interfaces.TEXT))
         interface = create_interface()
         self.assertEqual(type(interface), TextInterface)
 

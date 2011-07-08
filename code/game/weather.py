@@ -420,7 +420,8 @@ class Anomaly(object):
     def _PRECIP_CHANGE_FUNC(cls, intensity):
         # Returns a multiplier on average precip
         # (max - 1 / max)^-intensity
-        return pow((cls.MAX_INTENSITY - 1) / cls.MAX_INTENSITY, -intensity)
+        return pow(float(cls.MAX_INTENSITY - 1) / cls.MAX_INTENSITY,
+                   -intensity)
 
     @classmethod
     def _TEMPERATURE_CHANGE_FUNC(cls, intensity):

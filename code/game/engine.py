@@ -71,7 +71,7 @@ class Engine(object):
         """
         # Dump imports here to avoid circular imports
         from interface import create_interface
-        from world_factory import WorldFactory
+        from world_factory import create_world
         from player import Player
         from player_ai import PlayerAI
 
@@ -82,7 +82,7 @@ class Engine(object):
         check_callers(["_instance", "engine"])
 
         self.__interface = create_interface()
-        self.__world     = WorldFactory.create()
+        self.__world     = create_world()
         self.__player    = Player()
         self.__ai_player = PlayerAI()
         self.__quit      = False
@@ -164,7 +164,7 @@ class TestEngine(unittest.TestCase):
 
         # Create configuration
         from interface import Interfaces
-        config = Configuration._create(str(Interfaces.TEXT), "", "")
+        config = Configuration._create(interface_config=str(Interfaces.TEXT))
 
         # Grab global instance
         eng = engine()

@@ -256,7 +256,7 @@ class TestPlayer(unittest.TestCase):
         # Change to raising handler for unit-testing
         set_prequire_handler(raising_prequire_handler)
 
-        Configuration._create("", "", "")
+        Configuration._create()
         player = Player()
         spell = "hot"
 

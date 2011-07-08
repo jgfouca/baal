@@ -211,7 +211,7 @@ class City(object):
 
                 # Check if this is a valid city loc
                 if (world.in_bounds(loc) and
-                    world.get_tile(loc).supports_city() and
+                    world.tile(loc).supports_city() and
                     not _is_too_close_to_any_city(loc, min_distance - 1)):
 
                     heuristic = _compute_city_loc_heuristic(loc)
@@ -377,7 +377,7 @@ def _compute_nearby_food_and_prod_tiles(location,
                 if (world.in_bounds(loc_delta) and
                     not (filter_tiles_near_other_cities and
                          _is_too_close_to_any_city(loc_delta, 1))):
-                    tile = world.get_tile(loc_delta)
+                    tile = world.tile(loc_delta)
                     prequire(not (filter_tiles_near_other_cities and tile.worked()),
                              "How can tile be worked if it's not near a city")
                     if (not tile.worked()):

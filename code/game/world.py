@@ -21,7 +21,8 @@ class World(object):
     # ==== Public API ====
     #
 
-    def __init__(self, width, height): self.__init_impl(width, height)
+    def __init__(self, width, height, tiles):
+        self.__init_impl(width, height, tiles)
 
     #
     # Getters / Queries
@@ -95,15 +96,21 @@ class World(object):
     #
 
     ###########################################################################
-    def __init_impl(self, width, height):
+    def __init_impl(self, width, height, tiles):
     ###########################################################################
         self.__width  = width
         self.__height = height
         self.__time   = Time()
 
         self.__tiles = []
-        for i in xrange(height):
-            self.__tiles.append([None] * width)
+        total = 0
+        for idx, tile in enumerate(tiles):
+            if (idx % width == 0):
+                self.__tiles.append([])
+            self.__tiles[-1].append(tile)
+            total += 1
+
+        prequire(total == width * height, "Wrong number of tiles")
 
         self.__recent_anomalies = []
         self.__cities           = []

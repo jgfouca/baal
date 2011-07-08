@@ -48,7 +48,7 @@ class Configuration(object):
 
     ###########################################################################
     @classmethod
-    def _create(cls, interface_config, world_config, player_config):
+    def _create(cls, interface_config="", world_config="", player_config=""):
     ###########################################################################
         prequire(cls.__instance is None, "Already created")
         cls.__instance = Configuration(interface_config,
@@ -83,18 +83,20 @@ class TestConfiguration(unittest.TestCase):
         # Check trying to grab instance before calling _create
         self.assertRaises(ProgramError, Configuration.instance)
 
-        instance = Configuration._create("interface", "world", "player")
+        instance = Configuration._create(interface_config="interface",
+                                         world_config="world",
+                                         player_config="player")
 
         # Check double-call of _create
-        self.assertRaises(ProgramError, Configuration._create, "", "", "")
+        self.assertRaises(ProgramError, Configuration._create)
 
         # Check attempt to create Configuration directly
         self.assertRaises(ProgramError, Configuration, "", "", "")
 
         # Verify config values
         self.assertEqual(instance.interface_config(), "interface")
-        self.assertEqual(instance.world_config(), "world")
-        self.assertEqual(instance.player_config(), "player")
+        self.assertEqual(instance.world_config(),     "world")
+        self.assertEqual(instance.player_config(),    "player")
 
         # Verify global instance
         self.assertIs(instance, Configuration.instance())
