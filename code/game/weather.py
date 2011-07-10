@@ -6,16 +6,16 @@ closely coupled to those concepts)
 """
 
 from __future__ import print_function
-import unittest, random
+import unittest, random, sys
 
 from baal_common import prequire, SmartEnum, ProgramError, Location, \
     cprint, BLUE, GREEN, RED, YELLOW, \
     grant_access, check_access, check_callers, \
-    set_prequire_handler, raising_prequire_handler
+    set_prequire_handler, raising_prequire_handler, \
+    create_names_by_enum_value
 from drawable import Drawable, DrawMode, curr_draw_mode
 import baal_common
 from baal_time import Season
-from world_tile import WorldTile
 
 class _DirectionMeta(type):
     def __iter__(mcs): return Direction._iter_hook()
@@ -51,7 +51,7 @@ class Direction(SmartEnum):
     NNW = range(16)
 
     # Derive names from class members.
-    _NAMES = [ name for name in dir() if name.isupper() and name.isalpha() ]
+    _NAMES = create_names_by_enum_value(vars())
 
     def __init__(self, value):
         super(self.__class__, self).__init__(value)
@@ -201,11 +201,11 @@ class Atmosphere(Drawable):
     # is the upper-bound for the corresponding color.
     _MAX = 999999
     _FIELD_COLOR_MAP = {
-        DrawMode.WIND        : ((10, GREEN), (20, YELLOW), (_MAX, RED)),
-        DrawMode.DEWPOINT    : ((32, RED),   (55, YELLOW), (_MAX, GREEN)),
-        DrawMode.TEMPERATURE : ((32, BLUE),  (20, YELLOW), (_MAX, RED)),
-        DrawMode.PRESSURE    : ((10, GREEN), (20, YELLOW), (_MAX, RED)),
-        DrawMode.RAINFALL    : ((2,  RED),   (10, YELLOW), (_MAX, RED))
+        DrawMode.WIND        : ((10, GREEN),  (20, YELLOW),   (_MAX, RED)),
+        DrawMode.DEWPOINT    : ((32, RED),    (55, YELLOW),   (_MAX, GREEN)),
+        DrawMode.TEMPERATURE : ((32, BLUE),   (80, YELLOW),   (_MAX, RED)),
+        DrawMode.PRESSURE    : ((975, GREEN), (1025, YELLOW), (_MAX, RED)),
+        DrawMode.RAINFALL    : ((2,  RED),    (10, YELLOW),   (_MAX, RED))
     }
 
     #
@@ -259,9 +259,11 @@ class Atmosphere(Drawable):
     ###########################################################################
     def __draw_text_impl(self):
     ###########################################################################
+        from world_tile import WorldTile
+
         draw_mode = curr_draw_mode()
 
-        field = self.wind()
+        field = self._get_field_for_draw_mode(draw_mode)
         color = self._compute_color(draw_mode, field)
         str_  = str(field).center(WorldTile.TILE_TEXT_WIDTH)
 
@@ -284,7 +286,7 @@ class Atmosphere(Drawable):
         pressure_modifier = 0
         for anomaly in anomalies:
             precip_modifier   *= anomaly.precip_effect(location)
-            temp_modifier     += anomaly.temp_effect(location)
+            temp_modifier     += anomaly.temperature_effect(location)
             pressure_modifier += anomaly.pressure_effect(location)
 
         self.__temperature = self.__climate.temperature(season) + temp_modifier
@@ -335,7 +337,7 @@ class AnomalyCategory(SmartEnum):
     PRESSURE = range(3)
 
     # Derive names from class members.
-    _NAMES = [ name for name in dir() if name.isupper() and name.isalpha() ]
+    _NAMES = create_names_by_enum_value(vars())
 
     def __init__(self, value):
         super(self.__class__, self).__init__(value)
@@ -449,6 +451,11 @@ class Anomaly(object):
         while (roll < negative_anom):
             intensity += modifier
             negative_anom /= 2
+            if (abs(intensity) == cls.MAX_INTENSITY):
+                break
+
+        prequire(intensity >= -cls.MAX_INTENSITY, "below min: ", intensity)
+        prequire(intensity <= cls.MAX_INTENSITY, "above max: ", intensity)
 
         return intensity
 
@@ -517,7 +524,7 @@ class Anomaly(object):
     ###########################################################################
         print("Level:", self.__intensity, self.__category,
               "anomaly at location", self.__location,
-              end='')
+              end="")
 
     ###########################################################################
     def __draw_graphics_impl(self):
@@ -582,6 +589,8 @@ class TestWeather(unittest.TestCase):
         self.assertEqual(climate.temperature(first_season), atmos.temperature())
         self.assertEqual(climate.rainfall(first_season),    atmos.rainfall())
         self.assertEqual(climate.wind(first_season),        atmos.wind())
+
+        atmos._compute_color(DrawMode("pressure"), atmos.pressure())
 
 if (__name__ == "__main__"):
     unittest.main()

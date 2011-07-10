@@ -3,9 +3,11 @@
 import unittest
 
 from drawable import Drawable
-from baal_common import prequire, cprint, GREEN, BLUE
+from baal_common import prequire, cprint, GREEN, BLUE, \
+    check_access, grant_access
 from engine import engine
 from baal_math import poly_growth
+from city import City
 
 ###############################################################################
 class PlayerAI(Drawable):
@@ -26,13 +28,12 @@ class PlayerAI(Drawable):
     # Queries / getters
     #
 
-    def get_adjusted_yield(self, tile_yield):
+    def get_adjusted_yield(self, base_yield):
         """
         The AI receives yield bonuses based on their tech-level. This method
-        returns the multiplier that should be applied to the base yield for
-        this AI.
+        returns the tech-adjusted yield for a base yield.
         """
-        return self.__get_adjusted_yield_impl(tile_yield)
+        return self.__get_adjusted_yield_impl(base_yield)
 
     def population(self): return self.__population
 
@@ -62,6 +63,8 @@ class PlayerAI(Drawable):
     # ==== Class constants ====
     #
 
+    ALLOW_CYCLE_TURN = "_player_ai_allow_cycle_turn"
+
     __STARTING_TECH_LEVEL = 1
     __FIRST_TECH_LEVEL_COST = 1000
 
@@ -79,9 +82,9 @@ class PlayerAI(Drawable):
         return population / 100 # 1 tech point per 100 people
 
     @classmethod
-    def __ADJUSTED_YIELD_FUNC(cls, tile_yield, tech_level):
+    def __ADJUSTED_YIELD_FUNC(cls, base_yield, tech_level):
         # 10% per tech level
-        return tile_yield * \
+        return base_yield * \
             (1 + ((tech_level - cls.__STARTING_TECH_LEVEL) * 0.1))
 
     #
@@ -98,11 +101,13 @@ class PlayerAI(Drawable):
         self.__next_tech_level_cost = cls.__FIRST_TECH_LEVEL_COST
         self.__population           = 0
 
+        grant_access(self, City.ALLOW_CYCLE_TURN)
+
     ###########################################################################
-    def __get_adjusted_yield_impl(self, tile_yield):
+    def __get_adjusted_yield_impl(self, base_yield):
     ###########################################################################
         cls = self.__class__
-        return cls.__ADJUSTED_YIELD_FUNC(tile_yield, self.tech_level())
+        return cls.__ADJUSTED_YIELD_FUNC(base_yield, self.tech_level())
 
     ###########################################################################
     def __to_xml_impl(self):
@@ -116,7 +121,7 @@ class PlayerAI(Drawable):
         print "AI PLAYER STATS:"
         print "  tech level:",
         cprint(GREEN, self.tech_level())
-        print "  population:",
+        print "\n  population:",
         cprint(BLUE, self.population())
 
     ###########################################################################
@@ -128,6 +133,8 @@ class PlayerAI(Drawable):
     ###########################################################################
     def __cycle_turn_impl(self):
     ###########################################################################
+        check_access(self.ALLOW_CYCLE_TURN)
+
         cls = self.__class__
         world = engine().world()
         cities_orig = list(world.cities())
@@ -155,8 +162,8 @@ class PlayerAI(Drawable):
 
         # Tech invariants
         prequire(self.__tech_points < self.__next_tech_level_cost,
-                 "Expect tech-points(" << self.__tech_points <<
-                 ") < tech-cost(" << self.__next_tech_level_cost << ")")
+                 "Expect tech-points(", self.__tech_points,
+                 ") < tech-cost(", self.__next_tech_level_cost, ")")
 
 #
 # Tests

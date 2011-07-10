@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from baal_common import prequire, Location, check_access
+from baal_common import prequire, Location, check_access, grant_access
 from engine import engine
 
 ###############################################################################
@@ -55,28 +55,28 @@ class City(object):
     #
 
     # City growth/food/production constants
-    __CITY_BASE_GROWTH_RATE = 0.01 # 1% per turn
-    __MAX_GROWTH_MODIFIER   = 4.0
-    __CITY_RANK_UP_MULTIPLIER = 2
-    __CITY_STARTING_POP = 1000
-    MIN_CITY_SIZE = __CITY_STARTING_POP / 5
-    __POP_THAT_EATS_ONE_FOOD = 1000
-    __FOOD_FROM_CITY_CENTER = 1.0
-    __PROD_FROM_CITY_CENTER = 1.0
-    __PROD_FROM_SPECIALIST  = 1.0
+    _CITY_BASE_GROWTH_RATE = 0.01 # 1% per turn
+    _MAX_GROWTH_MODIFIER   = 4.0
+    _CITY_RANK_UP_MULTIPLIER = 2
+    _CITY_STARTING_POP = 1000
+    MIN_CITY_SIZE = _CITY_STARTING_POP / 5
+    _POP_THAT_EATS_ONE_FOOD = 1000
+    _FOOD_FROM_CITY_CENTER = 1.0
+    _PROD_FROM_CITY_CENTER = 1.0
+    _PROD_FROM_SPECIALIST  = 1.0
 
     # Constants for production-costs of various buildable items
-    __SETTLER_PROD_COST  = 200
-    __INFRA_PROD_COST    = 50
-    __CITY_DEF_PROD_COST = 400
+    _SETTLER_PROD_COST  = 200
+    _INFRA_PROD_COST    = 50
+    _CITY_DEF_PROD_COST = 400
 
     # AI constants
-    __TOO_MANY_FOOD_WORKERS = 0.66
-    __PROD_BEFORE_SETTLER   = 7.0
+    _TOO_MANY_FOOD_WORKERS = 0.66
+    _PROD_BEFORE_SETTLER   = 7.0
 
     # Access-limiting vars
-    ALLOW_CITY_KILL  = "_allow_city_kill"
-    ALLOW_CITY_CYCLE = "_allow_city_cycle"
+    ALLOW_KILL       = "_allow_city_kill"
+    ALLOW_CYCLE_TURN = "_allow_city_cycle"
 
     #
     # ==== Implementation ====
@@ -87,19 +87,26 @@ class City(object):
     ###########################################################################
         self.__name = name
         self.__rank = 1
-        self.__population = City.__CITY_STARTING_POP
-        self.__next_rank_pop = self.__population * City.__CITY_RANK_UP_MULTIPLIER
+        self.__population = City._CITY_STARTING_POP
+        self.__next_rank_pop = self.__population * City._CITY_RANK_UP_MULTIPLIER
         self.__prod_bank = 0.0
         self.__location = location
         self.__defense = 1
         self.__famine = False
+
+        from world_tile import WorldTile, LandTile
+        from world import World
+
+        grant_access(self, WorldTile.ALLOW_WORK)
+        grant_access(self, LandTile.ALLOW_BUILD_INFRA)
+        grant_access(self, World.ALLOW_PLACE_CITY)
 
     ###########################################################################
     def __cycle_turn_impl(self):
     ###########################################################################
         # TODO: This method is still too big, break it up more
 
-        check_access(self.__class__.ALLOW_CITY_CYCLE)
+        check_access(self.__class__.ALLOW_CYCLE_TURN)
 
         prequire(self.__population > 0,
                  "This city has no people and should have been deleted")
@@ -118,9 +125,9 @@ class City(object):
         # Choose which tiles to work. We first make sure we have ample
         # food, then we look for production tiles.
 
-        req_food = self.__population / City.__POP_THAT_EATS_ONE_FOOD
-        food_gathered = City.__FOOD_FROM_CITY_CENTER
-        prod_gathered = City.__PROD_FROM_CITY_CENTER
+        req_food = self.__population / City._POP_THAT_EATS_ONE_FOOD
+        food_gathered = City._FOOD_FROM_CITY_CENTER
+        prod_gathered = City._PROD_FROM_CITY_CENTER
         num_workers = self.__rank
         num_workers_used_for_food = 0
         for tile in food_tiles:
@@ -144,13 +151,13 @@ class City(object):
         for tile in prod_tiles:
             if (num_workers == 0): break
 
-            if (tile.yield_().prod > City.__PROD_FROM_SPECIALIST):
+            if (tile.yield_().prod > City._PROD_FROM_SPECIALIST):
                 tile.work()
                 num_workers -= 1
                 prod_gathered += tile.yield_().prod
 
         # Remaining workers are specialists that contribute production
-        base_specialist_prod = num_workers * City.__PROD_FROM_SPECIALIST
+        base_specialist_prod = num_workers * City._PROD_FROM_SPECIALIST
         prod_gathered += \
             engine().ai_player().get_adjusted_yield(base_specialist_prod)
 
@@ -180,7 +187,7 @@ class City(object):
         food_tile = None
 
         pct_workers_on_food = num_workers_used_for_food / self.__rank
-        if (pct_workers_on_food > City.__TOO_MANY_FOOD_WORKERS or
+        if (pct_workers_on_food > City._TOO_MANY_FOOD_WORKERS or
             food_gathered < req_food):
             for tile in food_tiles:
                 if (tile.can_build_infra()):
@@ -192,7 +199,7 @@ class City(object):
         # tiles that we can enhance.
         prod_tile = None
 
-        if (prod_gathered < City.__PROD_BEFORE_SETTLER):
+        if (prod_gathered < City._PROD_BEFORE_SETTLER):
             for tile in prod_tiles:
                 if (tile.can_build_infra()):
                     prod_tile = tile
@@ -235,15 +242,15 @@ class City(object):
         elif (prod_tile):
             self.__build_infra(prod_tile)
         elif (settler_loc):
-            if (self.__prod_bank >= City.__SETTLER_PROD_COST):
+            if (self.__prod_bank >= City._SETTLER_PROD_COST):
                 world.place_city(settler_loc)
-                self.__prod_bank -= City.__SETTLER_PROD_COST
+                self.__prod_bank -= City._SETTLER_PROD_COST
         elif (prod_tile_fallback):
             self.__build_infra(prod_tile_fallback)
         else:
             # No settler expansion is possible, build city
             # defenses. This is the lowest priority item to build.
-            cost = self.__defense * City.__CITY_DEF_PROD_COST
+            cost = self.__defense * City._CITY_DEF_PROD_COST
             if (self.__prod_bank >= cost):
                 self.__defense += 1
                 self.__prod_bank -= cost
@@ -254,20 +261,20 @@ class City(object):
         if (food_gathered < req_food):
             self.__famine = True
             food_multiplier = -req_food / food_gathered
-            if (food_multiplier < -1 * City.__MAX_GROWTH_MODIFIER):
-                food_multiplier = -1 * City.__MAX_GROWTH_MODIFIER
+            if (food_multiplier < -1 * City._MAX_GROWTH_MODIFIER):
+                food_multiplier = -1 * City._MAX_GROWTH_MODIFIER
         else:
             self.__famine = False
             food_multiplier = food_gathered / req_food
-            if (food_multiplier > City.__MAX_GROWTH_MODIFIER):
-                food_multiplier = City.__MAX_GROWTH_MODIFIER
+            if (food_multiplier > City._MAX_GROWTH_MODIFIER):
+                food_multiplier = City._MAX_GROWTH_MODIFIER
 
         # Grow city
-        pop_growth_rate = 1 + (food_multiplier * City.__CITY_BASE_GROWTH_RATE)
+        pop_growth_rate = 1 + (food_multiplier * City._CITY_BASE_GROWTH_RATE)
         self.__population *= pop_growth_rate
         if (self.__population > self.__next_rank_pop):
             self.__rank += 1
-            self.__next_rank_pop *= City.__CITY_RANK_UP_MULTIPLIER
+            self.__next_rank_pop *= City._CITY_RANK_UP_MULTIPLIER
 
     ###########################################################################
     def __to_xml_impl(self):
@@ -278,7 +285,7 @@ class City(object):
     ###########################################################################
     def __kill_impl(self, killed):
     ###########################################################################
-        check_access(self.__class__.ALLOW_CITY_KILL)
+        check_access(self.__class__.ALLOW_KILL)
 
         prequire(self.__population >= killed, "Invalid killed: ", killed)
 
@@ -286,9 +293,9 @@ class City(object):
 
         if (self.__population > 0):
             while (self.__population <
-                   self.__next_rank_pop / City.__CITY_RANK_UP_MULTIPLIER):
+                   self.__next_rank_pop / City._CITY_RANK_UP_MULTIPLIER):
                 self.__rank -= 1
-                self.__next_rank_pop /= City.__CITY_RANK_UP_MULTIPLIER
+                self.__next_rank_pop /= City._CITY_RANK_UP_MULTIPLIER
 
     ###########################################################################
     def __build_infra(self, tile):
@@ -297,7 +304,7 @@ class City(object):
 
         infra_level = tile.infra_level()
         next_infra_level = infra_level + 1
-        prod_cost = next_infra_level * City.__INFRA_PROD_COST
+        prod_cost = next_infra_level * City._INFRA_PROD_COST
         if (prod_cost < self.__prod_bank):
             self.__prod_bank -= prod_cost
             tile.build_infra()
@@ -351,8 +358,10 @@ def _compute_city_loc_heuristic(location):
         _compute_nearby_food_and_prod_tiles(location,
                                             filter_tiles_near_other_cities=True)
 
-    available_food = sum(food_tiles) + City.__FOOD_FROM_CITY_CENTER
-    available_prod = sum(prod_tiles) + City.__PROD_FROM_CITY_CENTER
+    available_food = sum([tile.yield_().food for tile in food_tiles]) + \
+        City._FOOD_FROM_CITY_CENTER
+    available_prod = sum([tile.yield_().prod for tile in prod_tiles]) + \
+        City._PROD_FROM_CITY_CENTER
 
     # Favor city locations with a good balance of food and production
     return available_food * available_prod

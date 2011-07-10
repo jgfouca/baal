@@ -226,7 +226,7 @@ class Spell(object):
         return 0 # No exp if spell could not be applied
 
 # We allow Spell to be able to kill
-grant_access(Spell, City.ALLOW_CITY_KILL)
+grant_access(Spell, City.ALLOW_KILL)
 
 ###############################################################################
 class SpellPrereq(object):

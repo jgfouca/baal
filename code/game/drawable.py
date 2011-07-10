@@ -3,7 +3,8 @@
 import unittest
 
 from baal_common import prequire, urequire, UserError, ProgramError, \
-    SmartEnum, set_prequire_handler, raising_prequire_handler
+    SmartEnum, set_prequire_handler, raising_prequire_handler, \
+    create_names_by_enum_value
 
 # TODO: is it possible to make SmartEnums even slicker? It would be nice if
 # we could auto-generate the meta class instead of having to have a custom
@@ -43,7 +44,7 @@ class DrawMode(SmartEnum):
     DEWPOINT = range(12)
 
     # Derive names from class members.
-    _NAMES = [ name for name in dir() if name.isupper() and name.isalpha() ]
+    _NAMES = create_names_by_enum_value(vars())
 
     def __init__(self, value):
         super(self.__class__, self).__init__(value)

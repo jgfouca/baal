@@ -62,9 +62,9 @@ class CommandFactory(object):
         """
         real_names = [cmd.name() for cmd in subclasses(Command)]
         # Filter out alias entries
-        return sorted([cmdcls
-                       for cmdname, cmdcls in sorted(cls.__cmd_map.iteritems())
-                       if cmdname in real_names])
+        return iter([cmdcls
+                     for cmdname, cmdcls in sorted(cls.__cmd_map.iteritems())
+                     if cmdname in real_names])
 
 #
 # Tests

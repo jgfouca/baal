@@ -3,8 +3,9 @@
 """
 This file contains various commonly used free functions and data structures
 """
+from __future__ import print_function
 
-import curses, subprocess, pdb, inspect
+import curses, subprocess, pdb, inspect, unittest
 
 #
 # API for error handling
@@ -36,7 +37,7 @@ _DEBUG = True
 ###############################################################################
 def debugger_prequire_handler(str_):
 ###############################################################################
-    print str_
+    print(str_)
     pdb.set_trace()
 
 ###############################################################################
@@ -100,9 +101,10 @@ def cprint(color, *args):
     USAGE: cprint(RED, "one is: ", 1)
     """
     #if (curses.has_colors()):
-    print _BOLD_COLOR_PREFIX + _COLOR_MAP[color] + \
-        "".join([str(arg) for arg in args]) + \
-        _CLEAR
+    print(_BOLD_COLOR_PREFIX + _COLOR_MAP[color] +
+          "".join([str(arg) for arg in args]) +
+          _CLEAR,
+          end="")
     #else:
     #    print "".join([str(arg) for arg in args])
 
@@ -282,6 +284,36 @@ class Location(object):
     ###########################################################################
         return self.row, self.col
 
+###############################################################################
+class LocationIterator(object):
+###############################################################################
+    """
+    Returns Location objects from left to right, top to bottom.
+    """
+
+    ###########################################################################
+    def __init__(self, rows, cols):
+    ###########################################################################
+        self.__rows = rows
+        self.__cols = cols
+        self.__curr_row = 0
+        self.__curr_col = 0
+
+    ###########################################################################
+    def next(self):
+    ###########################################################################
+        if (self.__curr_row >= self.__rows):
+            raise StopIteration
+
+        rv = Location(self.__curr_row, self.__curr_col)
+
+        self.__curr_col += 1
+        if (self.__curr_col == self.__cols):
+            self.__curr_col = 0
+            self.__curr_row += 1
+
+        return rv
+
 #
 # Smart Enum Class API
 #
@@ -347,6 +379,28 @@ class SmartEnum(object):
         return not self == rhs
 
     ###########################################################################
+    def __cmp__(self, rhs):
+    ###########################################################################
+        if (type(rhs) == str):
+            rhs = rhs.upper()
+            if (rhs in self._names()):
+                return cmp(self.__value, self._names().index(rhs))
+            else:
+                return False
+        elif (type(rhs) == int):
+            return cmp(self.__value, rhs)
+        elif (type(rhs) == self.__class__):
+            return cmp(self.__value, rhs.__value)
+        else:
+            prequire(False, "Can only compare with str, int, or enum, ",
+                     "received: ", type(rhs))
+
+    ###########################################################################
+    def __hash__(self):
+    ###########################################################################
+        return hash(self.__value)
+
+    ###########################################################################
     def __str__(self):
     ###########################################################################
         """
@@ -403,14 +457,43 @@ class SmartEnum(object):
 
     def _value(self): return self.__value
 
+###############################################################################
+def create_names_by_enum_value(local_vars):
+###############################################################################
+    """
+    Given a SmartEnum class with enum values populated, create the _NAMES
+    list. This list is ordered by enum value.
+    """
+    name_to_val_map = {}
+    for varname, varvalue in local_vars.iteritems():
+        # Check if this variable looks like an enum value
+        if (varname.isupper() and varname.isalpha()):
+            name_to_val_map[varvalue] = varname
+
+    rv = []
+    for varvalue in sorted(name_to_val_map):
+        rv.append(name_to_val_map[varvalue])
+
+    return rv
+
 #
 # Tests
 #
 
 ###############################################################################
-def _test():
+class TestBaalCommon(unittest.TestCase):
 ###############################################################################
-    pass
+
+    ###########################################################################
+    def test_create_names(self):
+    ###########################################################################
+        fake_vars = {'_skip': 'asd',
+                     'ZFIRST' : 0,
+                     'RSECOND' : 1,
+                     'ATHIRD' : 2}
+        names = create_names_by_enum_value(fake_vars)
+
+        self.assertEqual(names, ['ZFIRST', 'RSECOND', 'ATHIRD'])
 
 if (__name__ == "__main__"):
-    _test()
+    unittest.main()

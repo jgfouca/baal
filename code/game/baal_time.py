@@ -2,7 +2,8 @@
 
 import unittest
 
-from baal_common import prequire, SmartEnum, cprint, BLUE, GREEN, RED, YELLOW
+from baal_common import prequire, cprint, BLUE, GREEN, RED, YELLOW, \
+    SmartEnum, create_names_by_enum_value
 from drawable import Drawable
 
 class _SeasonMeta(type):
@@ -27,7 +28,7 @@ class Season(SmartEnum):
     FALL = range(4)
 
     # Derive names from class members.
-    _NAMES = [ name for name in dir() if name.isupper() and name.isalpha() ]
+    _NAMES = create_names_by_enum_value(vars())
 
     def __init__(self, value):
         super(self.__class__, self).__init__(value)

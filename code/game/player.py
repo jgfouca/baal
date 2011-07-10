@@ -126,10 +126,10 @@ class Player(Drawable):
     # Modification-control keys
     #
 
-    ALLOW_PLAYER_CYCLE_TURN    = "_allow_player_cycle_turn"
-    ALLOW_PLAYER_CAST          = "_allow_player_cast"
-    ALLOW_PLAYER_LEARN         = "_allow_player_learn"
-    ALLOW_PLAYER_GAIN_EXP      = "_allow_player_gain_exp"
+    ALLOW_CYCLE_TURN    = "_allow_player_cycle_turn"
+    ALLOW_CAST          = "_allow_player_cast"
+    ALLOW_LEARN         = "_allow_player_learn"
+    ALLOW_GAIN_EXP      = "_allow_player_gain_exp"
 
     #
     # ==== Implementation ====
@@ -170,9 +170,9 @@ class Player(Drawable):
         print "  name:", self.__name
         print "  level:",
         cprint(GREEN, self.__level)
-        print "  mana:",
+        print "\n  mana:",
         cprint(BLUE, self.__mana, "/", self.__max_mana)
-        print "  exp:",
+        print "\n  exp:",
         cprint(YELLOW, self.__exp, "/", self.__next_level_cost)
 
     ###########################################################################
@@ -184,9 +184,9 @@ class Player(Drawable):
     ###########################################################################
     def __cycle_turn_impl(self):
     ###########################################################################
-        check_access(self.ALLOW_PLAYER_CYCLE_TURN)
+        check_access(self.ALLOW_CYCLE_TURN)
 
-        self.__mana += self.__mana_regen_rate
+        self.__mana += self.__mana_regen
         if (self.__mana > self.__max_mana):
             self.__mana = self.__max_mana
 
@@ -197,7 +197,7 @@ class Player(Drawable):
     ###########################################################################
     def __cast_impl(self, spell):
     ###########################################################################
-        check_access(self.ALLOW_PLAYER_CAST)
+        check_access(self.ALLOW_CAST)
 
         self.__mana -= spell.cost()
 
@@ -209,14 +209,14 @@ class Player(Drawable):
     ###########################################################################
     def __learn_impl(self, name):
     ###########################################################################
-        check_access(self.ALLOW_PLAYER_LEARN)
+        check_access(self.ALLOW_LEARN)
 
         self.__talents.add(name)
 
     ###########################################################################
     def __gain_exp_impl(self, exp):
     ###########################################################################
-        check_access(self.ALLOW_PLAYER_GAIN_EXP)
+        check_access(self.ALLOW_GAIN_EXP)
 
         self.__exp += exp
 
@@ -226,7 +226,7 @@ class Player(Drawable):
 
             old_max = self.__max_mana
             self.__max_mana = self.__MANA_POOL_FUNC(self.level())
-            self.__mana_regen_rate = self.__max_mana * self.__MANA_REGEN_RATE
+            self.__mana_regen = self.__max_mana * self.__MANA_REGEN_RATE
             increase = self.__max_mana - old_max
             self.__mana += increase
 
@@ -264,7 +264,7 @@ class TestPlayer(unittest.TestCase):
 
         self.assertRaises(ProgramError, player.gain_exp, exp_needed)
 
-        grant_access(self, Player.ALLOW_PLAYER_GAIN_EXP)
+        grant_access(self, Player.ALLOW_GAIN_EXP)
         player.gain_exp(exp_needed)
         self.assertEqual(player.level(), 2)
 
@@ -276,13 +276,13 @@ class TestPlayer(unittest.TestCase):
         #self.assertRaises(UserError, player.verify_cast, hot_spell_1)
 
         self.assertRaises(ProgramError, player.learn, spell)
-        grant_access(self, Player.ALLOW_PLAYER_LEARN)
+        grant_access(self, Player.ALLOW_LEARN)
         player.learn(spell)
 
         player.verify_cast(hot_spell_1)
 
         self.assertRaises(ProgramError, player.cast, hot_spell_1)
-        grant_access(self, Player.ALLOW_PLAYER_CAST)
+        grant_access(self, Player.ALLOW_CAST)
         player.cast(hot_spell_1)
 
         self.assertEqual(player.mana(), player.max_mana() - hot_spell_1.cost())

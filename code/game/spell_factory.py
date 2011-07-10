@@ -16,6 +16,8 @@ class SpellFactory(object):
     the knowledge of the set of available spells.
     """
 
+    __metaclass__ = _SpellFactoryMeta
+
     # Class variables
     __spell_map = create_subclass_map(Spell)
 
@@ -47,8 +49,8 @@ class SpellFactory(object):
         """
         Iterate over valid spell names.
         """
-        spell_names = [spell_cls.name() for spell_cls in cls.__spell_map]
-        return sorted(spell_names)
+        spell_names = [name for name in sorted(cls.__spell_map)]
+        return iter(spell_names)
 
 #
 # Tests

@@ -12,8 +12,8 @@ import unittest
 from drawable import Drawable, DrawMode, curr_draw_mode, _set_draw_mode
 from baal_common import prequire, ProgramError, cprint, \
                         GREEN, YELLOW, BLUE, RED, WHITE, \
-                        set_prequire_handler, raising_prequire_handler
-from world_tile import WorldTile
+                        set_prequire_handler, raising_prequire_handler, \
+                        check_access, grant_access
 
 #
 # Free-function API
@@ -76,6 +76,12 @@ class Geology(Drawable):
         return self.__cycle_turn_impl()
 
     #
+    # ==== Class Constants ====
+    #
+
+    ALLOW_CYCLE_TURN = "_geology_allow_cycle_turn"
+
+    #
     # ==== Protected Abstract API ====
     #
 
@@ -116,6 +122,8 @@ class Geology(Drawable):
     ###########################################################################
     def __draw_text_impl(self):
     ###########################################################################
+        from world_tile import WorldTile
+
         draw_mode = curr_draw_mode()
         expected_length = WorldTile.TILE_TEXT_WIDTH
 
@@ -151,6 +159,8 @@ class Geology(Drawable):
     ###########################################################################
     def __cycle_turn_impl(self):
     ###########################################################################
+        check_access(self.ALLOW_CYCLE_TURN)
+
         # Tension/magma build up more slowly as they reach 100%
         self.__tension += (1 - self.__tension) * self.__tension_buildup
         self.__magma   += (1 - self.__magma)   * self.__magma_buildup
@@ -311,6 +321,8 @@ class TestGeology(unittest.TestCase):
     ###########################################################################
         # Change to raising handler for unit-testing
         set_prequire_handler(raising_prequire_handler)
+
+        grant_access(self, Geology.ALLOW_CYCLE_TURN)
 
         plate_movement = 3
 

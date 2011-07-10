@@ -74,6 +74,11 @@ class Engine(object):
         from world_factory import create_world
         from player import Player
         from player_ai import PlayerAI
+        from world import World
+
+        grant_access(self, Player.ALLOW_CYCLE_TURN)
+        grant_access(self, PlayerAI.ALLOW_CYCLE_TURN)
+        grant_access(self, World.ALLOW_CYCLE_TURN)
 
         # This should only be invoked through _instance which should only
         # be invoked through engine(). We cannot use the check_access system
@@ -127,7 +132,7 @@ class Engine(object):
                 self.__interface.human_wins()
                 break
             elif (self.__ai_player.tech_level() >=
-                  self.__class__.__AI_WINS_AT_TECH_LEVEL):
+                  self.__AI_WINS_AT_TECH_LEVEL):
                 self.__interface.ai_wins()
                 break
 

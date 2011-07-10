@@ -9,7 +9,7 @@ import readline, sys, unittest
 
 from configuration import Configuration
 from baal_common import prequire, clear_screen, SmartEnum, UserError, cprint, \
-    RED, GREEN
+    RED, GREEN, create_names_by_enum_value
 from command_factory import CommandFactory
 from engine import engine
 
@@ -35,7 +35,7 @@ class Interfaces(SmartEnum):
     GRAPHICS = range(2)
 
     # Derive names from class members.
-    _NAMES = [ name for name in dir() if name.isupper() and name.isalpha() ]
+    _NAMES = create_names_by_enum_value(vars())
 
     def __init__(self, value):
         super(self.__class__, self).__init__(value)
@@ -61,7 +61,7 @@ class Interface(object):
     #
 
     def __init__(self):
-        self.__end_turns = 0
+        self._end_turns = 0
 
     def draw(self):
         """
@@ -92,7 +92,7 @@ class Interface(object):
         End the current turn, optionally ending multiple turns.
         """
         prequire(num_turns >= 0, "Bad end_turns: ", num_turns)
-        self.__end_turns = num_turns
+        self._end_turns = num_turns
 
     def human_wins(self):
         """
@@ -113,15 +113,15 @@ class Interface(object):
 ###############################################################################
 def create_interface():
 ###############################################################################
-    interface = Interfaces(Configuration.instance().interface_config())
+    interface = Configuration.instance().interface_config()
 
     # First is default
     if (interface == ""):
         interface = [str(item) for item in Interfaces][0]
 
-    if (interface == Interfaces.TEXT):
+    if (Interfaces.TEXT == interface):
         return TextInterface()
-    elif (interface == Interfaces.GRAPHICS):
+    elif (Interfaces.GRAPHICS == interface):
         return GraphicInterface()
     else:
         prequire(False, "Missing support for ", interface)
@@ -169,7 +169,6 @@ class TextInterface(Interface):
 
         # Draw world
         engine().world().draw_text()
-        print
 
         # Draw Player
         engine().player().draw_text()
@@ -177,6 +176,7 @@ class TextInterface(Interface):
 
         # Draw AI Player
         engine().ai_player().draw_text()
+        print
 
         sys.stdout.flush()
 
@@ -184,7 +184,7 @@ class TextInterface(Interface):
     def interact(self):
     ###########################################################################
         # Enter loop for this turn
-        while (self.__end_turns == 0):
+        while (self._end_turns == 0):
             # Grab a line of text
             try:
                 line = raw_input("% ")
@@ -203,7 +203,7 @@ class TextInterface(Interface):
                     print "\nType: 'help [command]' for assistence"
                     sys.stdout.flush()
 
-        self.__end_turns -= 1
+        self._end_turns -= 1
 
     ###########################################################################
     def help(self, helpmsg):
@@ -220,13 +220,13 @@ class TextInterface(Interface):
     ###########################################################################
     def human_wins(self):
     ###########################################################################
-        cprint(GREEN, "GRATZ, UR WINNAR!")
+        cprint(GREEN, "GRATZ, UR WINNAR!\n")
         sys.stdout.flush()
 
     ###########################################################################
     def ai_wins(self):
     ###########################################################################
-        cprint(RED, "UR LUZER. LOL, GET PWNED")
+        cprint(RED, "UR LUZER. LOL, GET PWNED\n")
         sys.stdout.flush()
 
 ###############################################################################

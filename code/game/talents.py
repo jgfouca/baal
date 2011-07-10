@@ -210,7 +210,7 @@ class TestTalents(unittest.TestCase):
         not_a_spell = "lol"
 
         # Give ourselves ability to add exp to player
-        grant_access(self, Player.ALLOW_PLAYER_GAIN_EXP)
+        grant_access(self, Player.ALLOW_GAIN_EXP)
 
         # Get player up to level 10
         for i in xrange(9):

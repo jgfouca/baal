@@ -7,7 +7,7 @@ from baal_time import Time
 from drawable import curr_draw_mode, DrawMode
 from world_tile import WorldTile
 from weather import AnomalyCategory, Anomaly
-from baal_common import prequire, check_access
+from baal_common import prequire, check_access, grant_access
 from city import City
 
 ###############################################################################
@@ -74,13 +74,13 @@ class World(object):
         """
         Place a new city in the world.
         """
-        return self.__place_city_impl(location, name)
+        return self.__place_city_impl_world(location, name)
 
     def remove_city(self, city):
         """
         Remove a city from the world.
         """
-        return self.__remove_city_impl(city)
+        return self.__remove_city_impl_world(city)
 
     #
     # ==== Class Constants ====
@@ -118,7 +118,8 @@ class World(object):
     ###########################################################################
     def __in_bounds_impl(self, location):
     ###########################################################################
-        return location.row < self.height() and location.col < self.width()
+        return location.row >= 0 and location.row < self.height() and \
+               location.col >= 0 and location.col < self.width()
 
     ###########################################################################
     def __tile_impl(self, location):
@@ -144,6 +145,7 @@ class World(object):
         real_draw_mode = curr_draw_mode()
 
         self.__time.draw_text()
+        print()
 
         # Make room for row labels
         print("  ", end="")
@@ -177,7 +179,7 @@ class World(object):
         # Draw recent anomalies
         for anomaly in self.__recent_anomalies:
             anomaly.draw_text()
-        print()
+            print()
 
     ###########################################################################
     def __draw_graphics_impl(self):
@@ -216,14 +218,13 @@ class World(object):
         for row in self.__tiles:
             for tile in row:
                 tile.cycle_turn(self.__recent_anomalies,
-                                tile.location(),
                                 self.__time.season())
 
         # Phase 3: Increment time
         self.__time.next()
 
     ###########################################################################
-    def __place_city_impl(self, location, name):
+    def __place_city_impl_world(self, location, name):
     ###########################################################################
         check_access(self.ALLOW_PLACE_CITY)
 
@@ -238,13 +239,15 @@ class World(object):
         tile.place_city(city)
 
     ###########################################################################
-    def __remove_city_impl(self, city):
+    def __remove_city_impl_world(self, city):
     ###########################################################################
         check_access(self.ALLOW_REMOVE_CITY)
 
         self.__cities.remove(city)
 
         self.tile(city.location()).remove_city()
+
+grant_access(World, WorldTile.ALLOW_CYCLE_TURN)
 
 #
 # Tests

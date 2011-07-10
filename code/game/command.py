@@ -3,9 +3,10 @@
 import time
 
 from spell_factory import SpellFactory
-from baal_common import prequire, urequire, Location, UserError
+from baal_common import prequire, urequire, Location, UserError, grant_access
 from engine import engine
 from drawable import DrawMode
+from player import Player
 import drawable
 
 ###############################################################################
@@ -256,6 +257,9 @@ class _CastCommand(Command):
         except UserError:
             urequire(False, "arg ", "'%s' not a valid location" % args[2])
 
+        grant_access(self, Player.ALLOW_CAST)
+        grant_access(self, Player.ALLOW_GAIN_EXP)
+
     ###########################################################################
     def apply(self):
     ###########################################################################
@@ -332,6 +336,8 @@ class _LearnCommand(Command):
 
         self.__spell_cls = SpellFactory.get(args[0])
 
+        grant_access(self, Player.ALLOW_LEARN)
+
     ###########################################################################
     def apply(self):
     ###########################################################################
@@ -351,8 +357,8 @@ class _LearnCommand(Command):
 
         # Add info on learnable spells to usage string
         for spell_name, spell_level in engine().player().learnable():
-            full_usage += "    %s%s" % (spell_name,
-                                        "" if spell_level == 1 else " (new)")
+            full_usage += "    %s%s\n" % (spell_name,
+                                          "" if spell_level == 1 else " (new)")
 
         return _create_help_str(cls, full_usage)
 

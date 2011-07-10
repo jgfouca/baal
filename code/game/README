@@ -265,6 +265,7 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
   the calling object as an argument and then probe the object for the "right"
   to make the call it's trying to make. Most non-const methods should be
   protected this way.
+* Drawable design should be implemented via policies
 * Should unit-tests be separated from the code?
 * City-nearby-tiles iterator would be very nice (encapsulate what it means
   to be nearby a city)
@@ -282,7 +283,7 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
   * Documentation
   * No magic numbers
 * Make food req dependent on rank, not pop?
-* Need tracing infrastructure (asp for AI)
+* Need tracing infrastructure (esp for AI)
 * Start to fill in Spell implementations
 * Find areas that define the game model and tag them with MODEL
 * Map editor, map-file format defined, map-file loader

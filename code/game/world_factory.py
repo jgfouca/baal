@@ -3,7 +3,8 @@
 import unittest
 import os.path
 
-from baal_common import prequire, urequire, Location, grant_access
+from baal_common import prequire, urequire, Location, grant_access, \
+    LocationIterator
 from configuration import Configuration
 from world import World
 from world_tile import TundraTile, PlainsTile, HillsTile, MountainTile, \
@@ -87,110 +88,147 @@ class _WorldFactoryHardcoded(_WorldFactoryBase):
         P L L O O O
         O O O O O O
         """
+        loc_iter = LocationIterator(6, 6)
         tiles = []
 
         # Row 1
         tiles.append(TundraTile(Climate(30, 10, Wind(10, Direction.WSW)),
-                                Inactive))
+                                Inactive(),
+                                loc_iter.next()))
         tiles.append(PlainsTile(Climate(40, 12, Wind(10, Direction.WSW)),
-                                Inactive))
+                                Inactive(),
+                                loc_iter.next()))
         tiles.append(HillsTile(Climate(35, 14, Wind(15, Direction.WSW)),
-                               Inactive))
+                               Inactive(),
+                               loc_iter.next()))
         tiles.append(MountainTile(5000,
                                   Climate(20, 40, Wind(25, Direction.WSW)),
-                                  Subducting(2.0)))
+                                  Subducting(2.0),
+                                  loc_iter.next()))
         tiles.append(LushTile(Climate(60, 30, Wind(10, Direction.WSW)),
-                              Subducting(2.0)))
+                              Subducting(2.0),
+                              loc_iter.next()))
         tiles.append(OceanTile(1000,
                                Climate(70, 35, Wind(10, Direction.SW)),
-                               Subducting(2.0)))
+                               Subducting(2.0),
+                               loc_iter.next()))
 
         # Row 2
         tiles.append(DesertTile(Climate(50, 10, Wind(10, Direction.SW)),
-                                Inactive))
+                                Inactive(),
+                                loc_iter.next()))
         tiles.append(DesertTile(Climate(50, 10, Wind(10, Direction.SW)),
-                                Inactive))
+                                Inactive(),
+                                loc_iter.next()))
         tiles.append(MountainTile(5000,
                                   Climate(20, 40, Wind(25, Direction.SW)),
-                                  Inactive))
+                                  Inactive(),
+                                  loc_iter.next()))
         tiles.append(HillsTile(Climate(40, 40, Wind(15, Direction.SW)),
-                               Subducting(2.0)))
+                               Subducting(2.0),
+                               loc_iter.next()))
         tiles.append(LushTile(Climate(62, 30, Wind(10, Direction.SW)),
-                              Subducting(2.0)))
+                              Subducting(2.0),
+                              loc_iter.next()))
         tiles.append(OceanTile(1000,
                                Climate(72, 35, Wind(10, Direction.SSW)),
-                               Subducting(2.0)))
+                               Subducting(2.0),
+                               loc_iter.next()))
 
         # Row 3
         tiles.append(DesertTile(Climate(55, 10, Wind(10, Direction.S)),
-                                Inactive))
+                                Inactive(),
+                                loc_iter.next()))
         tiles.append(MountainTile(5000,
                                   Climate(25, 45, Wind(25, Direction.SSW)),
-                                  Inactive))
+                                  Inactive(),
+                                  loc_iter.next()))
         tiles.append(HillsTile(Climate(45, 40, Wind(15, Direction.SSW)),
-                               Subducting(3.0)))
+                               Subducting(3.0),
+                               loc_iter.next()))
         tiles.append(LushTile(Climate(65, 35, Wind(10, Direction.SSW)),
-                              Subducting(3.0)))
+                              Subducting(3.0),
+                              loc_iter.next()))
         tiles.append(OceanTile(1000,
                                Climate(75, 35, Wind(10, Direction.S)),
-                               Subducting(3.0)))
+                               Subducting(3.0),
+                               loc_iter.next()))
         tiles.append(OceanTile(1000,
                                Climate(75, 40, Wind(10, Direction.S)),
-                               Inactive))
+                               Inactive(),
+                               loc_iter.next()))
 
         # Row 4
         tiles.append(HillsTile(Climate(55, 15, Wind(15, Direction.S)),
-                               Inactive))
+                               Inactive(),
+                               loc_iter.next()))
         tiles.append(MountainTile(5000,
                                   Climate(30, 50, Wind(25, Direction.S)),
-                                  Inactive))
+                                  Inactive(),
+                                  loc_iter.next()))
         tiles.append(LushTile(Climate(70, 40, Wind(10, Direction.S)),
-                              Subducting(2.0)))
+                              Subducting(2.0),
+                              loc_iter.next()))
         tiles.append(LushTile(Climate(70, 40, Wind(10, Direction.S)),
-                              Subducting(2.0)))
+                              Subducting(2.0),
+                              loc_iter.next()))
         tiles.append(OceanTile(1000,
                                Climate(80, 45, Wind(10, Direction.SSE)),
-                               Subducting(2.0)))
+                               Inactive(),
+                               loc_iter.next()))
         tiles.append(OceanTile(1000,
                                Climate(80, 45, Wind(10, Direction.SSE)),
-                               Inactive))
+                               Inactive(),
+                               loc_iter.next()))
 
         # Row 5
         tiles.append(PlainsTile(Climate(70, 20, Wind(10, Direction.SSE)),
-                                Transform(2.0)))
+                                Transform(2.0),
+                                loc_iter.next()))
         tiles.append(LushTile(Climate(70, 30, Wind(10, Direction.SSE)),
-                              Transform(2.0)))
+                              Transform(2.0),
+                              loc_iter.next()))
         tiles.append(LushTile(Climate(70, 30, Wind(10, Direction.SSE)),
-                              Transform(2.0)))
+                              Transform(2.0),
+                              loc_iter.next()))
         tiles.append(OceanTile(1000,
                                Climate(80, 45, Wind(10, Direction.SE)),
-                               Subducting(1.0)))
+                               Subducting(1.0),
+                               loc_iter.next()))
         tiles.append(OceanTile(1000,
                                Climate(80, 45, Wind(10, Direction.SE)),
-                               Inactive))
+                               Inactive(),
+                               loc_iter.next()))
         tiles.append(OceanTile(1000,
                                Climate(80, 45, Wind(10, Direction.SE)),
-                               Inactive))
+                               Inactive(),
+                               loc_iter.next()))
 
         # Row 6
         tiles.append(OceanTile(1000,
                                Climate(85, 45, Wind(10, Direction.ESE)),
-                               Inactive))
+                               Inactive(),
+                               loc_iter.next()))
         tiles.append(OceanTile(1000,
                                Climate(85, 45, Wind(10, Direction.ESE)),
-                               Inactive))
+                               Inactive(),
+                               loc_iter.next()))
         tiles.append(OceanTile(1000,
                                Climate(85, 45, Wind(10, Direction.ESE)),
-                               Inactive))
+                               Inactive(),
+                               loc_iter.next()))
         tiles.append(OceanTile(1000,
                                Climate(85, 45, Wind(10, Direction.ESE)),
-                               Inactive))
+                               Inactive(),
+                               loc_iter.next()))
         tiles.append(OceanTile(1000,
                                Climate(85, 45, Wind(10, Direction.ESE)),
-                               Inactive))
+                               Inactive(),
+                               loc_iter.next()))
         tiles.append(OceanTile(1000,
                                Climate(85, 45, Wind(10, Direction.ESE)),
-                               Inactive))
+                               Inactive(),
+                               loc_iter.next()))
 
         world = World(6, 6, tiles)
         world.place_city(Location(4, 2), "Capital")
@@ -223,6 +261,7 @@ class _WorldFactoryFromFile(_WorldFactoryBase):
     def is_baal_map_file(cls, filename):
         ext = os.path.splitext(filename)[1]
         return ext == cls._WORLD_FILE_EXT
+
 #
 # Tests
 #
