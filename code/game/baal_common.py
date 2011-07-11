@@ -120,11 +120,12 @@ def check_callers(func_name_list):
     specific functions. Each item in the list will represent a function in
     the expected call stack.
     """
-    curr_frame = inspect.currentframe()
-    outer_frames = inspect.getouterframes(curr_frame)
-    for idx, expected_func_name in enumerate(func_name_list):
-        func_name = inspect.getframeinfo(outer_frames[idx+2][0]).function
-        prequire(func_name == expected_func_name,
+    if (_DEBUG):
+        curr_frame = inspect.currentframe()
+        outer_frames = inspect.getouterframes(curr_frame)
+        for idx, expected_func_name in enumerate(func_name_list):
+            func_name = inspect.getframeinfo(outer_frames[idx+2][0]).function
+            prequire(func_name == expected_func_name,
                  "Expected '", expected_func_name, "' found '", func_name, "'")
 
 ###############################################################################
@@ -151,31 +152,32 @@ def get_data_from_frame(frame):
 def check_access(attr_key):
 ###############################################################################
 
-    #
-    # Get reference to 'self' or 'cls' object from caller of caller
-    #
+    if (_DEBUG):
+        #
+        # Get reference to 'self' or 'cls' object from caller of caller
+        #
 
-    curr_frame = inspect.currentframe()
+        curr_frame = inspect.currentframe()
 
-    # Get caller frame, first item in list is frame object
-    caller_frame = inspect.getouterframes(curr_frame)[1][0]
+        # Get caller frame, first item in list is frame object
+        caller_frame = inspect.getouterframes(curr_frame)[1][0]
 
-    # Figure out caller class
-    caller_class = get_data_from_frame(caller_frame)[1]
+        # Figure out caller class
+        caller_class = get_data_from_frame(caller_frame)[1]
 
-    # Iterate up the stack until we find the class that called the protected
-    # method.
-    for frame_id in xrange(2, 10000):
-        frame = inspect.getouterframes(curr_frame)[frame_id][0]
-        obj_of_interest, frame_class = get_data_from_frame(frame)
-        if (frame_class != caller_class):
-            break
+        # Iterate up the stack until we find the class that called the
+        # protected method.
+        for frame_id in xrange(2, 10000):
+            frame = inspect.getouterframes(curr_frame)[frame_id][0]
+            obj_of_interest, frame_class = get_data_from_frame(frame)
+            if (frame_class != caller_class):
+                break
 
-    #
-    # Check
-    #
+        #
+        # Check
+        #
 
-    prequire(getattr(obj_of_interest, attr_key, False), "Illegal access")
+        prequire(getattr(obj_of_interest, attr_key, False), "Illegal access")
 
 ###############################################################################
 def grant_access(obj, attr_key):

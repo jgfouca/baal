@@ -352,7 +352,7 @@ class TestGeology(unittest.TestCase):
         self.assertLess(tension1, subd.tension())
         self.assertLess(magma1, subd.magma())
 
-        for i in xrange(10000):
+        for i in xrange(500):
             subd.cycle_turn()
         self.assertLess(subd.tension(), 1.0)
         self.assertLess(subd.magma(), 1.0)
@@ -373,7 +373,7 @@ class TestGeology(unittest.TestCase):
         inactive = Inactive()
         magma_orig = inactive.magma()
         tension_orig = inactive.tension()
-        for i in xrange(1000):
+        for i in xrange(100):
             inactive.cycle_turn()
         self.assertEqual(magma_orig, inactive.magma())
         self.assertEqual(tension_orig, inactive.tension())
