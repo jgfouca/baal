@@ -258,13 +258,8 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 
 - TODO List -
 
-* Port to python!
 * Get things looking better in pylint and/or set up a pylint config file
   to ignore things we don't care about
-* Enforce private API more-strictly? Have private API implementations take
-  the calling object as an argument and then probe the object for the "right"
-  to make the call it's trying to make. Most non-const methods should be
-  protected this way.
 * Drawable design should be implemented via policies
 * Should unit-tests be separated from the code?
 * City-nearby-tiles iterator would be very nice (encapsulate what it means
@@ -284,12 +279,9 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
   * No magic numbers
 * Make food req dependent on rank, not pop?
 * Need tracing infrastructure (esp for AI)
-* Start to fill in Spell implementations
-* Find areas that define the game model and tag them with MODEL
+* Start to fill in more Spell implementations
 * Map editor, map-file format defined, map-file loader
 * Need much more unit-testing
-* Use more typedefs for scalar properties?
 * Change "rainfall" to "precip"
 * Implement disasters as mini games?
-* Change some Require(...) to RequireAttach(...)
 * See code TODOs
