@@ -266,10 +266,13 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 * Map editor, map-file format defined, map-file loader
 * Implement dewpoint
 * Pressure needs to affect winds
+* Model cloudcover/instability?
+* Should all tiles have snowpack?
 * Get things looking better in pylint and/or set up a pylint config file
   to ignore things we don't care about
 * City-nearby-tiles iterator would be very nice (encapsulate what it means
   to be nearby a city)
+* Can only cast a disaster of a certain type once per tile per turn
 * Disaster balancing:
   * Sort out disaster stacking (ex: wind + tstorm-generated-wind)
   * Implement diminishing returns (ex: wind + fire)

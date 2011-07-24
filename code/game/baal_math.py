@@ -4,12 +4,12 @@
 This file contains some simple mathematical functions
 """
 
-import math
+import math, itertools
 
 from baal_common import prequire
 
 ###############################################################################
-def exp_growth(value, threshold, base, diminishing_returns):
+def exp_growth(base, value, threshold=0, diminishing_returns=None):
 ###############################################################################
     prequire(base >= 1.01 and base <= 1.10, "Invalid base: ", base)
 
@@ -20,7 +20,7 @@ def exp_growth(value, threshold, base, diminishing_returns):
         # the player for having all of the ingredients in place, so
         # being weak in a certain ingrediant is heavily penalized.
         return pow(base + ((base - 1.0) * 2), x)
-    elif (x <= diminishing_returns):
+    elif (diminishing_returns is None or x <= diminishing_returns):
         return pow(base, x)
     else:
         beyond_dim = x - diminishing_returns
@@ -43,25 +43,19 @@ def exp_growth(value, threshold, base, diminishing_returns):
         return pow(base, diminishing_returns) + additional
 
 ###############################################################################
-def _check(val):
+def poly_growth(val, exp, div=1):
 ###############################################################################
-    """
-    Check that val is >= 0
-    """
-    prequire(val >= 0, "Val is ", val)
-    return val
+    return 0 if val < 0 else pow(val, exp) / div
 
 ###############################################################################
-poly_growth = lambda val, exp, div: pow(_check(val), exp) / div
+def fibonacci_div(total, base):
 ###############################################################################
-
-###############################################################################
-linear_growth = lambda val, mult: val * mult
-###############################################################################
-
-###############################################################################
-sqrt = lambda val: math.sqrt(_check(val))
-###############################################################################
+    for rv in itertools.count():
+        cost = (rv+1) * base
+        if (cost > total):
+            return rv
+        else:
+            total -= cost
 
 #
 # Tests

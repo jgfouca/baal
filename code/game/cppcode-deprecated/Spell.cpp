@@ -631,8 +631,7 @@ unsigned Fire::apply() const
     damage_tile(tile, destructiveness);
   }
 
-  // Check for the existence of a city
-  // This spell can kill if cast on a city and winds get high enough
+  // This spell will kill if cast on a city
   City* city = tile.city();
   if (city != NULL) {
     float base_kill_pct   = m_base_kill_func(destructiveness);

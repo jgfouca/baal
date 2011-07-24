@@ -75,7 +75,7 @@ class PlayerAI(Drawable):
     def __TECH_NEXT_LEVEL_COST_FUNC(cls, tech_level):
         # first * tech_level ^ 1.5
         return cls.__FIRST_TECH_LEVEL_COST * \
-            poly_growth(tech_level - cls.__STARTING_TECH_LEVEL, 1.5, 1)
+            poly_growth(tech_level - cls.__STARTING_TECH_LEVEL, 1.5)
 
     @classmethod
     def __TECH_POINT_FUNC(cls, population):

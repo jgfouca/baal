@@ -5,6 +5,8 @@ import unittest
 from baal_common import prequire, urequire, UserError, grant_access
 from city import City
 from engine import engine
+from baal_math import exp_growth, poly_growth, fibonacci_div
+from world_tile import OceanTile, MountainTile, FoodTile, PlainsTile, LushTile
 
 ###############################################################################
 class Spell(object):
@@ -38,13 +40,6 @@ class Spell(object):
         The base (level-1) cost of this spell.
         """
         prequire(False, "Called abstract version of base_cost")
-
-    @classmethod
-    def cost_func(cls):
-        """
-        Describes how the cost of this spell increases as it's level increases
-        """
-        prequire(False, "Called abstract version of cost_func")
 
     @classmethod
     def prereqs(cls):
@@ -93,9 +88,18 @@ class Spell(object):
     # ==== Class constants ====
     #
 
+    #
+    # Tweakable constants
+    #
+
     __CITY_DESTROY_EXP_BONUS = 1000
     __CHAIN_REACTION_BONUS = 2
     __INFRA_EXP_FUNC = lambda infra_destroyed: pow(2, infra_destroyed) * 200
+
+    @classmethod
+    def _COST_FUNC(cls, level):
+        "Default cost function; override to change"
+        return cls.base_cost() * pow(1.3, level - 1) # 30% per lvl
 
     #
     # ==== Internal API ====
@@ -147,7 +151,7 @@ class Spell(object):
     ###########################################################################
     def __cost_impl(self):
     ###########################################################################
-        return self.cost_func()(self, self.level())
+        return self._COST_FUNC(self.level())
 
     ###########################################################################
     def __str_impl(self):
@@ -229,7 +233,7 @@ class Spell(object):
 grant_access(Spell, City.ALLOW_KILL)
 
 ###############################################################################
-class SpellPrereq(object):
+class _SpellPrereq(object):
 ###############################################################################
     """
     Encapsulates data needed to describe a spell prerequisite. This class is
@@ -248,8 +252,7 @@ class SpellPrereq(object):
 # of the atmosphere? Or do we want to leave some up to pure chance (pressure)?
 
 # Spell header components are designed to maximize tweakability from
-# the header file. TODO: should things like degrees-heated for Hot also be
-# represented by a function? Yes!
+# the header file.
 
 #
 # Spell Implementations. The rest of the system does not care about anything
@@ -271,13 +274,36 @@ class _Hot(Spell):
     """
 
     #
-    # Class Variables
+    # ==== Class Constants ====
     #
 
     __NAME = "hot"
     __BASE_COST = 50
-    __COST_FUNC = lambda cls, level: cls.base_cost() * pow(1.3, level - 1) # 30% per lvl
-    __PREREQS = SpellPrereq(1, ()) # No prereqs
+    __PREREQS = _SpellPrereq(1, ()) # No prereqs
+
+    #
+    # Tweakable constants
+    #
+
+    @classmethod
+    def _DEGREES_HEATED_ATMOS_FUNC(cls, curr_temp, dewpoint, level):
+        # TODO: high dewpoint makes it harder to heat?
+        # curr_temp may be used in the future to implement diminishing returns
+        return 7 * level  # very simple for now, 7 deg per level
+
+    @classmethod
+    def _DEGREES_HEATED_OCEAN_FUNC(cls, curr_surf_temp, level):
+        return 2 * level
+
+    @classmethod
+    def _BASE_KILL_FUNC(cls, temp, dewpoint):
+        # TODO: Dewpoint should enhance killing
+        # (temp-threshold)^1.5 / 8
+        return poly_growth(temp - 100, 1.5, 8)
+
+    @classmethod
+    def _TECH_PENALTY_FUNC(cls, tech_level):
+        return poly_growth(tech_level, 0.5) #sqrt
 
     #
     # Public API
@@ -288,9 +314,6 @@ class _Hot(Spell):
 
     @classmethod
     def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def cost_func(cls): return cls.__COST_FUNC
 
     @classmethod
     def prereqs(cls): return cls.__PREREQS
@@ -309,8 +332,50 @@ class _Hot(Spell):
     ###########################################################################
     def apply(self):
     ###########################################################################
-        # TODO
-        return 0
+        world = engine().world()
+        tile  = world.tile(self.location())
+        atmos = tile.atmosphere()
+        tech  = engine().ai_player().tech_level()
+        exp   = 0
+
+        # Regardless of tile type, atmosphere is warmed
+        orig_temp    = atmos.temperature()
+        dewpoint     = atmos.dewpoint()
+        new_temp     = orig_temp + \
+            self._DEGREES_HEATED_ATMOS_FUNC(orig_temp, dewpoint, self.level())
+        atmos.set_temperature(new_temp)
+        self._report("raised temperature from ", orig_temp, " to ", new_temp)
+
+        # If ocean tile, sea temps are warmed too
+        if (isinstance(tile, OceanTile)):
+            orig_ocean_temp = tile.surface_temp()
+            new_ocean_temp  = orig_ocean_temp + \
+                self._DEGREES_HEATED_OCEAN_FUNC(orig_ocean_temp, self.level())
+            tile.set_surface_temp(new_ocean_temp)
+            self._report("raised ocean temperature from ", orig_ocean_temp,
+                         " to ", new_ocean_temp)
+
+        # If mountain tile, snowpack will be melted quickly, potentially
+        # causing a flood.
+        elif (isinstance(tile, MountainTile)):
+            # TODO
+            pass
+
+        # This spell can kill if cast on a city and temps get high enough
+        city = tile.city()
+        if (city is not None):
+            base_kill_pct = self._BASE_KILL_FUNC(new_temp, dewpoint)
+            if (base_kill_pct > 0.0):
+                tech_penalty  = self._TECH_PENALTY_FUNC(tech)
+                pct_killed    = base_kill_pct / tech_penalty
+
+                self._report("base kill % is ", base_kill_pct)
+                self._report("tech penalty (divisor) is ", tech_penalty)
+                self._report("final kill % is ", pct_killed)
+
+                exp += self._kill(city, pct_killed)
+
+        return exp
 
 ###############################################################################
 class _Cold(Spell):
@@ -321,19 +386,53 @@ class _Cold(Spell):
     intended to be a primary damage dealer; instead, you should be using this
     spell to enhance the more-powerful spells.
 
-    Enhanced by low temps, low dewpoints. Decreased by AI tech level.
+    Enhanced by low temps, low dewpoints, high winds. Decreased by AI tech
+    level.
 
     This is a tier 1 spell
     """
 
     #
-    # Class Variables
+    # ==== Class Variables ====
     #
 
     __NAME = "cold"
     __BASE_COST = 50
-    __COST_FUNC = lambda cls, level: cls.base_cost() * pow(1.3, level - 1) # 30% per lvl
-    __PREREQS = SpellPrereq(1, ()) # No prereqs
+    __PREREQS = _SpellPrereq(1, ()) # No prereqs
+
+    #
+    # Tweakable constants
+    #
+
+    @classmethod
+    def _DEGREES_COOLED_ATMOS_FUNC(cls, curr_temp, dewpoint, level):
+        # TODO: high dewpoint makes it harder to cool
+        # curr_temp may be used in the future to implement diminishing returns
+        return -7 * level  # very simple for now, 7 deg per level
+
+    @classmethod
+    def _DEGREES_COOLED_OCEAN_FUNC(cls, curr_surf_temp, level):
+        return -2 * level
+
+    @classmethod
+    def _BASE_KILL_FUNC(cls, temp):
+        # TODO: Low dewpoint, wind should enhance killing
+        # (threshold - temp)^1.5 / 8
+        return poly_growth(0 - temp, 1.5, 8)
+
+    @classmethod
+    def _WIND_BONUS_FUNC(cls, wind):
+        # 1.02^speed, diminishing returns at 40, no threshold
+        return exp_growth(1.02, wind.speed(), diminishing_returns=40)
+
+    @classmethod
+    def _FAMINE_BONUS_FUNC(cls, city):
+        # Double-damage if city in famine
+        return 2.0 if city.famine() else 1.0
+
+    @classmethod
+    def _TECH_PENALTY_FUNC(cls, tech_level):
+        return tech_level # linear decrease
 
     #
     # Public API
@@ -344,9 +443,6 @@ class _Cold(Spell):
 
     @classmethod
     def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def cost_func(cls): return cls.__COST_FUNC
 
     @classmethod
     def prereqs(cls): return cls.__PREREQS
@@ -365,8 +461,307 @@ class _Cold(Spell):
     ###########################################################################
     def apply(self):
     ###########################################################################
-        # TODO
-        return 0
+        world = engine().world()
+        tile  = world.tile(self.location())
+        atmos = tile.atmosphere()
+        tech  = engine().ai_player().tech_level()
+        exp   = 0
+
+        # Regardless of tile type, atmosphere is cooled
+        orig_temp      = atmos.temperature()
+        dewpoint       = atmos.dewpoint()
+        wind           = atmos.wind()
+        new_temp       = orig_temp - \
+            self._DEGREES_COOLED_ATMOS_FUNC(orig_temp, dewpoint, self.level())
+        atmos.set_temperature(new_temp)
+        self._report("lowered temperature from ", orig_temp, " to ", new_temp)
+
+        # If ocean tile, sea temps are warmed too
+        if (isinstance(tile, OceanTile)):
+            orig_ocean_temp = tile.surface_temp()
+            new_ocean_temp  = orig_ocean_temp - \
+                self._DEGREES_COOLED_OCEAN_FUNC(orig_ocean_temp, self.level())
+            tile.set_surface_temp(new_ocean_temp)
+            self._report("lowered ocean temperature from ", orig_ocean_temp,
+                         " to ", new_ocean_temp)
+
+        # This spell can kill if cast on a city and temps get high enough
+        city = tile.city()
+        if (city is not None):
+            base_kill_pct = self._BASE_KILL_FUNC(new_temp)
+            if (base_kill_pct > 0.0):
+                wind_bonus    = self._WIND_BONUS_FUNC(wind)
+                famine_bonus  = self._FAMINE_BONUS_FUNC(city)
+                tech_penalty  = self._TECH_PENALTY_FUNC(tech)
+
+                pct_killed    = \
+                    (base_kill_pct * wind_bonus * famine_bonus) / tech_penalty
+
+                self._report("base kill % is ", base_kill_pct)
+                self._report("wind bonus (multiplier) is ", wind_bonus)
+                self._report("famine bonus (multiplier) is ", famine_bonus)
+                self._report("tech penalty (divisor) is ", tech_penalty)
+                self._report("final kill % is ", pct_killed)
+
+                exp += self._kill(city, pct_killed)
+
+        return exp
+
+###############################################################################
+class _Infect(Spell):
+###############################################################################
+    """
+    A weak direct damage spell against cities, this spell causes
+    an infection to spread within a city. This spell should be very
+    useful for getting players to the higher level spells.
+
+    Enhanced by extreme temperatures, recent famine, and size of city.
+    Decreased by AI tech level.
+
+    This is a tier 1 spell
+    """
+
+    #
+    # ==== Class Variables ====
+    #
+
+    __NAME = "infect"
+    __BASE_COST = 50
+    __PREREQS = _SpellPrereq(1, ()) # No prereqs
+
+    #
+    # Tweakable constants
+    #
+
+    @classmethod
+    def _BASE_KILL_FUNC(cls, level):
+        # level^1.3
+        return poly_growth(level, 1.3)
+
+    @classmethod
+    def _CITY_SIZE_BONUS_FUNC(cls, city_size):
+        # 1.05^city_size, no theshold or diminishing returns
+        return exp_growth(1.05, city_size)
+
+    @classmethod
+    def _FAMINE_BONUS_FUNC(cls, city):
+        # Double-damage if city in famine
+        return 2.0 if city.famine() else 1.0
+
+    @classmethod
+    def _EXTREME_TEMP_BONUS_FUNC(cls, temp):
+        if (temp > 90): # hot
+            degrees_extreme = temp - 90
+        elif (temp < 30):
+            degrees_extreme = 30 - temp
+        else:
+            degrees_extreme = 0
+        # 1.03^deg_extreme
+        return exp_growth(1.03, degrees_extreme, diminishing_returns=20)
+
+    @classmethod
+    def _TECH_PENALTY_FUNC(cls, tech_level):
+        return tech_level # linear decrease
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # This spell can only be cast on cities
+        tile = engine().world().tile(self.location())
+        urequire(tile.city() is not None,
+                 "Must cast ", self.name(), " on a city.")
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        world = engine().world()
+        tile  = world.tile(self.location())
+        atmos = tile.atmosphere()
+        tech  = engine().ai_player().tech_level()
+        exp   = 0
+
+        city = tile.city()
+        prequire(city is not None, "Verification did not catch None city")
+
+        # Calculate num killed
+        base_kill_pct      = self._BASE_KILL_FUNC(self.level())
+        city_size_bonus    = self._CITY_SIZE_BONUS_FUNC(city.rank())
+        extreme_temp_bonus = self._EXTREME_TEMP_BONUS_FUNC(atmos.temperature())
+        famine_bonus       = self._FAMINE_BONUS_FUNC(city)
+        tech_penalty       = self._TECH_PENALTY_FUNC(tech)
+
+        pct_killed = ((base_kill_pct *
+                       city_size_bonus *
+                       extreme_temp_bonus *
+                       famine_bonus) /
+                      tech_penalty)
+
+        self._report("base kill % is ", base_kill_pct)
+        self._report("city-size bonus (multiplier) is ", city_size_bonus)
+        self._report("extreme-temp bonus (multiplier) is ", extreme_temp_bonus)
+        self._report("famine bonus (multiplier) is ", famine_bonus)
+        self._report("tech penalty (divisor) is ", tech_penalty)
+        self._report("final kill % is ", pct_killed)
+
+        return exp
+
+###############################################################################
+class _Wind(Spell):
+###############################################################################
+    """
+    Increases the immediate wind speed of a region. High wind speeds can
+    kill, but this spell is generally more useful in combinations rather
+    than a direct damage spell. High wind speeds can damage
+    infrastructure.
+
+    Killing capability enhanced by low temps. Decreased by AI tech level.
+    Decreased by city defense.
+
+    This is a tier 1 spell
+    """
+
+    #
+    # ==== Class Constants ====
+    #
+
+    __NAME = "wind"
+    __BASE_COST = 50
+    __PREREQS = _SpellPrereq(1, ()) # No prereqs
+
+    #
+    # Tweakable constants
+    #
+
+    @classmethod
+    def _WIND_INCREASE_FUNC(cls, curr_wind, level):
+        # curr_wind may be used in the future to implement diminishing returns
+        return 20 * level  # very simple for now, 20 mph per level
+
+    @classmethod
+    def _BASE_KILL_FUNC(cls, wind):
+        # 1.03^(wind_speed-80)
+        return exp_growth(1.03, wind.speed(), threshold=80)
+
+    @classmethod
+    def _BASE_INFRA_DESTROY_FUNC(cls, wind):
+        # 1.03^(wind_speed-60)
+        return exp_growth(1.03, wind.speed(), threshold=60)
+
+    @classmethod
+    def _COLD_BONUS_FUNC(cls, temp, orig_wind, new_wind):
+        # 1.02^(new_wind) - 1.02^(orig_wind)
+        if (temp < 0):
+            return (
+                exp_growth(1.02, new_wind.speed(),  diminishing_returns=40) -
+                exp_growth(1.02, orig_wind.speed(), diminishing_returns=40)
+                )
+        else:
+            return 1 # No effect
+
+    @classmethod
+    def _TECH_PENALTY_FUNC(cls, tech_level):
+        return poly_growth(tech_level, 0.5) # sqrt
+
+    @classmethod
+    def _DEFENSE_PENALTY_FUNC(cls, defense_level):
+        return poly_growth(defense_level, 0.5) # sqrt
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # No-op. This spell can be cast anywhere, anytime.
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        world = engine().world()
+        tile  = world.tile(self.location())
+        atmos = tile.atmosphere()
+        tech  = engine().ai_player().tech_level()
+        exp   = 0
+
+        # Regardless of tile type, atmosphere is warmed
+        temp         = atmos.temperature()
+        orig_wind    = atmos.wind()
+        new_wind     = orig_wind + \
+            self._WIND_INCREASE_FUNC(orig_wind, self.level())
+        atmos.set_wind(new_wind)
+        self._report("increased wind from ", orig_wind, " to ", new_wind)
+
+        # Wind can destroy infrastructure
+        if (tile.infra_level() is not None and tile.infra_level() > 0):
+            base_infra_destroy = self._BASE_INFRA_DESTROY_FUNC(new_wind)
+            if (base_infra_destroy > 0.0):
+                tech_penalty = self._TECH_PENALTY_FUNC(tech)
+
+                max_infra_destroyed = round(base_infra_destroy / tech_penalty)
+
+                self._report("base infra damage % is ", base_infra_destroy)
+                self._report("tech penalty (divisor) is ", tech_penalty)
+
+                exp += self._destroy_infra(tile, max_infra_destroyed);
+
+        # This spell can kill if cast on a city and winds get high enough
+        city = tile.city()
+        if (city is not None):
+            base_kill_pct = self._BASE_KILL_FUNC(new_wind)
+            if (base_kill_pct > 0.0):
+                cold_bonus      = self._COLD_BONUS_FUNC(temp,
+                                                        orig_wind,
+                                                        new_wind)
+                tech_penalty    = self._TECH_PENALTY_FUNC(tech)
+                defense_penalty = self._DEFENSE_PENALTY_FUNC(city.defense())
+
+                pct_killed = (((base_kill_pct * cold_bonus)
+                               / tech_penalty) /
+                              defense_penalty)
+
+                self._report("base kill % is ", base_kill_pct)
+                self._report("cold bonus (multiplier) is ", cold_bonus)
+                self._report("tech penalty (divisor) is ", tech_penalty)
+                self._report("defense penalty (divisor) is ", defense_penalty)
+                self._report("final kill % is ", pct_killed)
+
+                exp += self._kill(city, pct_killed)
+
+        return exp
 
 ###############################################################################
 class _Fire(Spell):
@@ -383,13 +778,56 @@ class _Fire(Spell):
     """
 
     #
-    # Class Variables
+    # ==== Class Variables ====
     #
 
     __NAME = "fire"
     __BASE_COST = 100
-    __COST_FUNC = lambda cls, level: cls.base_cost() * pow(1.3, level - 1) # 30% per lvl
-    __PREREQS = SpellPrereq(5, ((_Hot.name(), 1),) ) # Requires hot
+    __PREREQS = _SpellPrereq(5, ((_Hot.name(), 1),) ) # Requires hot
+
+    #
+    # Tweakable Constants
+    #
+
+    @classmethod
+    def _BASE_DESTRUCTIVENESS_FUNC(cls, level):
+        # level^1.3
+        return poly_growth(level, 1.3)
+
+    @classmethod
+    def _WIND_EFFECT_FUNC(cls, wind):
+        # 1.05^(speed - tipping_pt(20)), diminishes @ 30 beyond thresh
+        return exp_growth(1.05, wind.speed(), threshold=20,
+                          diminishing_returns=30)
+
+    @classmethod
+    def _TEMP_EFFECT_FUNC(cls, temp):
+        # 1.03^(temp - tipping_pt(75))
+        return exp_growth(1.03, temp, threshold=75)
+
+    @classmethod
+    def _MOISTURE_EFFECT_FUNC(cls, raw_moisture):
+        # 1.05^(tipping_pt(75) - raw_moisture*100), diminishes at 30% below dry
+        return exp_growth(1.05, 75 - raw_moisture*100, diminishing_returns=30)
+
+    @classmethod
+    def _BASE_INFRA_DESTROY_FUNC(cls, destructiveness):
+        # 1.05^destructiveness
+        return exp_growth(1.05, destructiveness)
+
+    @classmethod
+    def _BASE_KILL_FUNC(cls, destructiveness):
+        return destructiveness # Linear
+
+    @classmethod
+    def _DEFENSE_PENALTY_FUNC(cls, defense):
+        # sqrt(defense)
+        return poly_growth(defense, 0.5)
+
+    @classmethod
+    def _TECH_PENALTY_FUNC(cls, tech):
+        # sqrt(tech)
+        return poly_growth(tech, 0.5)
 
     #
     # Public API
@@ -402,7 +840,170 @@ class _Fire(Spell):
     def base_cost(cls): return cls.__BASE_COST
 
     @classmethod
-    def cost_func(cls): return cls.__COST_FUNC
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # This spell can only be cast on tiles with plant growth
+        tile = engine().world().tile(self.location())
+        urequire(isinstance(tile, FoodTile),
+                 "Fire can only be cast on tiles with plant growth")
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        world = engine().world()
+        tile  = world.tile(self.location())
+        atmos = tile.atmosphere()
+        tech  = engine().ai_player().tech_level()
+        exp   = 0
+
+        # Query properties relevant to fire destructiveness
+        wind          = atmos.wind()
+        temp          = atmos.temperature()
+        dewpoint      = atmos.dewpoint()
+        soil_moisture = tile.soil_moisture()
+
+        # Compute destructiveness of fire
+        base_destructiveness = self._BASE_DESTRUCTIVENESS_FUNC(self.level())
+        temp_multiplier      = self._TEMP_EFFECT_FUNC(temp)
+        wind_multiplier      = self._WIND_EFFECT_FUNC(wind)
+        moisture_multiplier  = self._MOISTURE_EFFECT_FUNC(soil_moisture)
+        destructiveness      = (base_destructiveness *
+                                temp_multiplier *
+                                wind_multiplier *
+                                moisture_multiplier)
+
+        self._report("base destructiveness ",   base_destructiveness)
+        self._report("temperature multiplier ", temp_multiplier)
+        self._report("wind multiplier ",        wind_multiplier)
+        self._report("moisture multiplier ",    moisture_multiplier)
+        self._report("total destructiveness ",  destructiveness)
+
+        # Fire can destroy infrastructure
+        if (tile.infra_level() is not None and tile.infra_level() > 0):
+            base_infra_destroy = self._BASE_INFRA_DESTROY_FUNC(destructiveness)
+            tech_penalty       = self._TECH_PENALTY_FUNC(tech)
+
+            max_infra_destroyed = round(base_infra_destroy / tech_penalty)
+
+            self._report("base infra damage % is ", base_infra_destroy)
+            self._report("tech penalty (divisor) is ", tech_penalty)
+
+            exp += self._destroy_infra(tile, max_infra_destroyed)
+
+            self._damage_tile(tile, destructiveness)
+
+        # This spell will kill if cast on a city
+        city = tile.city()
+        if (city is not None):
+            base_kill_pct   = self._BASE_KILL_FUNC(destructiveness)
+            tech_penalty    = self._TECH_PENALTY_FUNC(tech)
+            defense_penalty = self._DEFENSE_PENALTY_FUNC(city.defense())
+
+            pct_killed = (base_kill_pct / tech_penalty) / defense_penalty
+
+            self._report("base kill % is ", base_kill_pct)
+            self._report("tech penalty (divisor) is ", tech_penalty)
+            self._report("defense penalty (divisor) is ", defense_penalty)
+            self._report("final kill % is ", pct_killed)
+
+            exp += self._kill(city, pct_killed)
+
+        return exp
+
+###############################################################################
+class _Tstorm(Spell):
+###############################################################################
+    """
+    Spawn severe thunderstorms. These storms have a chance to cause
+    weak floods, tornadoes, and high winds, making this a good spell for
+    causing chain-reactions. Lightning can kill city dwellers and is
+    the only way for a tstorm to directly get kills, but it's not a very
+    effective killer. Most of the damage will be done by chain-reaction
+    events.
+
+    Enhanced by high wind, high dewpoint, high temperature, low pressure, and
+    high temperature differentials.
+
+    This is a tier 2 spell
+    """
+
+    #
+    # ==== Class Variables ====
+    #
+
+    __NAME = "tstorm"
+    __BASE_COST = 100
+    __PREREQS = _SpellPrereq(5, ((_Wind.name(), 1),) ) # Requires wind
+
+    #
+    # Tweakable Constants
+    #
+
+    @classmethod
+    def _BASE_DESTRUCTIVENESS_FUNC(cls, level):
+        # level^1.3
+        return poly_growth(level, 1.3)
+
+    @classmethod
+    def _WIND_EFFECT_FUNC(cls, wind):
+        # 1.03^(speed - tipping_pt(15)), diminishes @ 15 beyond thresh
+        return exp_growth(1.03, wind.speed(), threshold=15,
+                          diminishing_returns=15)
+
+    @classmethod
+    def _TEMP_EFFECT_FUNC(cls, temp):
+        # 1.03^(temp - tipping_pt(85))
+        return exp_growth(1.03, temp, threshold=85, diminishing_returns=15)
+
+    @classmethod
+    def _PRESSURE_EFFECT_FUNC(cls, pressure):
+        # 1.05^(pressure - tipping_pt(990))
+        return exp_growth(1.05, pressure, threshold=990)
+
+    @classmethod
+    def _WIND_SPAWN_LEVEL_FUNC(cls, destructiveness):
+        return fibonacci_div(destructiveness, 10)
+
+    @classmethod
+    def _FLOOD_SPAWN_LEVEL_FUNC(cls, destructiveness):
+        return fibonacci_div(destructiveness, 15)
+
+    @classmethod
+    def _TORNADO_SPAWN_LEVEL_FUNC(cls, destructiveness):
+        return fibonacci_div(destructiveness, 20)
+
+    @classmethod
+    def _BASE_KILL_FUNC(cls, destructiveness):
+        # 2% of destructiveness
+        return 0.02 * destructiveness # Linear
+
+    @classmethod
+    def _DEFENSE_PENALTY_FUNC(cls, defense):
+        # sqrt(defense)
+        return poly_growth(defense, 0.5)
+
+    @classmethod
+    def _TECH_PENALTY_FUNC(cls, tech):
+        # sqrt(tech)
+        return poly_growth(tech, 0.5)
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
 
     @classmethod
     def prereqs(cls): return cls.__PREREQS
@@ -415,7 +1016,117 @@ class _Fire(Spell):
     ###########################################################################
     def verify_apply(self):
     ###########################################################################
-        # No-op. This spell can be cast anywhere, anytime.
+        # This spell can only be cast on plains or lush tiles
+        tile = engine().world().tile(self.location())
+        urequire(isinstance(tile, PlainsTile) or isinstance(tile, LushTile),
+                 "Tstorms can only be cast on plains or lush tiles")
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        world = engine().world()
+        tile  = world.tile(self.location())
+        atmos = tile.atmosphere()
+        tech  = engine().ai_player().tech_level()
+        exp   = 0
+
+        # Query properties relevant to fire destructiveness
+        wind          = atmos.wind().speed()
+        temp          = atmos.temperature()
+        dewpoint      = atmos.dewpoint()
+        pressure      = atmos.pressure()
+
+        # Compute destructiveness of fire
+        # TODO - Include instability/temperature differential/dewpoint
+        base_destructiveness = self._BASE_DESTRUCTIVENESS_FUNC(self.level())
+        temp_multiplier      = self._TEMP_EFFECT_FUNC(temp)
+        wind_multiplier      = self._WIND_EFFECT_FUNC(wind)
+        pressure_multiplier  = self._PRESSURE_EFFECT_FUNC(pressure)
+        destructiveness      = (base_destructiveness *
+                                temp_multiplier *
+                                wind_multiplier *
+                                pressure_multiplier)
+
+        self._report("base destructiveness ",   base_destructiveness)
+        self._report("temperature multiplier ", temp_multiplier)
+        self._report("wind multiplier ",        wind_multiplier)
+        self._report("presure multiplier ",     pressure_multiplier)
+        self._report("total destructiveness ",  destructiveness)
+
+        # Spawn chain-reaction events
+
+        wind_spawn_lvl    = self._WIND_SPAWN_LEVEL_FUNC(destructiveness)
+        flood_spawn_lvl   = self._FLOOD_SPAWN_LEVEL_FUNC(destructiveness)
+        tornado_spawn_lvl = self._TORNADO_SPAWN_LEVEL_FUNC(destructiveness)
+
+        if (wind_spawn_lvl > 0):
+            exp += self._spawn(_Wind.name(), wind_spawn_lvl)
+
+        if (flood_spawn_lvl > 0):
+            exp += self._spawn(_Flood.name(), flood_spawn_lvl)
+
+        if (tornado_spawn_lvl > 0):
+            exp += self._spawn(_Tornado.name(), tornado_spawn_lvl)
+
+        # This spell will kill if cast on a city
+        city = tile.city()
+        if (city is not None):
+            base_kill_pct   = self._BASE_KILL_FUNC(destructiveness)
+            tech_penalty    = self._TECH_PENALTY_FUNC(tech)
+            defense_penalty = self._DEFENSE_PENALTY_FUNC(city.defense())
+
+            pct_killed = (base_kill_pct / tech_penalty) / defense_penalty
+
+            self._report("base kill % is ", base_kill_pct)
+            self._report("tech penalty (divisor) is ", tech_penalty)
+            self._report("defense penalty (divisor) is ", defense_penalty)
+            self._report("final kill % is ", pct_killed)
+
+            exp += self._kill(city, pct_killed)
+
+        return exp
+
+###############################################################################
+class _Snow(Spell):
+###############################################################################
+    """
+    Spawn a large snow storm. Temporarily drastically reduces yields on tiles.
+
+    Enhanced by high dewpoint, low temperature, low pressure.
+
+    This is a tier 2 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "snow"
+    __BASE_COST = 100
+    __PREREQS = _SpellPrereq(5, ((_Cold.name(), 1),) ) # Requires cold
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # TODO
         pass
 
     ###########################################################################
@@ -424,6 +1135,505 @@ class _Fire(Spell):
         # TODO
         return 0
 
+###############################################################################
+class _Avalanche(Spell):
+###############################################################################
+    """
+    Cause an avalanche. This can devastate mountain infrasture and mountain
+    cities.
+
+    Enhanced by high snowpack, ongoing snowstorm/blizzard.
+
+    This is a tier 3 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "avalanche"
+    __BASE_COST = 200
+    __PREREQS = _SpellPrereq(10, ((_Snow.name(), 1),) ) # Requires snow
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # TODO
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+###############################################################################
+class _Flood(Spell):
+###############################################################################
+    """
+    Cause a flooding rainstorm. Can kill people in cities and destroy
+    infrastructure.
+
+    Enhanced by high soil moisture, high dewpoints, low pressure.
+
+    This is a tier 3 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "flood"
+    __BASE_COST = 200
+    __PREREQS = _SpellPrereq(10, ((_Tstorm.name(), 1),) ) # Requires tstorm
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # TODO
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+###############################################################################
+class _Dry(Spell):
+###############################################################################
+    """
+    Causes abnormally dry weather. Hurts food production by reducing soil
+    moisture.
+
+    Enhanced by high temperatures, low dewpoints, high pressure.
+
+    This is a tier 3 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "dry"
+    __BASE_COST = 200
+    __PREREQS = _SpellPrereq(10, ((_Fire.name(), 1),) ) # Requires fire
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # TODO
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+###############################################################################
+class _Blizzard(Spell):
+###############################################################################
+    """
+    Causes a massive snow/wind storm. Drastically reduces temperatures. Will
+    kill people in cities and drastically reduce tile yields temporarily.
+
+    Enhanced by low temperatures, high dewpoints, low pressure, high winds.
+
+    This is a tier 3 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "blizzard"
+    __BASE_COST = 200
+    __PREREQS = _SpellPrereq(10, ((_Snow.name(), 1),) ) # Requires snow
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # TODO
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+###############################################################################
+class _Tornado(Spell):
+###############################################################################
+    """
+    Causes a large severe thunderstorm outbreak with tornadoes. Severe storms
+    impact a large area. Each tornado has a chance of scoring a "direct hit".
+    Infrastructure/cities that get a direct hit will take serious damage.
+
+    Enhanced by same things that enhance thunderstorms.
+
+    This is a tier 3 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "tornado"
+    __BASE_COST = 200
+    __PREREQS = _SpellPrereq(10, ((_Tstorm.name(), 1),) ) # Requires tstorm
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # TODO
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+###############################################################################
+class _Heatwave(Spell):
+###############################################################################
+    """
+    Will cause the next season to be abnormally warm for the surrounding region.
+    Note that this spell affects long-term weather.
+
+    Enhanced by low soil moisture.
+
+    This is a tier 4 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "heatwave"
+    __BASE_COST = 400
+    __PREREQS = _SpellPrereq(15, ((_Dry.name(), 1),) ) # Requires dry
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # TODO
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+###############################################################################
+class _Coldwave(Spell):
+###############################################################################
+    """
+    Will cause the next season to be abnormally cold for the surrounding region.
+    Note that this spell affects long-term weather.
+
+    Enhanced by high snowpack?
+
+    This is a tier 4 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "coldwave"
+    __BASE_COST = 400
+    __PREREQS = _SpellPrereq(15, ((_Blizzard.name(), 1),) ) # Requires blizzard
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # TODO
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+###############################################################################
+class _Drought(Spell):
+###############################################################################
+    """
+    Will cause the next season to be abnormally dry for the surrounding region.
+    Note that this spell affects long-term weather.
+
+    Enhanced by low soil moisture.
+
+    This is a tier 4 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "drought"
+    __BASE_COST = 400
+    __PREREQS = _SpellPrereq(15, ((_Dry.name(), 1),) ) # Requires dry
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # TODO
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+###############################################################################
+class _Monsoon(Spell):
+###############################################################################
+    """
+    Will cause the next season to be abnormally moist for the surrounding region.
+    Note that this spell affects long-term weather.
+
+    Enhanced by high soil moisture.
+
+    This is a tier 4 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "monsoon"
+    __BASE_COST = 400
+    __PREREQS = _SpellPrereq(15, ((_Flood.name(), 1),) ) # Requires flood
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # TODO
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+###############################################################################
+class _Disease(Spell):
+###############################################################################
+    """
+    Will cause a disease to breakout in the targetted city.
+
+    Enhanced by extreme temperatures, famine, and large cities.
+
+    This is a tier 5 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "disease"
+    __BASE_COST = 800
+    __PREREQS = _SpellPrereq(20, ((_Infect.name(), 1),) ) # Requires infect
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # TODO
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
 
 ###############################################################################
 class _Earthquake(Spell):
@@ -443,8 +1653,7 @@ class _Earthquake(Spell):
 
     __NAME = "quake"
     __BASE_COST = 800
-    __COST_FUNC = lambda cls, level: cls.base_cost() * pow(1.3, level - 1) # 30% per lvl
-    __PREREQS = SpellPrereq(20, ()) # Requires player level 20, no spell prereqs
+    __PREREQS = _SpellPrereq(20, ()) # Requires player lvl 20, no spell prereqs
 
     #
     # Public API
@@ -457,7 +1666,204 @@ class _Earthquake(Spell):
     def base_cost(cls): return cls.__BASE_COST
 
     @classmethod
-    def cost_func(cls): return cls.__COST_FUNC
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # No-op. This spell can be cast anywhere, anytime.
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+###############################################################################
+class _Hurricane(Spell):
+###############################################################################
+    """
+    Will spawn a hurricane. Causes floods, high winds, tornadoes, and tstorms
+    over a large region.
+
+    Enhanced by warm sea temperatures, high dewpoints, high pressure and the
+    farther away from land they start, the larger they get, but the higher
+    chance they have to miss land.
+
+    This is a tier 5 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "hurricane"
+    __BASE_COST = 800
+    __PREREQS = _SpellPrereq(20, ((_Monsoon.name(), 1),) ) # Requires monsoon
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # No-op. This spell can be cast anywhere, anytime.
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+###############################################################################
+class _Plague(Spell):
+###############################################################################
+    """
+    Will cause a large outbreak affecting all nearby cities.
+
+    Same enhancements as disease.
+
+    This is a tier 6 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "plague"
+    __BASE_COST = 1600
+    __PREREQS = _SpellPrereq(25, ((_Disease.name(), 1),) ) # Requires disease
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # No-op. This spell can be cast anywhere, anytime.
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+###############################################################################
+class _Volcano(Spell):
+###############################################################################
+    """
+    Will cause a large volcanic eruption; everything nearby will be
+    eradicated.
+
+    Enhanced by magma build-up.
+
+    This is a tier 6 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "volcano"
+    __BASE_COST = 1600
+    __PREREQS = _SpellPrereq(25, ((_Earthquake.name(), 1),) ) # Requires quake
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
+
+    @classmethod
+    def prereqs(cls): return cls.__PREREQS
+
+    ###########################################################################
+    def __init__(self, level, location):
+    ###########################################################################
+        super(self.__class__, self).__init__(level, location)
+
+    ###########################################################################
+    def verify_apply(self):
+    ###########################################################################
+        # No-op. This spell can be cast anywhere, anytime.
+        pass
+
+    ###########################################################################
+    def apply(self):
+    ###########################################################################
+        # TODO
+        return 0
+
+###############################################################################
+class _Asteroid(Spell):
+###############################################################################
+    """
+    Hurls an asteriod at the planet. There is a chance the asteroid
+    will miss or hit somewhere other than the targetted area. Will
+    eradicate everything over a large area.
+
+    This is a tier 7 spell
+    """
+
+    #
+    # Class Variables
+    #
+
+    __NAME = "asteroid"
+    __BASE_COST = 3200
+    __PREREQS = _SpellPrereq(30, ((_Volcano.name(), 1),) ) # Requires volcano
+
+    #
+    # Public API
+    #
+
+    @classmethod
+    def name(cls): return cls.__NAME
+
+    @classmethod
+    def base_cost(cls): return cls.__BASE_COST
 
     @classmethod
     def prereqs(cls): return cls.__PREREQS
