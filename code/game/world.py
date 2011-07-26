@@ -1,10 +1,8 @@
 #! /usr/bin/env python
 
-from __future__ import print_function
 import unittest
 
 from baal_time import Time
-from drawable import curr_draw_mode, DrawMode
 from world_tile import WorldTile
 from weather import AnomalyCategory, Anomaly
 from baal_common import prequire, check_access, grant_access
@@ -50,15 +48,13 @@ class World(object):
         """
         return self.__cities_impl()
 
+    def time(self): return self.__time
+
+    def iter_tiles(self): return iter(self.__tiles)
+
+    def iter_anomalies(self): return iter(self.__recent_anomalies)
+
     def to_xml(self): return self.__to_xml_impl()
-
-    #
-    # Drawing API
-    #
-
-    def draw_text(self): return self.__draw_text_impl()
-
-    def draw_graphics(self): return self.__draw_graphics_impl()
 
     #
     # Modification API
@@ -137,54 +133,6 @@ class World(object):
     def __to_xml_impl(self):
     ###########################################################################
         # TODO - Aaron
-        pass
-
-    ###########################################################################
-    def __draw_text_impl(self):
-    ###########################################################################
-        real_draw_mode = curr_draw_mode()
-
-        self.__time.draw_text()
-        print()
-
-        # Make room for row labels
-        print("  ", end="")
-
-        # Draw column labels. Need to take 1 char space separator into account.
-        for col_id in xrange(self.width()):
-            print(("%d" % col_id).center(WorldTile.TILE_TEXT_WIDTH), end=" ")
-        print()
-
-        # Draw tiles
-        for row_id, row in enumerate(self.__tiles):
-            for height in xrange(WorldTile.TILE_TEXT_HEIGHT):
-                # Middle of tile displays "overlay" info, for the rest
-                # of the tile, just draw the land.
-                if (height == WorldTile.TILE_TEXT_HEIGHT / 2):
-                    draw_mode = real_draw_mode
-                    print(row_id, end=" ") # row label
-                else:
-                    draw_mode = DrawMode.LAND
-                    print("  ", end="") # no label
-
-                # Draw tiles
-                for tile in row:
-                    tile.draw_text(draw_mode)
-                    print(" ", end="") # col separator
-
-                print()
-
-            print()
-
-        # Draw recent anomalies
-        for anomaly in self.__recent_anomalies:
-            anomaly.draw_text()
-            print()
-
-    ###########################################################################
-    def __draw_graphics_impl(self):
-    ###########################################################################
-        # TODO
         pass
 
     ###########################################################################

@@ -5,15 +5,13 @@ The file contains classes having to do with weather and climate (and classes
 closely coupled to those concepts)
 """
 
-from __future__ import print_function
 import unittest, random, sys
 
 from baal_common import prequire, SmartEnum, ProgramError, Location, \
-    cprint, BLUE, GREEN, RED, YELLOW, \
     grant_access, check_access, check_callers, \
     set_prequire_handler, raising_prequire_handler, \
     create_names_by_enum_value
-from drawable import Drawable, DrawMode, curr_draw_mode
+from draw_mode import DrawMode
 import baal_common
 from baal_time import Season
 
@@ -118,7 +116,7 @@ class Climate(object):
         pass
 
 ###############################################################################
-class Atmosphere(Drawable):
+class Atmosphere(object):
 ###############################################################################
     """
     Every tile has atmosphere above it. Atmosphere has dewpoint,
@@ -148,14 +146,6 @@ class Atmosphere(Drawable):
     def to_xml(self): return self.__to_xml_impl()
 
     #
-    # Drawing API
-    #
-
-    def draw_text(self): return self.__draw_text_impl()
-
-    def draw_graphics(self): return self.__draw_graphics_impl()
-
-    #
     # Modification API
     #
 
@@ -181,12 +171,6 @@ class Atmosphere(Drawable):
     def _compute_dewpoint(self):
         return self.__compute_dewpoint_impl()
 
-    def _compute_color(self, draw_mode, field_value):
-        return self.__compute_color_impl(draw_mode, field_value)
-
-    def _get_field_for_draw_mode(self, draw_mode):
-        return self.__get_field_for_draw_mode_impl(draw_mode)
-
     #
     # ==== Class constants ====
     #
@@ -196,17 +180,6 @@ class Atmosphere(Drawable):
     ALLOW_CYCLE_TURN      = "_allow_atmos_cycle_turn"
     ALLOW_SET_TEMPERATURE = "_allow_atmos_set_temperature"
     ALLOW_SET_WIND        = "_allow_atmos_set_wind"
-
-    # Describes how to draw the various fields. The first value in the pair
-    # is the upper-bound for the corresponding color.
-    _MAX = 999999
-    _FIELD_COLOR_MAP = {
-        DrawMode.WIND        : ((10, GREEN),  (20, YELLOW),   (_MAX, RED)),
-        DrawMode.DEWPOINT    : ((32, RED),    (55, YELLOW),   (_MAX, GREEN)),
-        DrawMode.TEMPERATURE : ((32, BLUE),   (80, YELLOW),   (_MAX, RED)),
-        DrawMode.PRESSURE    : ((975, GREEN), (1025, YELLOW), (_MAX, RED)),
-        DrawMode.RAINFALL    : ((2,  RED),    (10, YELLOW),   (_MAX, RED))
-    }
 
     #
     # ==== Implementation ====
@@ -228,51 +201,6 @@ class Atmosphere(Drawable):
     def __to_xml_impl(self):
     ###########################################################################
         # TODO - Aaron
-        pass
-
-    ###########################################################################
-    def __compute_color_impl(self, draw_mode, field_value):
-    ###########################################################################
-        for upper_bound, color in self._FIELD_COLOR_MAP[draw_mode]:
-            if (field_value < upper_bound):
-                return color
-
-        prequire(False,
-                 "Failed to find color for ", draw_mode, ", val ", field_value)
-
-    ###########################################################################
-    def __get_field_for_draw_mode_impl(self, draw_mode):
-    ###########################################################################
-        if (draw_mode == DrawMode.WIND):
-            return self.wind()
-        elif (draw_mode == DrawMode.DEWPOINT):
-            return self.dewpoint()
-        elif (draw_mode == DrawMode.TEMPERATURE):
-            return self.temperature()
-        elif (draw_mode == DrawMode.PRESSURE):
-            return self.pressure()
-        elif (draw_mode == DrawMode.RAINFALL):
-            return self.rainfall()
-        else:
-            prequire(False, "Bad draw mode: ", draw_mode)
-
-    ###########################################################################
-    def __draw_text_impl(self):
-    ###########################################################################
-        from world_tile import WorldTile
-
-        draw_mode = curr_draw_mode()
-
-        field = self._get_field_for_draw_mode(draw_mode)
-        color = self._compute_color(draw_mode, field)
-        str_  = str(field).center(WorldTile.TILE_TEXT_WIDTH)
-
-        cprint(color, str_)
-
-    ###########################################################################
-    def __draw_graphics_impl(self):
-    ###########################################################################
-        # TODO
         pass
 
     ###########################################################################
@@ -395,15 +323,13 @@ class Anomaly(object):
         """
         return self.__pressure_effect_impl(location)
 
+    def intensity(self): return self.__intensity
+
+    def category(self): return self.__category
+
+    def location(self): return self.__location
+
     def to_xml(self): return self.__to_xml_impl()
-
-    #
-    # Drawing API
-    #
-
-    def draw_text(self): return self.__draw_text_impl()
-
-    def draw_graphics(self): return self.__draw_graphics_impl()
 
     #
     # ==== Internal methods ====
@@ -519,19 +445,6 @@ class Anomaly(object):
         # TODO - Aaron
         pass
 
-    ###########################################################################
-    def __draw_text_impl(self):
-    ###########################################################################
-        print("Level:", self.__intensity, self.__category,
-              "anomaly at location", self.__location,
-              end="")
-
-    ###########################################################################
-    def __draw_graphics_impl(self):
-    ###########################################################################
-        # TODO
-        pass
-
 #
 # Free-function API
 #
@@ -589,8 +502,6 @@ class TestWeather(unittest.TestCase):
         self.assertEqual(climate.temperature(first_season), atmos.temperature())
         self.assertEqual(climate.rainfall(first_season),    atmos.rainfall())
         self.assertEqual(climate.wind(first_season),        atmos.wind())
-
-        atmos._compute_color(DrawMode("pressure"), atmos.pressure())
 
 if (__name__ == "__main__"):
     unittest.main()

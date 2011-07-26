@@ -73,26 +73,6 @@ def _set_draw_mode(draw_mode):
     global _draw_mode
     _draw_mode = draw_mode
 
-###############################################################################
-class Drawable(object):
-###############################################################################
-    """
-    All classes that are drawable should inherit from this class. This class
-    does not have any member data and should not be instatiated. It is only
-    intended to impose an interface on its subclasses.
-    TODO: Drawing design needs to be reviewed
-    """
-
-    def __init__(self): prequire(False, "Do not instantiate Drawable")
-
-    #
-    # Public API
-    #
-
-    def draw_text(self): prequire(False, "Called abstract draw_test")
-
-    def draw_graphics(self): prequire(False, "Called abstract draw_graphics")
-
 #
 # Tests
 #

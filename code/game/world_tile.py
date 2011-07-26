@@ -7,10 +7,8 @@ generating a ton of header files.
 
 import unittest
 
-from drawable import Drawable, DrawMode, curr_draw_mode, _set_draw_mode
 from baal_common import prequire, ProgramError, \
-    check_access, check_callers, grant_access, \
-    cprint, GREEN, YELLOW, BLUE, RED, WHITE
+    check_access, check_callers, grant_access
 from weather import Atmosphere, is_atmospheric, Climate
 from geology import is_geological, Geology
 
@@ -41,12 +39,10 @@ class Yield(object):
         pass
 
 ###############################################################################
-class WorldTile(Drawable):
+class WorldTile(object):
 ###############################################################################
     """
-    WorldTile is the abstract base class of all tiles. Tile classes
-    are generally passive containers of data but they do know
-    how to draw themselves.
+    WorldTile is the abstract base class of all tiles.
 
     Every tile has an atmosphere, climate, geology, and yield.
 
@@ -79,6 +75,8 @@ class WorldTile(Drawable):
 
     def atmosphere(self): return self.__atmosphere
 
+    def geology(self): return self.__geology
+
     def to_xml(self): return self.__to_xml_impl()
 
     def infra_level(self): return None
@@ -98,15 +96,6 @@ class WorldTile(Drawable):
     def elevation(self): return None
 
     def snowpack(self): return None
-
-    #
-    # Drawing API
-    #
-
-    def draw_text(self, mode_override=None):
-        return self.__draw_text_impl(mode_override)
-
-    def draw_graphics(self): return self.__draw_graphics_impl()
 
     #
     # Modification API
@@ -129,24 +118,8 @@ class WorldTile(Drawable):
     # ==== Class constants ====
     #
 
-    ALLOW_WORK = "_world_tile_allow_work"
+    ALLOW_WORK       = "_world_tile_allow_work"
     ALLOW_CYCLE_TURN = "_world_tile_allow_cycle_turn"
-    TILE_TEXT_WIDTH  = 6
-    TILE_TEXT_HEIGHT = 5
-
-    #
-    # ==== Internal methods ====
-    #
-
-    def _draw_land(self): return self.__draw_land_impl()
-
-    @classmethod
-    def _color(cls):
-        prequire(False, "Please override")
-
-    @classmethod
-    def _symbol(cls):
-        prequire(False, "Please override")
 
     #
     # ==== Implementation ====
@@ -177,64 +150,6 @@ class WorldTile(Drawable):
         pass
 
     ###########################################################################
-    def __draw_text_impl(self, mode_override):
-    ###########################################################################
-        if (mode_override is None):
-            draw_mode = curr_draw_mode()
-        else:
-            draw_mode = mode_override
-
-        if (draw_mode == DrawMode.LAND):
-            self._draw_land()
-
-        elif (draw_mode == DrawMode.CIV):
-            if (self.city() is not None):
-                cprint(RED, " C: ",
-                       str(self.city().rank()).center(self.TILE_TEXT_WIDTH-4))
-            elif (self.infra_level() is not None and self.infra_level() > 0):
-                cprint(YELLOW, " I: ",
-                       str(self.infra_level()).center(self.TILE_TEXT_WIDTH-4))
-            else:
-                self._draw_land()
-
-        elif (draw_mode == DrawMode.MOISTURE):
-            moisture = self.soil_moisture()
-            if (moisture is not None):
-                if (moisture < 1.0):
-                    color = YELLOW
-                elif (moisture < FoodTile.FLOODING_THRESHOLD):
-                    color = GREEN
-                elif (moisture < FoodTile.TOTALLY_FLOODED):
-                    color = BLUE
-                else:
-                    color = RED
-                cprint(color, "%.3f" % moisture)
-            else:
-                self._draw_land()
-
-        elif (draw_mode == DrawMode.YIELD):
-            yield_ = self.yield_()
-            if (yield_.food > 0):
-                cprint(GREEN, "%.3f" % yield_.food)
-            else:
-                cprint(RED, "%.3f" % yield_.prod)
-
-        elif (is_geological(draw_mode)):
-            self.__geology.draw_text()
-
-        elif (is_atmospheric(draw_mode)):
-            self.__atmosphere.draw_text()
-
-        else:
-            prequire(False, "Unhandled mode: ", draw_mode)
-
-    ###########################################################################
-    def __draw_graphics_impl(self):
-    ###########################################################################
-        # TODO
-        pass
-
-    ###########################################################################
     def __work_impl(self):
     ###########################################################################
         check_access(self.ALLOW_WORK)
@@ -250,11 +165,6 @@ class WorldTile(Drawable):
         self.__geology.cycle_turn()
         self.__atmosphere.cycle_turn(anomalies, self.location(), season)
         self.__worked = False
-
-    ###########################################################################
-    def __draw_land_impl(self):
-    ###########################################################################
-        cprint(self._color(), self._symbol() * self.TILE_TEXT_WIDTH)
 
 grant_access(WorldTile, Atmosphere.ALLOW_CYCLE_TURN)
 grant_access(WorldTile, Geology.ALLOW_CYCLE_TURN)
@@ -297,24 +207,12 @@ class OceanTile(WorldTile):
     #
 
     ALLOW_SET_SURFACE_TEMP = "_ocean_tile_allow_set_surface_temp"
-    _COLOR = BLUE
-    _SYMBOL = "~"
     _FOOD_YIELD = 3
 
     @classmethod
     def _NEW_SURFACE_TEMP_FUNC(cls, orig_surf_temp, new_air_temp):
         # Just average the two for now
         return (orig_surf_temp + new_air_temp) / 2
-
-    #
-    # ==== Internal methods ====
-    #
-
-    @classmethod
-    def _color(cls): return cls._COLOR
-
-    @classmethod
-    def _symbol(cls): return cls._SYMBOL
 
     #
     # ==== Implementation ====
@@ -404,6 +302,14 @@ class LandTile(WorldTile):
 
     LAND_TILE_MAX_INFRA = 5
 
+    ALLOW_DAMAGE        = "_allow_damage_land_tile"
+    ALLOW_BUILD_INFRA   = "_allow_build_infra_land_tile"
+    ALLOW_DESTROY_INFRA = "_allow_destroy_infra_land_tile"
+
+    #
+    # Tweakable Constants
+    #
+
     @classmethod
     def _LAND_TILE_RECOVERY_FUNC(cls, prior):
         # Recovers 10% of full hp per turn
@@ -413,10 +319,6 @@ class LandTile(WorldTile):
     @classmethod
     def _COMPUTE_YIELD_FUNC(cls, normal_yield, infra_level, tile_hp):
         return normal_yield * (1 + infra_level) * tile_hp
-
-    ALLOW_DAMAGE = "_allow_damage_land_tile"
-    ALLOW_BUILD_INFRA = "_allow_build_infra_land_tile"
-    ALLOW_DESTROY_INFRA = "_allow_destroy_infra_land_tile"
 
     #
     # ==== Implementation ====
@@ -540,8 +442,9 @@ class MountainTile(LandTile):
 
     _PROD_YIELD = 2
 
-    _COLOR = WHITE
-    _SYMBOL = "^"
+    #
+    # Tweakable Constants
+    #
 
     @classmethod
     def _PORTION_OF_PRECIP_THAT_FALLS_AS_SNOW_FUNC(cls, temp):
@@ -560,16 +463,6 @@ class MountainTile(LandTile):
             return float(temp - 30) / 45
         else:
             return 1.0
-
-    #
-    # ==== Internal methods ====
-    #
-
-    @classmethod
-    def _color(cls): return cls._COLOR
-
-    @classmethod
-    def _symbol(cls): return cls._SYMBOL
 
     #
     # ==== Implementation ====
@@ -622,14 +515,6 @@ class DesertTile(LandTile):
                                          location)
 
     _PROD_YIELD = 0.5
-    _COLOR = YELLOW
-    _SYMBOL = "-"
-
-    @classmethod
-    def _color(cls): return cls._COLOR
-
-    @classmethod
-    def _symbol(cls): return cls._SYMBOL
 
 ###############################################################################
 class TundraTile(LandTile):
@@ -645,14 +530,6 @@ class TundraTile(LandTile):
                                          location)
 
     _PROD_YIELD = 0.5
-    _COLOR = WHITE
-    _SYMBOL = "-"
-
-    @classmethod
-    def _color(cls): return cls._COLOR
-
-    @classmethod
-    def _symbol(cls): return cls._SYMBOL
 
 ###############################################################################
 class HillsTile(LandTile):
@@ -671,15 +548,6 @@ class HillsTile(LandTile):
                                         location)
 
     _PROD_YIELD = 1
-    _COLOR = GREEN
-    _SYMBOL = "^"
-
-    @classmethod
-    def _color(cls): return cls._COLOR
-
-    @classmethod
-    def _symbol(cls): return cls._SYMBOL
-
 
 ###############################################################################
 class FoodTile(LandTile):
@@ -769,14 +637,6 @@ class PlainsTile(LandTile):
                                          location)
 
     _FOOD_YIELD = 1
-    _COLOR = GREEN
-    _SYMBOL = "-"
-
-    @classmethod
-    def _color(cls): return cls._COLOR
-
-    @classmethod
-    def _symbol(cls): return cls._SYMBOL
 
 ###############################################################################
 class LushTile(LandTile):
@@ -793,14 +653,6 @@ class LushTile(LandTile):
                                        location)
 
     _FOOD_YIELD = 2
-    _COLOR = GREEN
-    _SYMBOL = "="
-
-    @classmethod
-    def _color(cls): return cls._COLOR
-
-    @classmethod
-    def _symbol(cls): return cls._SYMBOL
 
 #
 # Tests

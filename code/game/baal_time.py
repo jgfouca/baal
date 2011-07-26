@@ -2,9 +2,7 @@
 
 import unittest
 
-from baal_common import prequire, cprint, BLUE, GREEN, RED, YELLOW, \
-    SmartEnum, create_names_by_enum_value
-from drawable import Drawable
+from baal_common import prequire, SmartEnum, create_names_by_enum_value
 
 class _SeasonMeta(type):
     def __iter__(mcs): return Season._iter_hook()
@@ -38,7 +36,7 @@ for name in Season._names():
     setattr(Season, name, Season(name))
 
 ###############################################################################
-class Time(Drawable):
+class Time(object):
 ###############################################################################
     """
     Encapsulates how time elapses in the system.
@@ -59,14 +57,6 @@ class Time(Drawable):
     def year(self): return self.__year
 
     def to_xml(self): return self.__to_xml_impl()
-
-    #
-    # Drawing API
-    #
-
-    def draw_text(self): return self.__draw_text_impl()
-
-    def draw_graphics(self): return self.__draw_graphics_impl()
 
     #
     # Modifying API
@@ -98,29 +88,6 @@ class Time(Drawable):
     def __to_xml_impl(self):
     ###########################################################################
         # TODO - Aaron
-        pass
-
-    ###########################################################################
-    def __draw_text_impl(self):
-    ###########################################################################
-        # Compute color
-        if (self.__season == "winter"):
-            color = BLUE
-        elif (self.__season == "spring"):
-            color = GREEN
-        elif (self.__season == "summer"):
-            color = RED
-        elif (self.__season == "fall"):
-            color = YELLOW
-        else:
-            prequire(False, "Unhandled season ", self.__season)
-
-        cprint(color, self.__season, ", Year ", self.__year)
-
-    ###########################################################################
-    def __draw_graphics_impl(self):
-    ###########################################################################
-        # TODO
         pass
 
     ###########################################################################

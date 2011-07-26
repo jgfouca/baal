@@ -2,15 +2,14 @@
 
 import unittest
 
-from drawable import Drawable
 from configuration import Configuration
 from talents import Talents
-from baal_common import urequire, prequire, check_access, cprint, \
-    GREEN, BLUE, YELLOW, ProgramError, UserError, Location, \
+from baal_common import urequire, prequire, check_access, \
+    ProgramError, UserError, Location, \
     set_prequire_handler, raising_prequire_handler, grant_access
 
 ###############################################################################
-class Player(Drawable):
+class Player(object):
 ###############################################################################
     """
     Encapsulates player state.
@@ -40,6 +39,8 @@ class Player(Drawable):
 
     def next_level_cost(self): return self.__next_level_cost
 
+    def name(self): return self.__name
+
     def exp(self): return self.__exp
 
     def level(self): return self.__level
@@ -56,14 +57,6 @@ class Player(Drawable):
         return self.__verify_cast_impl(spell)
 
     def to_xml(self): return self.__to_xml_impl()
-
-    #
-    # Drawing API
-    #
-
-    def draw_text(self): return self.__draw_text_impl()
-
-    def draw_graphics(self): return self.__draw_graphics_impl()
 
     #
     # Modification API
@@ -161,24 +154,6 @@ class Player(Drawable):
     def __to_xml_impl(self):
     ###########################################################################
         # TODO - Aaron
-        pass
-
-    ###########################################################################
-    def __draw_text_impl(self):
-    ###########################################################################
-        print "PLAYER STATS:"
-        print "  name:", self.__name
-        print "  level:",
-        cprint(GREEN, self.__level)
-        print "\n  mana:",
-        cprint(BLUE, self.__mana, "/", self.__max_mana)
-        print "\n  exp:",
-        cprint(YELLOW, self.__exp, "/", self.__next_level_cost)
-
-    ###########################################################################
-    def __draw_graphics_impl(self):
-    ###########################################################################
-        # TODO
         pass
 
     ###########################################################################

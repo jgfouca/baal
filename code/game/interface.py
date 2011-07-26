@@ -12,6 +12,7 @@ from baal_common import prequire, clear_screen, SmartEnum, UserError, cprint, \
     RED, GREEN, create_names_by_enum_value
 from command_factory import CommandFactory
 from engine import engine
+from draw_text import DrawText
 
 class _InterfacesMeta(type):
     def __iter__(mcs): return Interfaces._iter_hook()
@@ -162,20 +163,22 @@ class TextInterface(Interface):
         readline.set_completer(_readline_completer)
         readline.parse_and_bind("tab: complete")
 
+        self.__drawer = DrawText()
+
     ###########################################################################
     def draw(self):
     ###########################################################################
         clear_screen()
 
         # Draw world
-        engine().world().draw_text()
+        self.__drawer.draw(engine().world())
 
         # Draw Player
-        engine().player().draw_text()
+        self.__drawer.draw(engine().player())
         print
 
         # Draw AI Player
-        engine().ai_player().draw_text()
+        self.__drawer.draw(engine().ai_player())
         print
 
         sys.stdout.flush()

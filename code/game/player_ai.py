@@ -2,15 +2,13 @@
 
 import unittest
 
-from drawable import Drawable
-from baal_common import prequire, cprint, GREEN, BLUE, \
-    check_access, grant_access
+from baal_common import prequire, check_access, grant_access
 from engine import engine
 from baal_math import poly_growth
 from city import City
 
 ###############################################################################
-class PlayerAI(Drawable):
+class PlayerAI(object):
 ###############################################################################
     """
     Manages the "global" (higher-than-city) affairs of the AI. Since most
@@ -42,14 +40,6 @@ class PlayerAI(Drawable):
     def to_xml(self): return self.__to_xml_impl()
 
     #
-    # Drawing API
-    #
-
-    def draw_text(self): return self.__draw_text_impl()
-
-    def draw_graphics(self): return self.__draw_graphics_impl()
-
-    #
     # Modifying API
     #
 
@@ -65,7 +55,7 @@ class PlayerAI(Drawable):
 
     ALLOW_CYCLE_TURN = "_player_ai_allow_cycle_turn"
 
-    __STARTING_TECH_LEVEL = 1
+    __STARTING_TECH_LEVEL   = 1
     __FIRST_TECH_LEVEL_COST = 1000
 
     # We express arbitrary rule choices as short classmethods that are
@@ -113,21 +103,6 @@ class PlayerAI(Drawable):
     def __to_xml_impl(self):
     ###########################################################################
         # TODO Aaron
-        pass
-
-    ###########################################################################
-    def __draw_text_impl(self):
-    ###########################################################################
-        print "AI PLAYER STATS:"
-        print "  tech level:",
-        cprint(GREEN, self.tech_level())
-        print "\n  population:",
-        cprint(BLUE, self.population())
-
-    ###########################################################################
-    def __draw_graphics_impl(self):
-    ###########################################################################
-        # TODO
         pass
 
     ###########################################################################

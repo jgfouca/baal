@@ -9,11 +9,9 @@ very small classes.
 
 import unittest
 
-from drawable import Drawable, DrawMode, curr_draw_mode, _set_draw_mode
-from baal_common import prequire, ProgramError, cprint, \
-                        GREEN, YELLOW, BLUE, RED, WHITE, \
-                        set_prequire_handler, raising_prequire_handler, \
-                        check_access, grant_access
+from draw_mode import DrawMode
+from baal_common import prequire, ProgramError, check_access, grant_access, \
+                        set_prequire_handler, raising_prequire_handler
 
 #
 # Free-function API
@@ -25,7 +23,7 @@ def is_geological(draw_mode):
     return draw_mode in [DrawMode.GEOLOGY, DrawMode.TENSION, DrawMode.MAGMA]
 
 ###############################################################################
-class Geology(Drawable):
+class Geology(object):
 ###############################################################################
     """
     Contains geology (plate-tectonic) data. This is an abstract base class for
@@ -58,14 +56,6 @@ class Geology(Drawable):
     def to_xml(self): return self.__to_xml_impl()
 
     #
-    # Drawing API
-    #
-
-    def draw_text(self): return self.__draw_text_impl()
-
-    def draw_graphics(self): return self.__draw_graphics_impl()
-
-    #
     # Modification API
     #
 
@@ -84,12 +74,6 @@ class Geology(Drawable):
     #
     # ==== Protected Abstract API ====
     #
-
-    @classmethod
-    def _color(cls): prequire(False, "Must override")
-
-    @classmethod
-    def _symbol(cls): prequire(False, "Must override")
 
     @classmethod
     def _base_magma_buildup(cls): prequire(False, "Must override")
@@ -120,43 +104,6 @@ class Geology(Drawable):
         pass # Aaron TODO
 
     ###########################################################################
-    def __draw_text_impl(self):
-    ###########################################################################
-        from world_tile import WorldTile
-
-        draw_mode = curr_draw_mode()
-        expected_length = WorldTile.TILE_TEXT_WIDTH
-
-        # Figure out what string to print and what color it should be
-        if (draw_mode == DrawMode.GEOLOGY):
-            color = self._color()
-            to_draw = self._symbol().center(expected_length)
-        elif (draw_mode in [DrawMode.TENSION, DrawMode.MAGMA]):
-            value = self.__tension if draw_mode == DrawMode.TENSION \
-                    else self.__magma
-            to_draw = ("%.3f" % value).center(expected_length)
-
-            if (value < .333):
-                color = GREEN
-            elif (value < .666):
-                color = YELLOW
-            else:
-                color = RED
-        else:
-            prequire(False, "Should not draw geology in mode: ", draw_mode)
-
-        prequire(len(to_draw) == WorldTile.TILE_TEXT_WIDTH,
-                 "Symbol '", to_draw, "' is wrong length")
-
-        cprint(color, to_draw)
-
-    ###########################################################################
-    def __draw_graphics_impl(self):
-    ###########################################################################
-        # TODO
-        pass
-
-    ###########################################################################
     def __cycle_turn_impl(self):
     ###########################################################################
         check_access(self.ALLOW_CYCLE_TURN)
@@ -181,17 +128,9 @@ class Divergent(Geology):
 
     _MAGMA_BUILDUP   = 0.001
     _TENSION_BUILDUP = 0.000
-    _COLOR           = BLUE
-    _SYMBOL          = "<-->"
 
     def __init__(self, plate_movement):
         super(self.__class__, self).__init__(plate_movement)
-
-    @classmethod
-    def _color(cls): return cls._COLOR
-
-    @classmethod
-    def _symbol(cls): return cls._SYMBOL
 
     @classmethod
     def _base_magma_buildup(cls): return cls._MAGMA_BUILDUP
@@ -209,17 +148,9 @@ class Subducting(Geology):
 
     _MAGMA_BUILDUP   = 0.002
     _TENSION_BUILDUP = 0.002
-    _COLOR           = RED
-    _SYMBOL          = "-v<-"
 
     def __init__(self, plate_movement):
         super(self.__class__, self).__init__(plate_movement)
-
-    @classmethod
-    def _color(cls): return cls._COLOR
-
-    @classmethod
-    def _symbol(cls): return cls._SYMBOL
 
     @classmethod
     def _base_magma_buildup(cls): return cls._MAGMA_BUILDUP
@@ -236,17 +167,9 @@ class Orogenic(Geology):
 
     _MAGMA_BUILDUP   = 0.000
     _TENSION_BUILDUP = 0.002
-    _COLOR           = GREEN
-    _SYMBOL          = "-><-"
 
     def __init__(self, plate_movement):
         super(self.__class__, self).__init__(plate_movement)
-
-    @classmethod
-    def _color(cls): return cls._COLOR
-
-    @classmethod
-    def _symbol(cls): return cls._SYMBOL
 
     @classmethod
     def _base_magma_buildup(cls): return cls._MAGMA_BUILDUP
@@ -263,17 +186,9 @@ class Transform(Geology):
 
     _MAGMA_BUILDUP   = 0.000
     _TENSION_BUILDUP = 0.003
-    _COLOR           = YELLOW
-    _SYMBOL          = "vv^^"
 
     def __init__(self, plate_movement):
         super(self.__class__, self).__init__(plate_movement)
-
-    @classmethod
-    def _color(cls): return cls._COLOR
-
-    @classmethod
-    def _symbol(cls): return cls._SYMBOL
 
     @classmethod
     def _base_magma_buildup(cls): return cls._MAGMA_BUILDUP
@@ -290,17 +205,9 @@ class Inactive(Geology):
 
     _MAGMA_BUILDUP   = 0.000
     _TENSION_BUILDUP = 0.000
-    _COLOR           = WHITE
-    _SYMBOL          = ""
 
     def __init__(self):
         super(self.__class__, self).__init__(0.0)
-
-    @classmethod
-    def _color(cls): return cls._COLOR
-
-    @classmethod
-    def _symbol(cls): return cls._SYMBOL
 
     @classmethod
     def _base_magma_buildup(cls): return cls._MAGMA_BUILDUP
@@ -329,18 +236,10 @@ class TestGeology(unittest.TestCase):
         # Test that we cannot create instances of Geology
         self.assertRaises(ProgramError, Geology, plate_movement)
 
-        # Check that classmethod structure works
-        subd = Subducting(plate_movement)
-        self.assertEqual(subd._color(), Subducting._COLOR)
-
-        # Check that drawing works
-        _set_draw_mode(DrawMode.CIV)
-        self.assertRaises(ProgramError, subd.draw_text)
+        # Check that is_geological works
         self.assertTrue(is_geological(DrawMode.MAGMA))
-        _set_draw_mode(DrawMode.MAGMA)
-        subd.draw_text()
-        _set_draw_mode(DrawMode.TENSION)
-        subd.draw_text()
+
+        subd = Subducting(plate_movement)
 
         # Check turn cycling
         subd.cycle_turn()

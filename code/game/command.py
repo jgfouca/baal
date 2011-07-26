@@ -5,9 +5,8 @@ import time
 from spell_factory import SpellFactory
 from baal_common import prequire, urequire, Location, UserError, grant_access
 from engine import engine
-from drawable import DrawMode
+from draw_mode import DrawMode, _set_draw_mode
 from player import Player
-import drawable
 
 ###############################################################################
 class Command(object):
@@ -392,7 +391,7 @@ class _DrawCommand(Command):
     ###########################################################################
         if (self.__new_mode is not None):
             # DrawCommand has the right to change draw mode
-            drawable._set_draw_mode(self.__new_mode)
+            _set_draw_mode(self.__new_mode)
 
         engine().interface().draw() # redraw
 
