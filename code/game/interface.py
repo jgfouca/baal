@@ -5,7 +5,7 @@ This file contains the API and implementation of everything having to do
 with interfaces in baal.
 """
 
-import readline, sys, unittest
+import readline, sys, unittest, pygame
 
 from configuration import Configuration
 from baal_common import prequire, clear_screen, SmartEnum, UserError, cprint, \
@@ -13,6 +13,7 @@ from baal_common import prequire, clear_screen, SmartEnum, UserError, cprint, \
 from command_factory import CommandFactory
 from engine import engine
 from draw_text import DrawText
+from draw_pygame import DrawPygame
 
 class _InterfacesMeta(type):
     def __iter__(mcs): return Interfaces._iter_hook()
@@ -33,7 +34,8 @@ class Interfaces(SmartEnum):
     #
     # First listed interface will be default
     TEXT, \
-    GRAPHICS = range(2)
+    PYGAME, \
+    PANDA = range(3)
 
     # Derive names from class members.
     _NAMES = create_names_by_enum_value(vars())
@@ -122,8 +124,8 @@ def create_interface():
 
     if (Interfaces.TEXT == interface):
         return TextInterface()
-    elif (Interfaces.GRAPHICS == interface):
-        return GraphicInterface()
+    elif (Interfaces.PYGAME == interface):
+        return PygameInterface()
     else:
         prequire(False, "Missing support for ", interface)
 
@@ -233,10 +235,85 @@ class TextInterface(Interface):
         sys.stdout.flush()
 
 ###############################################################################
-class GraphicInterface(Interface):
+class PygameInterface(Interface):
 ###############################################################################
-    # TODO
-    pass
+    """
+    Pygame-based implementation of an interface.
+    """
+
+    ###########################################################################
+    def __init__(self):
+    ###########################################################################
+        super(self.__class__, self).__init__()
+
+        self.__drawer = DrawPygame()
+
+    ###########################################################################
+    def draw(self):
+    ###########################################################################
+        # Begin draw cycle
+        self.__drawer.begin_draw()
+
+        # Draw world
+        self.__drawer.draw(engine().world())
+
+        # Draw Player
+        self.__drawer.draw(engine().player())
+
+        # Draw AI Player
+        self.__drawer.draw(engine().ai_player())
+
+        # End draw cycle
+        self.__drawer.end_draw()
+
+    ###########################################################################
+    def interact(self):
+    ###########################################################################
+        # Enter loop for this turn
+        while (self._end_turns == 0):
+            # Grab a line of text
+            try:
+                line = raw_input("% ")
+            except KeyboardInterrupt:
+                # User ctrl-d
+                engine().quit()
+                break
+
+            # Add to history and process if not empty string
+            if (line):
+                try:
+                    command = CommandFactory.parse_command(line)
+                    command.apply()
+                except UserError, error:
+                    print "ERROR:", error
+                    print "\nType: 'help [command]' for assistence"
+                    sys.stdout.flush()
+
+        self._end_turns -= 1
+
+    ###########################################################################
+    def help(self, helpmsg):
+    ###########################################################################
+        print helpmsg
+        sys.stdout.flush()
+
+    ###########################################################################
+    def spell_report(self, report):
+    ###########################################################################
+        cprint(RED, report)
+        sys.stdout.flush()
+
+    ###########################################################################
+    def human_wins(self):
+    ###########################################################################
+        cprint(GREEN, "GRATZ, UR WINNAR!\n")
+        sys.stdout.flush()
+
+    ###########################################################################
+    def ai_wins(self):
+    ###########################################################################
+        cprint(RED, "UR LUZER. LOL, GET PWNED\n")
+        sys.stdout.flush()
 
 #
 # Tests

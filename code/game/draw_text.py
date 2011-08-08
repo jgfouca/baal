@@ -211,7 +211,7 @@ class DrawText(object):
         print()
 
         # Draw tiles
-        for row_id, row in enumerate(item.iter_tiles()):
+        for row_id, row in enumerate(item.iter_rows()):
             for height in xrange(self.TILE_TEXT_HEIGHT):
                 # Middle of tile displays "overlay" info, for the rest
                 # of the tile, just draw the land.

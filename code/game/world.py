@@ -50,7 +50,7 @@ class World(object):
 
     def time(self): return self.__time
 
-    def iter_tiles(self): return iter(self.__tiles)
+    def iter_rows(self): return iter(self.__rows)
 
     def iter_anomalies(self): return iter(self.__recent_anomalies)
 
@@ -98,12 +98,12 @@ class World(object):
         self.__height = height
         self.__time   = Time()
 
-        self.__tiles = []
+        self.__rows = []
         total = 0
         for idx, tile in enumerate(tiles):
             if (idx % width == 0):
-                self.__tiles.append([])
-            self.__tiles[-1].append(tile)
+                self.__rows.append([])
+            self.__rows[-1].append(tile)
             total += 1
 
         prequire(total == width * height, "Wrong number of tiles")
@@ -121,7 +121,7 @@ class World(object):
     def __tile_impl(self, location):
     ###########################################################################
         prequire(self.in_bounds(location), location, " out of bounds")
-        return self.__tiles[location.row][location.col]
+        return self.__rows[location.row][location.col]
 
     ###########################################################################
     def __cities_impl(self):
@@ -143,7 +143,7 @@ class World(object):
         # Phase 1: Generate anomalies.
         # TODO: How to handle overlapping anomalies of same category?
         self.__recent_anomalies = []
-        for row in self.__tiles:
+        for row in self.__rows:
             for tile in row:
                 for anomaly_category in AnomalyCategory:
                     anomaly = Anomaly.generate_anomaly(anomaly_category,
@@ -163,7 +163,7 @@ class World(object):
         # is why time is not incremented until later. Current
         # conditions for the next turn will be derived from these
         # anomalies.
-        for row in self.__tiles:
+        for row in self.__rows:
             for tile in row:
                 tile.cycle_turn(self.__recent_anomalies,
                                 self.__time.season())
