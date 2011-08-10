@@ -32,7 +32,7 @@ class ProgramError(Exception):
     pass
 
 # Change this to False for production release
-_DEBUG = True
+_DEBUG = False
 
 ###############################################################################
 def debugger_prequire_handler(str_):

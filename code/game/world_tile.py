@@ -75,6 +75,8 @@ class WorldTile(object):
 
     def atmosphere(self): return self.__atmosphere
 
+    def climate(self): return self.__climate
+
     def geology(self): return self.__geology
 
     def to_xml(self): return self.__to_xml_impl()
@@ -572,11 +574,11 @@ class FoodTile(LandTile):
         super(FoodTile, self).cycle_turn(anomalies, season)
 
         # Get the parameters we need to make the calculation
-        precip         = self.__atmosphere.rainfall()
-        temp           = self.__atmosphere.temperature()
-        av_precip      = self.__climate.rainfall(season)
-        av_temp        = self.__climate.temperature(season)
-        prior_moisture = self.__soil_moisture
+        precip         = self.atmosphere().rainfall()
+        temp           = self.atmosphere().temperature()
+        av_precip      = self.climate().rainfall(season)
+        av_temp        = self.climate().temperature(season)
+        prior_moisture = self.soil_moisture()
 
         # Precip's effect on moisture
         precip_effect = self._PRECIP_EFFECT_ON_MOISTURE_FUNC(av_precip, precip)
@@ -624,7 +626,7 @@ class FoodTile(LandTile):
         return ((current_forcing * 2) + prior) / 3
 
 ###############################################################################
-class PlainsTile(LandTile):
+class PlainsTile(FoodTile):
 ###############################################################################
     """
     Represents plains tiles. Plains add no concepts, so this class is simple.
@@ -639,7 +641,7 @@ class PlainsTile(LandTile):
     _FOOD_YIELD = 1
 
 ###############################################################################
-class LushTile(LandTile):
+class LushTile(FoodTile):
 ###############################################################################
     """
     Represents lush tiles. Lush add no concepts, so this class is simple. Lush

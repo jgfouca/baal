@@ -110,13 +110,13 @@ class DrawPygame(object):
             prequire(False, "Unhandled season ", item.season())
 
         my_font = pygame.font.SysFont("None", # font name
-                                      16)     # fontsize
+                                      30)     # fontsize
         self.__screen.blit(my_font.render("%s, Year: %s" % (item.season(), item.year()),
                                           0, # antialias
                                           color),
-                           (self.__x_pos + 20, self.__y_pos))
+                           (self.__x_pos + 200, self.__y_pos + 5))
 
-        self.__y_pos += 20
+        self.__y_pos += 30
         self.__x_pos = 0
 
     # _GEOLOGY_MAP = {
@@ -163,7 +163,7 @@ class DrawPygame(object):
     def __draw_player(self, item):
     ###########################################################################
         player_image = pygame.image.load(os.path.join(self.__path_to_data,
-                                                      "player",
+                                                      "images", "player",
                                                       "baal.jpg"))
         self.__screen.blit(player_image,
             (self.__x_pos, self.__y_pos, 100, 100)) # allow 100x100 pixels
@@ -171,7 +171,7 @@ class DrawPygame(object):
         self.__x_pos += 100
 
         my_font = pygame.font.SysFont("None", # font name
-                                      16)     # fontsize
+                                      20)     # fontsize
 
         self.__screen.blit(my_font.render("PLAYER STATS:",
                                    0, # antialias
@@ -209,7 +209,7 @@ class DrawPygame(object):
     def __draw_player_ai(self, item):
     ###########################################################################
         player_image = pygame.image.load(os.path.join(self.__path_to_data,
-                                                      "player",
+                                                      "images", "player",
                                                       "peasant.png"))
         self.__screen.blit(player_image,
             (self.__x_pos, self.__y_pos, 100, 100)) # allow 100x100 pixels
@@ -217,7 +217,7 @@ class DrawPygame(object):
         self.__x_pos += 100
 
         my_font = pygame.font.SysFont("None", # font name
-                                      16)     # fontsize
+                                      20)     # fontsize
 
         self.__screen.blit(my_font.render("AI PLAYER STATS:",
                                    0, # antialias
@@ -300,17 +300,26 @@ class DrawPygame(object):
     ###########################################################################
     def __draw_world(self, item):
     ###########################################################################
-        real_draw_mode = curr_draw_mode()
+        draw_mode = curr_draw_mode()
 
         self.draw(item.time())
 
-        # Draw tiles
+        # Draw tiles, just land to start
+        starting_y_pos = self.__y_pos
         for row in item.iter_rows():
             for tile in row:
-                self.__draw_world_tile(tile)
+                self.__draw_world_tile(tile, mode_override=DrawMode.LAND)
             self.__x_pos = 0
             self.__y_pos += 100
 
+        # Now draw appropriate overlay
+        if (draw_mode != DrawMode.LAND):
+            self.__y_pos = starting_y_pos
+            for row in item.iter_rows():
+                for tile in row:
+                    self.__draw_world_tile(tile)
+                self.__x_pos = 0
+                self.__y_pos += 100
 
         # Draw recent anomalies
         # for anomaly in item.iter_anomalies():
@@ -332,64 +341,96 @@ class DrawPygame(object):
     ###########################################################################
         filename = self._TILE_MAP[item.__class__]
         tile_image = pygame.image.load(os.path.join(self.__path_to_data,
-                                                    "tiles",
+                                                    "images", "tiles",
                                                     filename))
         self.__screen.blit(tile_image,
             (self.__x_pos, self.__y_pos, 100, 100)) # allow 100x100 pixels
-        self.__x_pos += 100
 
     ###########################################################################
     def __draw_world_tile(self, item, mode_override=None):
     ###########################################################################
-        # if (mode_override is None):
-        #     draw_mode = curr_draw_mode()
-        # else:
-        #     draw_mode = mode_override
+        my_font = pygame.font.SysFont("None", # font name
+                                      20)     # fontsize
 
-        # if (draw_mode == DrawMode.LAND):
-        #     self.__draw_land(item)
+        if (mode_override is None):
+            draw_mode = curr_draw_mode()
+        else:
+            draw_mode = mode_override
 
-        # elif (draw_mode == DrawMode.CIV):
-        #     if (item.city() is not None):
-        #         cprint(RED, " C: ",
-        #                str(item.city().rank()).center(self.TILE_TEXT_WIDTH-4))
-        #     elif (item.infra_level() is not None and item.infra_level() > 0):
-        #         cprint(YELLOW, " I: ",
-        #                str(item.infra_level()).center(self.TILE_TEXT_WIDTH-4))
-        #     else:
-        #         self.__draw_land(item)
+        if (draw_mode == DrawMode.LAND):
+            self.__draw_land(item)
 
-        # elif (draw_mode == DrawMode.MOISTURE):
-        #     moisture = item.soil_moisture()
-        #     if (moisture is not None):
-        #         if (moisture < 1.0):
-        #             color = YELLOW
-        #         elif (moisture < FoodTile.FLOODING_THRESHOLD):
-        #             color = GREEN
-        #         elif (moisture < FoodTile.TOTALLY_FLOODED):
-        #             color = BLUE
-        #         else:
-        #             color = RED
-        #         cprint(color, "%.3f" % moisture)
-        #     else:
-        #         self.__draw_land(item)
+        elif (draw_mode == DrawMode.CIV):
+            if (item.city() is not None):
+                city_image = pygame.image.load(os.path.join(self.__path_to_data,
+                                                            "images", "misc",
+                                                            "city.jpg"))
+                self.__screen.blit(city_image,
+                                   (self.__x_pos + 25,
+                                    self.__y_pos + 25,
+                                    50, 50))
 
-        # elif (draw_mode == DrawMode.YIELD):
-        #     yield_ = item.yield_()
-        #     if (yield_.food > 0):
-        #         cprint(GREEN, "%.3f" % yield_.food)
-        #     else:
-        #         cprint(RED, "%.3f" % yield_.prod)
+                self.__screen.blit(my_font.render("Size: %d" % item.city().rank(),
+                                                  0, # antialias
+                                                  (255, 0, 0)), # red
+                                   (self.__x_pos + 30, self.__y_pos + 75))
 
-        # elif (is_geological(draw_mode)):
-        #     self.draw(item.geology())
+            elif (item.infra_level() is not None and item.infra_level() > 0):
+                if (isinstance(item, FoodTile)):
+                    infra_image = pygame.image.load(os.path.join(self.__path_to_data,
+                                                                 "images", "misc",
+                                                                 "farm.jpg"))
+                else:
+                    infra_image = pygame.image.load(os.path.join(self.__path_to_data,
+                                                                 "images", "misc",
+                                                                 "mine.jpg"))
 
-        # elif (is_atmospheric(draw_mode)):
-        #     self.draw(item.atmosphere())
+                self.__screen.blit(infra_image,
+                                   (self.__x_pos + 25,
+                                    self.__y_pos + 25,
+                                    50, 50))
 
-        # else:
-        #     prequire(False, "Unhandled mode: ", draw_mode)
-        self.__draw_land(item)
+                self.__screen.blit(my_font.render("Level: %d" % item.infra_level(),
+                                                  0, # antialias
+                                                  (255, 255, 0)), # yellow
+                                   (self.__x_pos + 30, self.__y_pos + 75))
+            else:
+                self.__draw_land(item)
+
+        elif (draw_mode == DrawMode.MOISTURE):
+            moisture = item.soil_moisture()
+            if (moisture is not None):
+                # if (moisture < 1.0):
+                #     color = YELLOW
+                # elif (moisture < FoodTile.FLOODING_THRESHOLD):
+                #     color = GREEN
+                # elif (moisture < FoodTile.TOTALLY_FLOODED):
+                #     color = BLUE
+                # else:
+                #     color = RED
+                # cprint(color, "%.3f" % moisture)
+                pass
+            else:
+                self.__draw_land(item)
+
+        elif (draw_mode == DrawMode.YIELD):
+            # yield_ = item.yield_()
+            # if (yield_.food > 0):
+            #     cprint(GREEN, "%.3f" % yield_.food)
+            # else:
+            #     cprint(RED, "%.3f" % yield_.prod)
+            pass
+
+        elif (is_geological(draw_mode)):
+            self.draw(item.geology())
+
+        elif (is_atmospheric(draw_mode)):
+            self.draw(item.atmosphere())
+
+        else:
+            prequire(False, "Unhandled mode: ", draw_mode)
+
+        self.__x_pos += 100
 
 #
 # Tests

@@ -133,7 +133,8 @@ class Player(object):
     ###########################################################################
         cls = self.__class__
 
-        self.__name = Configuration.instance().player_config()
+        config_name = Configuration.instance().player_config()
+        self.__name = config_name if config_name else "Anonymous"
         self.__mana = cls.__STARTING_MANA
         self.__max_mana = self.__mana
         self.__mana_regen = self.__mana * cls.__MANA_REGEN_RATE

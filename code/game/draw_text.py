@@ -123,7 +123,7 @@ class DrawText(object):
     ###########################################################################
         print("PLAYER STATS:")
         print("  name:", item.name())
-        print("  level:")
+        print("  level: ", end="")
         cprint(GREEN, item.level())
         print("\n  mana: ", end="")
         cprint(BLUE, item.mana(), "/", item.max_mana())

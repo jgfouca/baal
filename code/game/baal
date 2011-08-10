@@ -16,7 +16,8 @@ def _main():
     parser.add_argument("-i", "--interface",
                         dest="interface",
                         action="store",
-                        choices=tuple([str(item) for item in Interfaces]),
+                        choices=tuple([str(item).lower()
+                                       for item in Interfaces]),
                         default="",
                         help="Choose the game interface")
 
