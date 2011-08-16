@@ -1,4 +1,4 @@
-include ../common.mk
+include ../../common.mk
 
 BOOSTCXXFLAGS :=
 BOOSTLDFLAGS := -lboost_thread
