@@ -40,6 +40,7 @@ class Engine(object):
         Quit the game.
         """
         self.__quit = True
+        self.interface().end_turn()
 
     #
     # Public Getters

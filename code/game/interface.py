@@ -271,23 +271,23 @@ class PygameInterface(Interface):
     ###########################################################################
         # Enter loop for this turn
         while (self._end_turns == 0):
-            # Grab a line of text
-            try:
-                line = raw_input("% ")
-            except KeyboardInterrupt:
-                # User ctrl-d
-                engine().quit()
-                break
 
-            # Add to history and process if not empty string
-            if (line):
-                try:
-                    command = CommandFactory.parse_command(line)
-                    command.apply()
-                except UserError, error:
-                    print "ERROR:", error
-                    print "\nType: 'help [command]' for assistence"
-                    sys.stdout.flush()
+            # Watch for pygame events.
+            for event in pygame.event.get():
+                if (event.type == pygame.QUIT):
+                    engine().quit()
+                    break
+                elif (event.type == pygame.MOUSEBUTTONDOWN):
+                    try:
+                        mouse_pos = pygame.mouse.get_pos()
+                        command_str = self.__drawer.clicked(mouse_pos)
+                        if (command_str is not None):
+                            command = CommandFactory.parse_command(command_str)
+                            command.apply()
+                    except UserError, error:
+                        print "ERROR:", error
+                        print "\nType: 'help [command]' for assistence"
+                        sys.stdout.flush()
 
         self._end_turns -= 1
 

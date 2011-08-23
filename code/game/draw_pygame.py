@@ -61,6 +61,9 @@ class DrawPygame(object):
         self.__x_pos = 0
         self.__y_pos = 0
 
+        self.__cast_spell_button_loc_map  = {}
+        self.__learn_spell_button_loc_map = {}
+
     ###########################################################################
     def end_draw(self):
     ###########################################################################
@@ -89,6 +92,15 @@ class DrawPygame(object):
             self.__draw_world_tile(item)
         else:
             prequire(False, "Class not drawable: ", item.__class__)
+
+    ###########################################################################
+    def clicked(self, mouse_pos):
+    ###########################################################################
+        """
+        Based on mouse click, generate command text
+        """
+        # TODO
+        return None
 
     #
     # ==== Internal Methods ====
@@ -198,12 +210,49 @@ class DrawPygame(object):
         self.__y_pos += 20
 
         self.__screen.blit(my_font.render("  exp: %d / %d" % (item.exp(), item.next_level_cost()),
-                                   0, # antialias
-                                   (255, 255, 0)), # yellow
-                    (self.__x_pos, self.__y_pos))
+                                          0, # antialias
+                                          (255, 255, 0)), # yellow
+                           (self.__x_pos, self.__y_pos))
 
         self.__x_pos += 200
         self.__y_pos -= 80
+
+        # Draw spell buttons based on player spells
+
+        x_button_pos = self.SCREEN_WIDTH - 200
+        y_button_pos = 0
+
+        self.__screen.blit(my_font.render("CAST:",
+                                          0, # antialias
+                                          (255, 0, 0)), # red
+                           (x_button_pos + 5, y_button_pos))
+
+        self.__screen.blit(my_font.render("LEARN:",
+                                          0, # antialias
+                                          (0, 255, 0)), # green
+                           (x_button_pos + 105, y_button_pos))
+        y_button_pos = 15
+
+        for spell_name, spell_level in item.talents():
+            spell_image = pygame.image.load(os.path.join(self.__path_to_data,
+                                                         "images", "spell-icons",
+                                                         "%s.jpg" % spell_name))
+            self.__screen.blit(spell_image,
+                               (x_button_pos, y_button_pos, 50, 50))
+            self.__cast_spell_button_loc_map[spell_name] = (x_button_pos, y_button_pos)
+            y_button_pos += 50
+
+        x_button_pos += 60
+        y_button_pos = 15
+
+        for spell_name, spell_level in item.learnable():
+            spell_image = pygame.image.load(os.path.join(self.__path_to_data,
+                                                         "images", "spell-icons",
+                                                         "%s.jpg" % spell_name))
+            self.__screen.blit(spell_image,
+                               (x_button_pos, y_button_pos, 50, 50))
+            self.__learn_spell_button_loc_map[spell_name] = (x_button_pos, y_button_pos)
+            y_button_pos += 50
 
     ###########################################################################
     def __draw_player_ai(self, item):
