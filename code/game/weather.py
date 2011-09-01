@@ -229,7 +229,7 @@ class Atmosphere(object):
     ###########################################################################
     def __set_temperature_impl(self, new_temperature):
     ###########################################################################
-        check_access(self.ALLOW_CYCLE_TURN)
+        check_access(self.ALLOW_SET_TEMPERATURE)
         self.__temperature = new_temperature
 
     ###########################################################################

@@ -291,11 +291,11 @@ class City(object):
 
         self.__population -= killed
 
-        if (self.__population > 0):
-            while (self.__population <
-                   self.__next_rank_pop / City._CITY_RANK_UP_MULTIPLIER):
-                self.__rank -= 1
-                self.__next_rank_pop /= City._CITY_RANK_UP_MULTIPLIER
+        while (self.__population <
+               self.__next_rank_pop / City._CITY_RANK_UP_MULTIPLIER and
+               self.__rank > 1):
+            self.__rank -= 1
+            self.__next_rank_pop /= City._CITY_RANK_UP_MULTIPLIER
 
     ###########################################################################
     def __build_infra(self, tile):

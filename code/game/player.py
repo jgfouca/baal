@@ -37,6 +37,12 @@ class Player(object):
         """
         return self.__talents.learnable()
 
+    def spell_skill(self, spell_name):
+        """
+        Return a player's skill in a certain spell
+        """
+        return self.__talents.spell_skill(spell_name)
+
     def next_level_cost(self): return self.__next_level_cost
 
     def name(self): return self.__name

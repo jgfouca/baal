@@ -18,6 +18,7 @@ from player import Player
 from player_ai import PlayerAI
 from weather import Atmosphere, Anomaly, is_atmospheric
 from world import World
+from engine import engine
 
 ###############################################################################
 class DrawPygame(object):
@@ -64,6 +65,8 @@ class DrawPygame(object):
         self.__cast_spell_button_loc_map  = {}
         self.__learn_spell_button_loc_map = {}
 
+        self.__spell_to_cast = None
+
     ###########################################################################
     def end_draw(self):
     ###########################################################################
@@ -99,8 +102,43 @@ class DrawPygame(object):
         """
         Based on mouse click, generate command text
         """
+        # Case 1: User is clicking one of the buttons for spell learning/casting
+        for button_collection in [self.__cast_spell_button_loc_map,
+                                  self.__learn_spell_button_loc_map]:
+            for spell_name, button_loc in button_collection.iteritems():
+                if (_is_within(mouse_pos, button_loc, 50)):
+                    # Match
+                    if (button_collection is self.__learn_spell_button_loc_map):
+                        return "learn %s" % spell_name
+                    else:
+                        self.__spell_to_cast = spell_name
+                        return None
+
+        # Case 2: User has chosen a spell to cast and is clicking on a world
+        # tile to complete the cast
+        if (self.__spell_to_cast):
+            if (_is_within(mouse_pos, self.__tile_start_pos,
+                           self.__world_dim[0] * 100, self.__world_dim[0] * 100)):
+                x_diff = mouse_pos[0] - self.__tile_start_pos[0]
+                y_diff = mouse_pos[1] - self.__tile_start_pos[1]
+                row_loc = int(y_diff / 100)
+                col_loc = int(x_diff / 100)
+
+                # For now, just cast it at the max level possible
+                player = engine().player()
+                spell_level = player.spell_skill(self.__spell_to_cast)
+
+                return "cast %s %d %d,%d" % \
+                    (self.__spell_to_cast, spell_level, row_loc, col_loc)
+
+        # Case 3: User is clicking end turn
+        if (_is_within(mouse_pos, self.__next_button_pos,
+                       self.__next_button_dim[0],
+                       self.__next_button_dim[1])):
+            return "end"
+
+        # Case 4: User is changing overlay choice
         # TODO
-        return None
 
     #
     # ==== Internal Methods ====
@@ -263,30 +301,44 @@ class DrawPygame(object):
         self.__screen.blit(player_image,
             (self.__x_pos, self.__y_pos, 100, 100)) # allow 100x100 pixels
 
+        orig_x_pos = self.__x_pos
         self.__x_pos += 100
 
         my_font = pygame.font.SysFont("None", # font name
                                       20)     # fontsize
 
         self.__screen.blit(my_font.render("AI PLAYER STATS:",
-                                   0, # antialias
-                                   (255, 255, 255)), # white
+                                          0, # antialias
+                                          (255, 255, 255)), # white
                     (self.__x_pos, self.__y_pos))
         self.__y_pos += 20
 
         self.__screen.blit(my_font.render("  tech level: %d" % item.tech_level(),
-                                   0, # antialias
-                                   (0, 255, 0)), # green
+                                          0, # antialias
+                                          (0, 255, 0)), # green
                     (self.__x_pos, self.__y_pos))
         self.__y_pos += 20
 
         self.__screen.blit(my_font.render("  population: %d" % item.population(),
-                                   0, # antialias
-                                   (0, 0, 255)), # blue
+                                          0, # antialias
+                                          (0, 0, 255)), # blue
                     (self.__x_pos, self.__y_pos))
 
         self.__x_pos = 0
-        self.__y_pos += 60
+        self.__y_pos += 75
+
+        # We choose to draw this here since we have extra room
+        next_button_img = pygame.image.load(os.path.join(self.__path_to_data,
+                                                         "images", "misc",
+                                                         "next_turn.jpg"))
+
+        self.__screen.blit(next_button_img,
+                           (orig_x_pos + 50, self.__y_pos, 100, 50))
+        self.__next_button_pos = (orig_x_pos + 50, self.__y_pos)
+        self.__next_button_dim = (100, 50)
+
+        self.__y_pos += 50
+
 
     # Describes how to draw the various fields. The first value in the pair
     # is the upper-bound for the corresponding color.
@@ -352,6 +404,10 @@ class DrawPygame(object):
         draw_mode = curr_draw_mode()
 
         self.draw(item.time())
+
+        self.__world_dim = (item.width(), item.height())
+
+        self.__tile_start_pos = (self.__x_pos, self.__y_pos)
 
         # Draw tiles, just land to start
         starting_y_pos = self.__y_pos
@@ -480,6 +536,20 @@ class DrawPygame(object):
             prequire(False, "Unhandled mode: ", draw_mode)
 
         self.__x_pos += 100
+
+#
+# Free functions
+#
+
+###############################################################################
+def _is_within( position, square_begin, square_size_x, square_size_y=None):
+###############################################################################
+    if (square_size_y is None):
+        square_size_y = square_size_x
+    return (position[0] >= square_begin[0]                 and
+            position[0] <  square_begin[0] + square_size_x and
+            position[1] >= square_begin[1]                 and
+            position[1] <  square_begin[1] + square_size_y)
 
 #
 # Tests

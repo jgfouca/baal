@@ -7,6 +7,7 @@ from city import City
 from engine import engine
 from baal_math import exp_growth, poly_growth, fibonacci_div
 from world_tile import OceanTile, MountainTile, FoodTile, PlainsTile, LushTile
+from weather import Atmosphere
 
 ###############################################################################
 class Spell(object):
@@ -171,7 +172,7 @@ class Spell(object):
 
         pct_killed = min(pct_killed, 100.0)
         num_killed = city.population() * (pct_killed / 100)
-        city.kill(self, num_killed)
+        city.kill(num_killed)
         self._report("killed ", num_killed)
 
         if (city.population() < City.MIN_CITY_SIZE):
@@ -376,6 +377,8 @@ class _Hot(Spell):
                 exp += self._kill(city, pct_killed)
 
         return exp
+# Hot can change temp
+grant_access(_Hot, Atmosphere.ALLOW_SET_TEMPERATURE)
 
 ###############################################################################
 class _Cold(Spell):
@@ -506,6 +509,8 @@ class _Cold(Spell):
                 exp += self._kill(city, pct_killed)
 
         return exp
+# Cold can change temp
+grant_access(_Cold, Atmosphere.ALLOW_SET_TEMPERATURE)
 
 ###############################################################################
 class _Infect(Spell):
@@ -620,6 +625,8 @@ class _Infect(Spell):
         self._report("famine bonus (multiplier) is ", famine_bonus)
         self._report("tech penalty (divisor) is ", tech_penalty)
         self._report("final kill % is ", pct_killed)
+
+        exp += self._kill(city, pct_killed)
 
         return exp
 
@@ -762,6 +769,8 @@ class _Wind(Spell):
                 exp += self._kill(city, pct_killed)
 
         return exp
+# Wind can change wind
+grant_access(_Wind, Atmosphere.ALLOW_SET_WIND)
 
 ###############################################################################
 class _Fire(Spell):

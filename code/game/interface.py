@@ -282,12 +282,17 @@ class PygameInterface(Interface):
                         mouse_pos = pygame.mouse.get_pos()
                         command_str = self.__drawer.clicked(mouse_pos)
                         if (command_str is not None):
+                            print command_str
                             command = CommandFactory.parse_command(command_str)
                             command.apply()
                     except UserError, error:
                         print "ERROR:", error
                         print "\nType: 'help [command]' for assistence"
                         sys.stdout.flush()
+
+                    # Successful commands should redraw
+                    if (command_str is not None):
+                        self.draw()
 
         self._end_turns -= 1
 
@@ -300,7 +305,7 @@ class PygameInterface(Interface):
     ###########################################################################
     def spell_report(self, report):
     ###########################################################################
-        cprint(RED, report)
+        cprint(RED, report + "\n")
         sys.stdout.flush()
 
     ###########################################################################
