@@ -27,7 +27,7 @@ class DrawPygame(object):
     Draw objects using pygame graphics.
     """
 
-    SCREEN_WIDTH  = 800
+    SCREEN_WIDTH  = 1200
     SCREEN_HEIGHT = 800
 
     #
@@ -64,6 +64,7 @@ class DrawPygame(object):
 
         self.__cast_spell_button_loc_map  = {}
         self.__learn_spell_button_loc_map = {}
+        self.__draw_mode_button_loc_map   = {}
 
         self.__spell_to_cast = None
 
@@ -104,15 +105,18 @@ class DrawPygame(object):
         """
         # Case 1: User is clicking one of the buttons for spell learning/casting
         for button_collection in [self.__cast_spell_button_loc_map,
-                                  self.__learn_spell_button_loc_map]:
+                                  self.__learn_spell_button_loc_map,
+                                  self.__draw_mode_button_loc_map]:
             for spell_name, button_loc in button_collection.iteritems():
                 if (_is_within(mouse_pos, button_loc, 50)):
                     # Match
                     if (button_collection is self.__learn_spell_button_loc_map):
                         return "learn %s" % spell_name
-                    else:
+                    elif (button_collection is self.__cast_spell_button_loc_map):
                         self.__spell_to_cast = spell_name
                         return None
+                    else:
+                        return "draw %s" % spell_name
 
         # Case 2: User has chosen a spell to cast and is clicking on a world
         # tile to complete the cast
@@ -169,45 +173,42 @@ class DrawPygame(object):
         self.__y_pos += 30
         self.__x_pos = 0
 
-    # _GEOLOGY_MAP = {
-    #     Divergent  : (BLUE,   "<-->"),
-    #     Subducting : (RED,    "-v<-"),
-    #     Orogenic   : (GREEN,  "-><-"),
-    #     Transform  : (YELLOW, "vv^^"),
-    #     Inactive   : (WHITE,  "")
-    # }
-
     ###########################################################################
     def __draw_geology(self, item):
     ###########################################################################
-        # draw_mode = curr_draw_mode()
-        # prequire(is_geological(draw_mode), "Bad draw mode ", draw_mode)
-        # expected_length = self.TILE_TEXT_WIDTH
+        draw_mode = curr_draw_mode()
+        prequire(is_geological(draw_mode), "Bad draw mode ", draw_mode)
 
-        # # Figure out what string to print and what color it should be
-        # if (draw_mode == DrawMode.GEOLOGY):
-        #     color, symbol = self._GEOLOGY_MAP[item.__class__]
+        geological_image = pygame.image.load(os.path.join(self.__path_to_data,
+                                                          "images", "geology",
+                                                          item.__class__.__name__.lower() + ".jpg"))
+        self.__screen.blit(geological_image,
+                           (self.__x_pos, self.__y_pos, 100, 100))
 
-        #     to_draw = symbol.center(expected_length)
-        # elif (draw_mode in [DrawMode.TENSION, DrawMode.MAGMA]):
-        #     value = item.tension() if draw_mode == DrawMode.TENSION \
-        #        else item.magma()
-        #     to_draw = ("%.3f" % value).center(expected_length)
+        # Figure out what string to print and what color it should be
+        if (draw_mode == DrawMode.GEOLOGY):
+            pass # already drawn
+        elif (draw_mode in [DrawMode.TENSION, DrawMode.MAGMA]):
+            value = item.tension() if draw_mode == DrawMode.TENSION \
+                else item.magma()
+            to_draw = ("%.3f" % value)
 
-        #     if (value < .333):
-        #         color = GREEN
-        #     elif (value < .666):
-        #         color = YELLOW
-        #     else:
-        #         color = RED
-        # else:
-        #     prequire(False, "Should not draw geology in mode: ", draw_mode)
+            if (value < .333):
+                color = (0, 255, 0)
+            elif (value < .666):
+                color = (255, 255, 0)
+            else:
+                color = (255, 0, 0)
 
-        # prequire(len(to_draw) == self.TILE_TEXT_WIDTH,
-        #          "Symbol '", to_draw, "' is wrong length")
+            my_font = pygame.font.SysFont("None", # font name
+                                          20)     # fontsize
 
-        # cprint(color, to_draw)
-        pass
+            self.__screen.blit(my_font.render(to_draw,
+                                              0, # antialias
+                                              color), # red
+                               (self.__x_pos + 30, self.__y_pos + 40))
+        else:
+            prequire(False, "Should not draw geology in mode: ", draw_mode)
 
     ###########################################################################
     def __draw_player(self, item):
@@ -257,7 +258,7 @@ class DrawPygame(object):
 
         # Draw spell buttons based on player spells
 
-        x_button_pos = self.SCREEN_WIDTH - 200
+        x_button_pos = self.SCREEN_WIDTH - 600
         y_button_pos = 0
 
         self.__screen.blit(my_font.render("CAST:",
@@ -268,7 +269,13 @@ class DrawPygame(object):
         self.__screen.blit(my_font.render("LEARN:",
                                           0, # antialias
                                           (0, 255, 0)), # green
-                           (x_button_pos + 105, y_button_pos))
+                           (x_button_pos + 165, y_button_pos))
+
+        self.__screen.blit(my_font.render("DRAW MODES:",
+                                          0, # antialias
+                                          (255, 255, 255)), # white
+                           (x_button_pos + 275, y_button_pos))
+
         y_button_pos = 15
 
         for spell_name, spell_level in item.talents():
@@ -280,7 +287,7 @@ class DrawPygame(object):
             self.__cast_spell_button_loc_map[spell_name] = (x_button_pos, y_button_pos)
             y_button_pos += 50
 
-        x_button_pos += 60
+        x_button_pos += 110
         y_button_pos = 15
 
         for spell_name, spell_level in item.learnable():
@@ -290,6 +297,19 @@ class DrawPygame(object):
             self.__screen.blit(spell_image,
                                (x_button_pos, y_button_pos, 50, 50))
             self.__learn_spell_button_loc_map[spell_name] = (x_button_pos, y_button_pos)
+            y_button_pos += 50
+
+        x_button_pos += 140
+        y_button_pos = 15
+
+        for draw_mode in DrawMode:
+            draw_mode_str = str(draw_mode).lower()
+            mode_image = pygame.image.load(os.path.join(self.__path_to_data,
+                                                         "images", "draw-modes",
+                                                         "%s.jpg" % draw_mode_str))
+            self.__screen.blit(mode_image,
+                               (x_button_pos, y_button_pos, 50, 50))
+            self.__draw_mode_button_loc_map[draw_mode_str] = (x_button_pos, y_button_pos)
             y_button_pos += 50
 
     ###########################################################################
@@ -409,22 +429,12 @@ class DrawPygame(object):
 
         self.__tile_start_pos = (self.__x_pos, self.__y_pos)
 
-        # Draw tiles, just land to start
-        starting_y_pos = self.__y_pos
+        # Draw tiles
         for row in item.iter_rows():
             for tile in row:
-                self.__draw_world_tile(tile, mode_override=DrawMode.LAND)
+                self.__draw_world_tile(tile)
             self.__x_pos = 0
             self.__y_pos += 100
-
-        # Now draw appropriate overlay
-        if (draw_mode != DrawMode.LAND):
-            self.__y_pos = starting_y_pos
-            for row in item.iter_rows():
-                for tile in row:
-                    self.__draw_world_tile(tile)
-                self.__x_pos = 0
-                self.__y_pos += 100
 
         # Draw recent anomalies
         # for anomaly in item.iter_anomalies():
@@ -452,20 +462,18 @@ class DrawPygame(object):
             (self.__x_pos, self.__y_pos, 100, 100)) # allow 100x100 pixels
 
     ###########################################################################
-    def __draw_world_tile(self, item, mode_override=None):
+    def __draw_world_tile(self, item):
     ###########################################################################
         my_font = pygame.font.SysFont("None", # font name
                                       20)     # fontsize
 
-        if (mode_override is None):
-            draw_mode = curr_draw_mode()
-        else:
-            draw_mode = mode_override
+        draw_mode = curr_draw_mode()
 
         if (draw_mode == DrawMode.LAND):
             self.__draw_land(item)
 
         elif (draw_mode == DrawMode.CIV):
+            self.__draw_land(item)
             if (item.city() is not None):
                 city_image = pygame.image.load(os.path.join(self.__path_to_data,
                                                             "images", "misc",
@@ -499,8 +507,6 @@ class DrawPygame(object):
                                                   0, # antialias
                                                   (255, 255, 0)), # yellow
                                    (self.__x_pos + 30, self.__y_pos + 75))
-            else:
-                self.__draw_land(item)
 
         elif (draw_mode == DrawMode.MOISTURE):
             moisture = item.soil_moisture()

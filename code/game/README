@@ -261,7 +261,6 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 * Start to fill in more Spell implementations
 * Need much more unit-testing
 * Seasons need to affect atmosphere
-* Drawable design should be implemented via policies
 * Use pygame to produce basic 2D graphics
 * Map editor, map-file format defined, map-file loader
 * Implement dewpoint
