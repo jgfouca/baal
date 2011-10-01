@@ -73,6 +73,72 @@ def _set_draw_mode(draw_mode):
     global _draw_mode
     _draw_mode = draw_mode
 
+###############################################################################
+def explain_draw_mode(draw_mode):
+###############################################################################
+    if (draw_mode == DrawMode.CIV):
+        return \
+"""
+Draws things the civ has built, like cities and infrastructure.
+""".strip()
+    elif (draw_mode == DrawMode.LAND):
+        return \
+"""
+Draws the basic lay of the land.
+""".strip()
+    elif (draw_mode == DrawMode.YIELD):
+        return \
+"""
+Draws tile yields (food and production).
+""".strip()
+    elif (draw_mode == DrawMode.MOISTURE):
+        return \
+"""
+Draws soil moisture as a % of normal soil moisture.
+""".strip()
+    elif (draw_mode == DrawMode.GEOLOGY):
+        return \
+"""
+Draws the plate tectonics underneath the land.
+""".strip()
+    elif (draw_mode == DrawMode.MAGMA):
+        return \
+"""
+Draws the amount of magma buildup on a scale from 0 to 1
+""".strip()
+    elif (draw_mode == DrawMode.TENSION):
+        return \
+"""
+Draws the amount of plate tension buildup on a scale from 0 to 1
+""".strip()
+    elif (draw_mode == DrawMode.WIND):
+        return \
+"""
+Draws the speed and direction of the wind in mph.
+""".strip()
+    elif (draw_mode == DrawMode.TEMPERATURE):
+        return \
+"""
+Draws the current average (not high or low) temperature in degrees farenheit.
+""".strip()
+    elif (draw_mode == DrawMode.PRESSURE):
+        return \
+"""
+Draws the current pressure in millibars (1000 is average).
+""".strip()
+    elif (draw_mode == DrawMode.RAINFALL):
+        return \
+"""
+Draws the amount of rainfall, in inches, that has fallen this season.
+""".strip()
+    elif (draw_mode == DrawMode.DEWPOINT):
+        return \
+"""
+Draws the current dewpoint in farenheit.
+""".strip()
+    else:
+        prequire(False, "Unhandled draw mode:", draw_mode)
+
 #
 # Tests
 #

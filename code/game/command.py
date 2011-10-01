@@ -5,7 +5,7 @@ import time
 from spell_factory import SpellFactory
 from baal_common import prequire, urequire, Location, UserError, grant_access
 from engine import engine
-from draw_mode import DrawMode, _set_draw_mode
+from draw_mode import DrawMode, _set_draw_mode, explain_draw_mode
 from player import Player
 
 ###############################################################################
@@ -35,7 +35,7 @@ class Command(object):
         prequire(False, "Called abstract version of apply")
 
     #
-    # Class-method API
+    # Class-method API (with default implementations)
     #
 
     @classmethod
@@ -44,7 +44,7 @@ class Command(object):
         Get the name of the command, this is what the user will type to issue
         the command.
         """
-        prequire(False, "Called abstract version of name")
+        return cls._NAME
 
     @classmethod
     def aliases(cls):
@@ -52,14 +52,27 @@ class Command(object):
         Get aliases for the command, the user can type these as a shortcut for
         the command.
         """
-        prequire(False, "Called abstract version of aliases")
+        return cls._ALIASES
 
     @classmethod
-    def help(cls):
+    def help(cls, extra_args=None):
         """
         Get help information for this command.
         """
-        prequire(False, "Called abstract version of help")
+        if (_is_text_interface()):
+            return _create_text_help_str(cls, cls._TEXT_USAGE)
+        else:
+            return cls._GRAPHICAL_USAGE
+
+    #
+    # ==== Class Constants ====
+    #
+
+    # These should be overridden
+    _NAME            = None
+    _ALIASES         = None
+    _TEXT_USAGE      = None
+    _GRAPHICAL_USAGE = None
 
 #
 # Command implementations. The rest of the system does not care about anything
@@ -71,23 +84,25 @@ class _HelpCommand(Command):
 ###############################################################################
 
     # Class variables
-    __NAME    = "help"
-    __ALIASES = ("h",)
-    __USAGE   = \
+    _NAME            = "help"
+    _ALIASES         = ("h",)
+    _TEXT_USAGE      = \
 """%s [<command>]
   Returns info/syntax help for a command or all commands if no argument
-""" % __NAME
+""" % _NAME
+    _GRAPHICAL_USAGE = "Right click on items to get help"
 
     ###########################################################################
     def __init__(self, args):
     ###########################################################################
-        urequire(len(args) <= 1, self.name(), " takes at most one argument")
-
         self.__cmd = None
+        self.__extra_args = None
         if (args):
             # Verify arg is a valid command name and get handle to cmd class
             from command_factory import CommandFactory
             self.__cmd = CommandFactory.get(args[0])
+            if (len(args) > 1):
+                self.__extra_args = args[1:]
 
     ###########################################################################
     def apply(self):
@@ -97,33 +112,25 @@ class _HelpCommand(Command):
         # If user provided arg, give help for that cmd, otherwise give help for
         # all commands.
         if (self.__cmd is not None):
-            interface.help(self.__cmd.help())
+            interface.help(self.__cmd.help(self.__extra_args))
         else:
             from command_factory import CommandFactory
             for cmd_cls in CommandFactory:
                 interface.help(cmd_cls.help())
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def aliases(cls): return cls.__ALIASES
-
-    @classmethod
-    def help(cls): return _create_help_str(cls, cls.__USAGE)
 
 ###############################################################################
 class _EndTurnCommand(Command):
 ###############################################################################
 
     # Class variables
-    __NAME    = "end"
-    __ALIASES = ("n",)
-    __USAGE   = \
+    _NAME             = "end"
+    _ALIASES          = ("n",)
+    _TEXT_USAGE       = \
 """%s [<num-turns>]
-  Ends the current turn. Optional arg to skip ahead many turns
-""" % __NAME
-    __MAX_SKIP_TURNS = 100
+Ends the current turn. Optional arg to skip ahead many turns
+""" % _NAME
+    _GRAPHICAL_USAGE  = "Ends the current turn."
+    __MAX_SKIP_TURNS   = 100
 
     ###########################################################################
     def __init__(self, args):
@@ -146,26 +153,18 @@ class _EndTurnCommand(Command):
     ###########################################################################
         engine().interface().end_turn(self.__num_turns)
 
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def aliases(cls): return cls.__ALIASES
-
-    @classmethod
-    def help(cls): return _create_help_str(cls, cls.__USAGE)
-
 ###############################################################################
 class _QuitCommand(Command):
 ###############################################################################
 
     # Class variables
-    __NAME    = "quit"
-    __ALIASES = ("q", "exit")
-    __USAGE   = \
+    _NAME            = "quit"
+    _ALIASES         = ("q", "exit")
+    _TEXT_USAGE      = \
 """%s
   Ends the game.
-""" % __NAME
+""" % _NAME
+    _GRAPHICAL_USAGE = "Ends the game."
 
     ###########################################################################
     def __init__(self, args):
@@ -178,26 +177,18 @@ class _QuitCommand(Command):
         engine().interface().end_turn()
         engine().quit()
 
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def aliases(cls): return cls.__ALIASES
-
-    @classmethod
-    def help(cls): return _create_help_str(cls, cls.__USAGE)
-
 ###############################################################################
 class _SaveCommand(Command):
 ###############################################################################
 
     # Class variables
-    __NAME    = "save"
-    __ALIASES = ("s",)
-    __USAGE   = \
+    _NAME            = "save"
+    _ALIASES         = ("s",)
+    _TEXT_USAGE      = \
 """%s [<filename>]
   Saves the game; if no name provided, a name based on data/time will be used.
-""" % __NAME
+""" % _NAME
+    _GRAPHICAL_USAGE = "Save the game."
 
     ###########################################################################
     def __init__(self, args):
@@ -215,26 +206,23 @@ class _SaveCommand(Command):
         # TODO: Aaron, please re-implement in python
         urequire(False, "Not implemented yet")
 
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def aliases(cls): return cls.__ALIASES
-
-    @classmethod
-    def help(cls): return _create_help_str(cls, cls.__USAGE)
-
 ###############################################################################
 class _CastCommand(Command):
 ###############################################################################
 
     # Class variables
-    __NAME    = "cast"
-    __ALIASES = ("c", "spell")
-    __USAGE   = \
+    _NAME            = "cast"
+    _ALIASES         = ("c", "spell")
+    _TEXT_USAGE      = \
 """%s <spell-name> <level> <row,col>
   Casts spell of type <spell-name> and level <level> at location <row>,<col>
-""" % __NAME
+""" % _NAME
+    _GRAPHICAL_USAGE = \
+"""
+Click to cast a specific spell. Once you've clicked this button, your next
+click should be on the square of the world where you want the spell to be
+casted.
+"""
 
     ###########################################################################
     def __init__(self, args):
@@ -297,36 +285,49 @@ class _CastCommand(Command):
         except UserError, e:
             prequire(False, "User error interrupted atomic operations: ", e)
 
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def aliases(cls): return cls.__ALIASES
-
     ###########################################################################
     @classmethod
-    def help(cls):
+    def help(cls, extra_args=None):
     ###########################################################################
-        full_usage = "%s  Castable spells:\n" % cls.__USAGE
+        if (_is_text_interface()):
+            full_usage = "%s  Castable spells:\n" % cls._TEXT_USAGE
 
-        # Add info on castable spells to usage string
-        for spell_name, spell_level in engine().player().talents():
-            full_usage += "    %s : %d\n" % (spell_name, spell_level)
+            # Add info on castable spells to usage string
+            for spell_name, spell_level in engine().player().talents():
+                full_usage += "    %s : %d\n" % (spell_name, spell_level)
 
-        return _create_help_str(cls, full_usage)
+            return _create_text_help_str(cls, full_usage)
+        else:
+            prequire(extra_args is not None and len(extra_args) == 1,
+                     "Expect spell name in extra_args")
+
+            spell_name = extra_args[0]
+            spell = SpellFactory.create_spell(spell_name)
+
+            help_str = cls._GRAPHICAL_USAGE
+            help_str += "\nDescription of %s spell:\n" % spell_name
+            help_str += spell.info() + "\n"
+            help_str += "Player has skill level %d in this spell\n" % \
+                engine().player().spell_skill(spell_name)
+
+            return help_str
 
 ###############################################################################
 class _LearnCommand(Command):
 ###############################################################################
 
     # Class variables
-    __NAME    = "learn"
-    __ALIASES = ("l",)
-    __USAGE   = \
+    _NAME            = "learn"
+    _ALIASES         = ("l",)
+    _TEXT_USAGE      = \
 """%s <spell-name>
   Player learns spell of type <spell-name>. If spell already known, then
   skill in this spell is increased by one.
-""" % __NAME
+""" % _NAME
+    _GRAPHICAL_USAGE = \
+"""
+Click to learn this skill OR increase skill in this spell.
+"""
 
     ###########################################################################
     def __init__(self, args):
@@ -342,39 +343,52 @@ class _LearnCommand(Command):
     ###########################################################################
         engine().player().learn(self.__spell_cls.name())
 
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def aliases(cls): return cls.__ALIASES
-
     ###########################################################################
     @classmethod
-    def help(cls):
+    def help(cls, extra_args=None):
     ###########################################################################
-        full_usage = "%s  Learnable spells:\n" % cls.__USAGE
+        if (_is_text_interface()):
+            full_usage = "%s  Learnable spells:\n" % cls._TEXT_USAGE
 
-        # Add info on learnable spells to usage string
-        for spell_name, spell_level in engine().player().learnable():
-            full_usage += "    %s%s\n" % (spell_name,
+            # Add info on learnable spells to usage string
+            for spell_name, spell_level in engine().player().learnable():
+                full_usage += "    %s%s\n" % (spell_name,
                                           "" if spell_level == 1 else " (new)")
 
-        return _create_help_str(cls, full_usage)
+            return _create_text_help_str(cls, full_usage)
+        else:
+            prequire(extra_args is not None and len(extra_args) == 1,
+                     "Expect spell name in extra_args")
+
+            spell_name = extra_args[0]
+            spell = SpellFactory.create_spell(spell_name)
+
+            help_str = cls._GRAPHICAL_USAGE
+            help_str += "\nDescription of %s spell:\n" % spell_name
+            help_str += spell.info() + "\n"
+            help_str += "Player has skill level %d in this spell\n" % \
+                engine().player().spell_skill(spell_name)
+
+            return help_str
 
 ###############################################################################
 class _DrawCommand(Command):
 ###############################################################################
 
     # Class variables
-    __NAME    = "draw"
-    __ALIASES = ("d", "show")
-    __USAGE   = \
+    _NAME            = "draw"
+    _ALIASES         = ("d", "show")
+    _TEXT_USAGE      = \
 """%s [<draw-mode>]
   Re-draw the world; if arg is provided, draw mode is switched to that mode.
   Available draw modes:
     %s
-""" % (__NAME,
+""" % (_NAME,
        "\n    ".join([str(mode) for mode in DrawMode]))
+    _GRAPHICAL_USAGE = \
+"""
+Re-draw the world with a diverent overlay.
+"""
 
     ###########################################################################
     def __init__(self, args):
@@ -395,28 +409,40 @@ class _DrawCommand(Command):
 
         engine().interface().draw() # redraw
 
+    ###########################################################################
     @classmethod
-    def name(cls): return cls.__NAME
+    def help(cls, extra_args=None):
+    ###########################################################################
+        if (_is_text_interface()):
+            return _create_text_help_str(cls, cls._TEXT_USAGE)
+        else:
+            prequire(extra_args is not None and len(extra_args) == 1,
+                     "Expect draw_mode in extra_args")
+            draw_mode = extra_args[0]
 
-    @classmethod
-    def aliases(cls): return cls.__ALIASES
+            help_str =  cls._GRAPHICAL_USAGE
+            help_str += "\nDescription of draw-mode %s:\n" % draw_mode
+            help_str += explain_draw_mode(draw_mode)
 
-    @classmethod
-    def help(cls): return _create_help_str(cls, cls.__USAGE)
+            return help_str
 
 ###############################################################################
 class _HackCommand(Command):
 ###############################################################################
 
     # Class variables
-    __NAME    = "hack"
-    __ALIASES = ()
-    __USAGE   = \
+    _NAME            = "hack"
+    _ALIASES         = ()
+    _TEXT_USAGE      = \
 """%s [<exp>]
   Gives the player free arbitrary exp. If no arg is provided, enough exp is
   awarded to get the player to the next level. This is a cheat put in for
   testing.
-""" % __NAME
+""" % _NAME
+    _GRAPHICAL_USAGE = \
+"""
+Click to give yourself a free level!
+"""
 
     ###########################################################################
     def __init__(self, args):
@@ -443,21 +469,12 @@ class _HackCommand(Command):
 
         engine().player().gain_exp(exp_gained)
 
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def aliases(cls): return cls.__ALIASES
-
-    @classmethod
-    def help(cls): return _create_help_str(cls, cls.__USAGE)
-
 #
 # Internal methods
 #
 
 ###############################################################################
-def _create_help_str(cmd_cls, usage):
+def _create_text_help_str(cmd_cls, usage):
 ###############################################################################
     help_str = usage
 
@@ -466,6 +483,14 @@ def _create_help_str(cmd_cls, usage):
         help_str += "  Aliases: " + " ".join(aliases)
 
     return help_str
+
+###############################################################################
+def _is_text_interface():
+###############################################################################
+    # Importing interface within the global namespace will cause a circular
+    # import, so we must wrap is_text_interface within an internal free func
+    from interface import is_text_interface
+    return is_text_interface()
 
 #
 # Tests

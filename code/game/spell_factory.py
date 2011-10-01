@@ -27,7 +27,7 @@ class SpellFactory(object):
 
     ###########################################################################
     @classmethod
-    def create_spell(cls, name, level, location=None):
+    def create_spell(cls, name, level=0, location=None):
     ###########################################################################
         return cls.get(name)(level, location)
 

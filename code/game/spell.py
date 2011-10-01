@@ -24,7 +24,7 @@ class Spell(object):
     def __init__(self, level, location): self.__init_impl(level, location)
 
     #
-    # Class-level property getters (all abstract, subclasses must define)
+    # Class-level property getters (default definitions provided)
     #
 
     @classmethod
@@ -33,21 +33,28 @@ class Spell(object):
         Get the name of the spell; this is what the user will type to refer
         to this spell.
         """
-        prequire(False, "Called abstract version of name")
+        return cls._NAME
 
     @classmethod
     def base_cost(cls):
         """
         The base (level-1) cost of this spell.
         """
-        prequire(False, "Called abstract version of base_cost")
+        return cls._BASE_COST
 
     @classmethod
     def prereqs(cls):
         """
         Returns the prerequisites for this spell.
         """
-        prequire(False, "Called abstract version of prereqs")
+        return cls._PREREQS
+
+    @classmethod
+    def info(cls):
+        """
+        Returns some basic documentation about this spell
+        """
+        return cls.__doc__
 
     #
     # Instance getters/queries
@@ -88,6 +95,12 @@ class Spell(object):
     #
     # ==== Class constants ====
     #
+
+    # These are intended to be overridden
+    _NAME      = None
+    _BASE_COST = None
+    _PREREQS   = None
+
 
     #
     # Tweakable constants
@@ -278,9 +291,9 @@ class _Hot(Spell):
     # ==== Class Constants ====
     #
 
-    __NAME = "hot"
-    __BASE_COST = 50
-    __PREREQS = _SpellPrereq(1, ()) # No prereqs
+    _NAME      = "hot"
+    _BASE_COST = 50
+    _PREREQS   = _SpellPrereq(1, ()) # No prereqs
 
     #
     # Tweakable constants
@@ -309,15 +322,6 @@ class _Hot(Spell):
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -399,9 +403,9 @@ class _Cold(Spell):
     # ==== Class Variables ====
     #
 
-    __NAME = "cold"
-    __BASE_COST = 50
-    __PREREQS = _SpellPrereq(1, ()) # No prereqs
+    _NAME      = "cold"
+    _BASE_COST = 50
+    _PREREQS   = _SpellPrereq(1, ()) # No prereqs
 
     #
     # Tweakable constants
@@ -440,15 +444,6 @@ class _Cold(Spell):
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -530,9 +525,9 @@ class _Infect(Spell):
     # ==== Class Variables ====
     #
 
-    __NAME = "infect"
-    __BASE_COST = 50
-    __PREREQS = _SpellPrereq(1, ()) # No prereqs
+    _NAME      = "infect"
+    _BASE_COST = 50
+    _PREREQS   = _SpellPrereq(1, ()) # No prereqs
 
     #
     # Tweakable constants
@@ -571,15 +566,6 @@ class _Infect(Spell):
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -649,9 +635,9 @@ class _Wind(Spell):
     # ==== Class Constants ====
     #
 
-    __NAME = "wind"
-    __BASE_COST = 50
-    __PREREQS = _SpellPrereq(1, ()) # No prereqs
+    _NAME      = "wind"
+    _BASE_COST = 50
+    _PREREQS   = _SpellPrereq(1, ()) # No prereqs
 
     #
     # Tweakable constants
@@ -694,15 +680,6 @@ class _Wind(Spell):
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -790,9 +767,9 @@ class _Fire(Spell):
     # ==== Class Variables ====
     #
 
-    __NAME = "fire"
-    __BASE_COST = 100
-    __PREREQS = _SpellPrereq(5, ((_Hot.name(), 1),) ) # Requires hot
+    _NAME      = "fire"
+    _BASE_COST = 100
+    _PREREQS   = _SpellPrereq(5, ((_Hot.name(), 1),) ) # Requires hot
 
     #
     # Tweakable Constants
@@ -841,15 +818,6 @@ class _Fire(Spell):
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -948,9 +916,9 @@ class _Tstorm(Spell):
     # ==== Class Variables ====
     #
 
-    __NAME = "tstorm"
-    __BASE_COST = 100
-    __PREREQS = _SpellPrereq(5, ((_Wind.name(), 1),) ) # Requires wind
+    _NAME      = "tstorm"
+    _BASE_COST = 100
+    _PREREQS   = _SpellPrereq(5, ((_Wind.name(), 1),) ) # Requires wind
 
     #
     # Tweakable Constants
@@ -1007,15 +975,6 @@ class _Tstorm(Spell):
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1110,22 +1069,13 @@ class _Snow(Spell):
     # Class Variables
     #
 
-    __NAME = "snow"
-    __BASE_COST = 100
-    __PREREQS = _SpellPrereq(5, ((_Cold.name(), 1),) ) # Requires cold
+    _NAME      = "snow"
+    _BASE_COST = 100
+    _PREREQS   = _SpellPrereq(5, ((_Cold.name(), 1),) ) # Requires cold
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1160,22 +1110,13 @@ class _Avalanche(Spell):
     # Class Variables
     #
 
-    __NAME = "avalanche"
-    __BASE_COST = 200
-    __PREREQS = _SpellPrereq(10, ((_Snow.name(), 1),) ) # Requires snow
+    _NAME      = "avalanche"
+    _BASE_COST = 200
+    _PREREQS   = _SpellPrereq(10, ((_Snow.name(), 1),) ) # Requires snow
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1210,22 +1151,13 @@ class _Flood(Spell):
     # Class Variables
     #
 
-    __NAME = "flood"
-    __BASE_COST = 200
-    __PREREQS = _SpellPrereq(10, ((_Tstorm.name(), 1),) ) # Requires tstorm
+    _NAME      = "flood"
+    _BASE_COST = 200
+    _PREREQS   = _SpellPrereq(10, ((_Tstorm.name(), 1),) ) # Requires tstorm
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1260,22 +1192,13 @@ class _Dry(Spell):
     # Class Variables
     #
 
-    __NAME = "dry"
-    __BASE_COST = 200
-    __PREREQS = _SpellPrereq(10, ((_Fire.name(), 1),) ) # Requires fire
+    _NAME      = "dry"
+    _BASE_COST = 200
+    _PREREQS   = _SpellPrereq(10, ((_Fire.name(), 1),) ) # Requires fire
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1310,22 +1233,13 @@ class _Blizzard(Spell):
     # Class Variables
     #
 
-    __NAME = "blizzard"
-    __BASE_COST = 200
-    __PREREQS = _SpellPrereq(10, ((_Snow.name(), 1),) ) # Requires snow
+    _NAME      = "blizzard"
+    _BASE_COST = 200
+    _PREREQS   = _SpellPrereq(10, ((_Snow.name(), 1),) ) # Requires snow
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1361,22 +1275,13 @@ class _Tornado(Spell):
     # Class Variables
     #
 
-    __NAME = "tornado"
-    __BASE_COST = 200
-    __PREREQS = _SpellPrereq(10, ((_Tstorm.name(), 1),) ) # Requires tstorm
+    _NAME      = "tornado"
+    _BASE_COST = 200
+    _PREREQS   = _SpellPrereq(10, ((_Tstorm.name(), 1),) ) # Requires tstorm
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1411,22 +1316,13 @@ class _Heatwave(Spell):
     # Class Variables
     #
 
-    __NAME = "heatwave"
-    __BASE_COST = 400
-    __PREREQS = _SpellPrereq(15, ((_Dry.name(), 1),) ) # Requires dry
+    _NAME      = "heatwave"
+    _BASE_COST = 400
+    _PREREQS   = _SpellPrereq(15, ((_Dry.name(), 1),) ) # Requires dry
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1461,22 +1357,13 @@ class _Coldwave(Spell):
     # Class Variables
     #
 
-    __NAME = "coldwave"
-    __BASE_COST = 400
-    __PREREQS = _SpellPrereq(15, ((_Blizzard.name(), 1),) ) # Requires blizzard
+    _NAME      = "coldwave"
+    _BASE_COST = 400
+    _PREREQS   = _SpellPrereq(15, ((_Blizzard.name(), 1),) ) # Requires blizzard
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1511,22 +1398,13 @@ class _Drought(Spell):
     # Class Variables
     #
 
-    __NAME = "drought"
-    __BASE_COST = 400
-    __PREREQS = _SpellPrereq(15, ((_Dry.name(), 1),) ) # Requires dry
+    _NAME      = "drought"
+    _BASE_COST = 400
+    _PREREQS   = _SpellPrereq(15, ((_Dry.name(), 1),) ) # Requires dry
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1561,22 +1439,13 @@ class _Monsoon(Spell):
     # Class Variables
     #
 
-    __NAME = "monsoon"
-    __BASE_COST = 400
-    __PREREQS = _SpellPrereq(15, ((_Flood.name(), 1),) ) # Requires flood
+    _NAME      = "monsoon"
+    _BASE_COST = 400
+    _PREREQS   = _SpellPrereq(15, ((_Flood.name(), 1),) ) # Requires flood
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1610,22 +1479,13 @@ class _Disease(Spell):
     # Class Variables
     #
 
-    __NAME = "disease"
-    __BASE_COST = 800
-    __PREREQS = _SpellPrereq(20, ((_Infect.name(), 1),) ) # Requires infect
+    _NAME      = "disease"
+    _BASE_COST = 800
+    _PREREQS   = _SpellPrereq(20, ((_Infect.name(), 1),) ) # Requires infect
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1660,22 +1520,13 @@ class _Earthquake(Spell):
     # Class Variables
     #
 
-    __NAME = "quake"
-    __BASE_COST = 800
-    __PREREQS = _SpellPrereq(20, ()) # Requires player lvl 20, no spell prereqs
+    _NAME      = "quake"
+    _BASE_COST = 800
+    _PREREQS   = _SpellPrereq(20, ()) # Requires player lvl 20, no spell prereqs
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1712,22 +1563,13 @@ class _Hurricane(Spell):
     # Class Variables
     #
 
-    __NAME = "hurricane"
-    __BASE_COST = 800
-    __PREREQS = _SpellPrereq(20, ((_Monsoon.name(), 1),) ) # Requires monsoon
+    _NAME      = "hurricane"
+    _BASE_COST = 800
+    _PREREQS   = _SpellPrereq(20, ((_Monsoon.name(), 1),) ) # Requires monsoon
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1761,22 +1603,13 @@ class _Plague(Spell):
     # Class Variables
     #
 
-    __NAME = "plague"
-    __BASE_COST = 1600
-    __PREREQS = _SpellPrereq(25, ((_Disease.name(), 1),) ) # Requires disease
+    _NAME      = "plague"
+    _BASE_COST = 1600
+    _PREREQS   = _SpellPrereq(25, ((_Disease.name(), 1),) ) # Requires disease
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1811,22 +1644,13 @@ class _Volcano(Spell):
     # Class Variables
     #
 
-    __NAME = "volcano"
-    __BASE_COST = 1600
-    __PREREQS = _SpellPrereq(25, ((_Earthquake.name(), 1),) ) # Requires quake
+    _NAME      = "volcano"
+    _BASE_COST = 1600
+    _PREREQS   = _SpellPrereq(25, ((_Earthquake.name(), 1),) ) # Requires quake
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):
@@ -1860,22 +1684,13 @@ class _Asteroid(Spell):
     # Class Variables
     #
 
-    __NAME = "asteroid"
-    __BASE_COST = 3200
-    __PREREQS = _SpellPrereq(30, ((_Volcano.name(), 1),) ) # Requires volcano
+    _NAME      = "asteroid"
+    _BASE_COST = 3200
+    _PREREQS   = _SpellPrereq(30, ((_Volcano.name(), 1),) ) # Requires volcano
 
     #
     # Public API
     #
-
-    @classmethod
-    def name(cls): return cls.__NAME
-
-    @classmethod
-    def base_cost(cls): return cls.__BASE_COST
-
-    @classmethod
-    def prereqs(cls): return cls.__PREREQS
 
     ###########################################################################
     def __init__(self, level, location):

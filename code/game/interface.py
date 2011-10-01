@@ -116,11 +116,7 @@ class Interface(object):
 ###############################################################################
 def create_interface():
 ###############################################################################
-    interface = Configuration.instance().interface_config()
-
-    # First is default
-    if (interface == ""):
-        interface = [str(item) for item in Interfaces][0]
+    interface = _get_inteface_config_str()
 
     if (Interfaces.TEXT == interface):
         return TextInterface()
@@ -129,9 +125,26 @@ def create_interface():
     else:
         prequire(False, "Missing support for ", interface)
 
+###############################################################################
+def is_text_interface():
+###############################################################################
+    interface = _get_inteface_config_str()
+    return Interfaces.TEXT == interface
+
 #
 # Internal-only below
 #
+
+###############################################################################
+def _get_inteface_config_str():
+###############################################################################
+    interface = Configuration.instance().interface_config()
+
+    # First is default
+    if (interface == ""):
+        interface = [str(item) for item in Interfaces][0]
+
+    return interface
 
 ###############################################################################
 def _readline_completer(text, state):
@@ -279,8 +292,12 @@ class PygameInterface(Interface):
                     break
                 elif (event.type == pygame.MOUSEBUTTONDOWN):
                     try:
+                        button1, button2, button3 = pygame.mouse.get_pressed()
                         mouse_pos = pygame.mouse.get_pos()
-                        command_str = self.__drawer.clicked(mouse_pos)
+                        command_str = self.__drawer.clicked(mouse_pos,
+                                                            button1,
+                                                            button2,
+                                                            button3)
                         if (command_str is not None):
                             print command_str
                             command = CommandFactory.parse_command(command_str)

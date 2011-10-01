@@ -20,6 +20,8 @@ from weather import Atmosphere, Anomaly, is_atmospheric
 from world import World
 from engine import engine
 
+# TODO - This is prototype code and needs extensive cleanup
+
 ###############################################################################
 class DrawPygame(object):
 ###############################################################################
@@ -98,11 +100,24 @@ class DrawPygame(object):
             prequire(False, "Class not drawable: ", item.__class__)
 
     ###########################################################################
-    def clicked(self, mouse_pos):
+    def clicked(self, mouse_pos, button1, button2, button3):
     ###########################################################################
         """
         Based on mouse click, generate command text
         """
+        # First: Determine what action to take based on what button was clicked
+        HELP, DO = range(2)
+        if (button1 and not button2 and not button3):
+            action = DO
+        elif (not button1 and not button2 and button3):
+            action = HELP
+        else:
+            # ignore
+            return None
+
+        # Next: Figure out what the user is clicking on so we can create the
+        # appropriate command...
+
         # Case 1: User is clicking one of the buttons for spell learning/casting
         for button_collection in [self.__cast_spell_button_loc_map,
                                   self.__learn_spell_button_loc_map,
@@ -111,16 +126,18 @@ class DrawPygame(object):
                 if (_is_within(mouse_pos, button_loc, 50)):
                     # Match
                     if (button_collection is self.__learn_spell_button_loc_map):
-                        return "learn %s" % spell_name
+                        rv = "learn %s" % spell_name
+                        return "help %s" % rv if action == HELP else rv
                     elif (button_collection is self.__cast_spell_button_loc_map):
                         self.__spell_to_cast = spell_name
-                        return None
+                        return "help cast %s" % spell_name if action == HELP else None
                     else:
-                        return "draw %s" % spell_name
+                        rv = "draw %s" % spell_name
+                        return "help %s" % rv if action == HELP else rv
 
         # Case 2: User has chosen a spell to cast and is clicking on a world
         # tile to complete the cast
-        if (self.__spell_to_cast):
+        if (self.__spell_to_cast and action == DO):
             if (_is_within(mouse_pos, self.__tile_start_pos,
                            self.__world_dim[0] * 100, self.__world_dim[0] * 100)):
                 x_diff = mouse_pos[0] - self.__tile_start_pos[0]
@@ -139,10 +156,9 @@ class DrawPygame(object):
         if (_is_within(mouse_pos, self.__next_button_pos,
                        self.__next_button_dim[0],
                        self.__next_button_dim[1])):
-            return "end"
+            return "end" if action == DO else "help end"
 
-        # Case 4: User is changing overlay choice
-        # TODO
+        return None
 
     #
     # ==== Internal Methods ====

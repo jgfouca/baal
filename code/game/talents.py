@@ -268,7 +268,7 @@ class TestTalents(unittest.TestCase):
                 self.assertIn( (spell_name, spell_level), talents )
                 #self.assertIn( (spell_name, spell_level), known_spells )
 
-        self.assertEqual(len(known_spells), 10)
+        self.assertEqual(len(known_spells), 2)
 
 if (__name__ == "__main__"):
     unittest.main()
