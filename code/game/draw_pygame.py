@@ -6,6 +6,8 @@ API for drawing things in pygame.
 
 import unittest, pygame, os
 
+from Tkinter import Tk, Label, Button, LEFT
+
 from baal_common import prequire
 from draw_mode import DrawMode, curr_draw_mode, _set_draw_mode
 from baal_time import Time, Season
@@ -76,6 +78,24 @@ class DrawPygame(object):
         # Pygame uses double-buffering; make the buffer we just drew into the
         # active buffer.
         pygame.display.flip()
+
+    ###########################################################################
+    def popup(self, title, text):
+    ###########################################################################
+        root = Tk()
+        root.title(title)
+        Label(root,text=text, justify=LEFT).pack(pady=10)
+        Button(root, text="OK", command=lambda: root.destroy()).pack()
+
+        w = root.winfo_screenwidth()
+        h = root.winfo_screenheight()
+        rw = root.winfo_reqwidth()
+        rh = root.winfo_reqheight()
+        x = w/2 - rw/2
+        y = h/2 - rh/2
+        root.geometry("+%d+%d" % (x, y))
+
+        root.mainloop()
 
     ###########################################################################
     def draw(self, item):
@@ -390,6 +410,7 @@ class DrawPygame(object):
     ###########################################################################
     def __compute_atmos_color(self, draw_mode, field_value):
     ###########################################################################
+        # TODO
         # for upper_bound, color in self._ATMOS_FIELD_COLOR_MAP[draw_mode]:
         #     if (field_value < upper_bound):
         #         return color
@@ -417,6 +438,7 @@ class DrawPygame(object):
     ###########################################################################
     def __draw_atmosphere(self, item):
     ###########################################################################
+        # TODO
         # draw_mode = curr_draw_mode()
 
         # field = self.__get_field_for_draw_mode(item, draw_mode)
@@ -429,6 +451,7 @@ class DrawPygame(object):
     ###########################################################################
     def __draw_anomaly(self, item):
     ###########################################################################
+        # TODO
         # print("Level:", item.intensity(), item.category(),
         #       "anomaly at location", item.location(),
         #       end="")
@@ -452,6 +475,7 @@ class DrawPygame(object):
             self.__x_pos = 0
             self.__y_pos += 100
 
+        # TODO
         # Draw recent anomalies
         # for anomaly in item.iter_anomalies():
         #     self.draw(anomaly)
@@ -527,6 +551,7 @@ class DrawPygame(object):
         elif (draw_mode == DrawMode.MOISTURE):
             moisture = item.soil_moisture()
             if (moisture is not None):
+                # TODO
                 # if (moisture < 1.0):
                 #     color = YELLOW
                 # elif (moisture < FoodTile.FLOODING_THRESHOLD):
@@ -541,6 +566,7 @@ class DrawPygame(object):
                 self.__draw_land(item)
 
         elif (draw_mode == DrawMode.YIELD):
+            # TODO
             # yield_ = item.yield_()
             # if (yield_.food > 0):
             #     cprint(GREEN, "%.3f" % yield_.food)

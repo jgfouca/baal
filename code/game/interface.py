@@ -261,6 +261,21 @@ class PygameInterface(Interface):
 
         self.__drawer = DrawPygame()
 
+        self.__spell_report_buffer = []
+
+        # Very basic opening menu
+        self.__drawer.popup("Menu",
+"""
+Welcome to Ba'al!
+
+Explain game at a high level here.
+
+Right click on buttons you don't understand.
+
+Enjoy!
+"""
+)
+
     ###########################################################################
     def draw(self):
     ###########################################################################
@@ -302,6 +317,7 @@ class PygameInterface(Interface):
                             print command_str
                             command = CommandFactory.parse_command(command_str)
                             command.apply()
+                            self.__flush_spell_report_buffer()
                     except UserError, error:
                         print "ERROR:", error
                         print "\nType: 'help [command]' for assistence"
@@ -316,26 +332,30 @@ class PygameInterface(Interface):
     ###########################################################################
     def help(self, helpmsg):
     ###########################################################################
-        print helpmsg
-        sys.stdout.flush()
+        self.__drawer.popup("help", helpmsg)
 
     ###########################################################################
     def spell_report(self, report):
     ###########################################################################
-        cprint(RED, report + "\n")
-        sys.stdout.flush()
+        self.__spell_report_buffer.append(report)
 
     ###########################################################################
     def human_wins(self):
     ###########################################################################
-        cprint(GREEN, "GRATZ, UR WINNAR!\n")
-        sys.stdout.flush()
+        self.__drawer.popup("Game Over", "GRATZ, UR WINNAR!")
 
     ###########################################################################
     def ai_wins(self):
     ###########################################################################
-        cprint(RED, "UR LUZER. LOL, GET PWNED\n")
-        sys.stdout.flush()
+        self.__drawer.popup("Game Over", "UR LUZER. LOL, GET PWNED")
+
+    ###########################################################################
+    def __flush_spell_report_buffer(self):
+    ###########################################################################
+        if (self.__spell_report_buffer):
+            self.__drawer.popup("Spell Report",
+                                "\n".join(self.__spell_report_buffer))
+            self.__spell_report_buffer = []
 
 #
 # Tests
