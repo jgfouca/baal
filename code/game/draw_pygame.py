@@ -24,6 +24,16 @@ from engine import engine
 
 # TODO - This is prototype code and needs extensive cleanup
 
+# Some RGB color constants
+
+_RED       = (255, 0, 0)
+_GREEN     = (0, 255, 0)
+_BLUE      = (0, 0, 255)
+_YELLOW    = (255, 255, 0)
+_WHITE     = (255, 255, 255)
+_BLACK     = (0, 0, 0)
+_DARKGREEN = (0, 125, 0)
+
 ###############################################################################
 class DrawPygame(object):
 ###############################################################################
@@ -61,7 +71,7 @@ class DrawPygame(object):
     ###########################################################################
     def begin_draw(self):
     ###########################################################################
-        self.__screen.fill( (0, 0, 0) ) # black
+        self.__screen.fill( _BLACK )
 
         self.__x_pos = 0
         self.__y_pos = 0
@@ -189,13 +199,13 @@ class DrawPygame(object):
     ###########################################################################
         # Compute color
         if (item.season() == Season.WINTER):
-            color = (0, 0, 255) # blue
+            color = _BLUE
         elif (item.season() == Season.SPRING):
-            color = (0, 255, 0) # green
+            color = _GREEN
         elif (item.season() == Season.SUMMER):
-            color = (255, 0, 0) # red
+            color = _RED
         elif (item.season() == Season.FALL):
-            color = (255, 255, 0) # yellow
+            color = _YELLOW
         else:
             prequire(False, "Unhandled season ", item.season())
 
@@ -230,18 +240,18 @@ class DrawPygame(object):
             to_draw = ("%.3f" % value)
 
             if (value < .333):
-                color = (0, 255, 0)
+                color = _GREEN
             elif (value < .666):
-                color = (255, 255, 0)
+                color = _YELLOW
             else:
-                color = (255, 0, 0)
+                color = _RED
 
             my_font = pygame.font.SysFont("None", # font name
                                           20)     # fontsize
 
             self.__screen.blit(my_font.render(to_draw,
                                               0, # antialias
-                                              color), # red
+                                              color),
                                (self.__x_pos + 30, self.__y_pos + 40))
         else:
             prequire(False, "Should not draw geology in mode: ", draw_mode)
@@ -262,31 +272,31 @@ class DrawPygame(object):
 
         self.__screen.blit(my_font.render("PLAYER STATS:",
                                    0, # antialias
-                                   (255, 255, 255)), # white
+                                   _WHITE),
                     (self.__x_pos, self.__y_pos))
         self.__y_pos += 20
 
         self.__screen.blit(my_font.render("  name: %s" % item.name(),
                                    0, # antialias
-                                   (255, 255, 255)), # white
+                                   _WHITE),
                     (self.__x_pos, self.__y_pos))
         self.__y_pos += 20
 
         self.__screen.blit(my_font.render("  level: %d" % item.level(),
                                    0, # antialias
-                                   (0, 255, 0)), # green
+                                   _GREEN),
                     (self.__x_pos, self.__y_pos))
         self.__y_pos += 20
 
         self.__screen.blit(my_font.render("  mana: %d / %d" % (item.mana(), item.max_mana()),
                                    0, # antialias
-                                   (0, 0, 255)), # blue
+                                   _BLUE),
                     (self.__x_pos, self.__y_pos))
         self.__y_pos += 20
 
         self.__screen.blit(my_font.render("  exp: %d / %d" % (item.exp(), item.next_level_cost()),
                                           0, # antialias
-                                          (255, 255, 0)), # yellow
+                                          _YELLOW),
                            (self.__x_pos, self.__y_pos))
 
         self.__x_pos += 200
@@ -299,17 +309,17 @@ class DrawPygame(object):
 
         self.__screen.blit(my_font.render("CAST:",
                                           0, # antialias
-                                          (255, 0, 0)), # red
+                                          _RED),
                            (x_button_pos + 5, y_button_pos))
 
         self.__screen.blit(my_font.render("LEARN:",
                                           0, # antialias
-                                          (0, 255, 0)), # green
+                                          _GREEN),
                            (x_button_pos + 165, y_button_pos))
 
         self.__screen.blit(my_font.render("DRAW MODES:",
                                           0, # antialias
-                                          (255, 255, 255)), # white
+                                          _WHITE),
                            (x_button_pos + 275, y_button_pos))
 
         y_button_pos = 15
@@ -365,19 +375,19 @@ class DrawPygame(object):
 
         self.__screen.blit(my_font.render("AI PLAYER STATS:",
                                           0, # antialias
-                                          (255, 255, 255)), # white
+                                          _WHITE),
                     (self.__x_pos, self.__y_pos))
         self.__y_pos += 20
 
         self.__screen.blit(my_font.render("  tech level: %d" % item.tech_level(),
                                           0, # antialias
-                                          (0, 255, 0)), # green
+                                          _GREEN),
                     (self.__x_pos, self.__y_pos))
         self.__y_pos += 20
 
         self.__screen.blit(my_font.render("  population: %d" % item.population(),
                                           0, # antialias
-                                          (0, 0, 255)), # blue
+                                          _BLUE),
                     (self.__x_pos, self.__y_pos))
 
         self.__x_pos = 0
@@ -398,32 +408,30 @@ class DrawPygame(object):
 
     # Describes how to draw the various fields. The first value in the pair
     # is the upper-bound for the corresponding color.
-    # _MAX = 999999
-    # _ATMOS_FIELD_COLOR_MAP = {
-    #     DrawMode.WIND        : ((10, GREEN),  (20, YELLOW),   (_MAX, RED)),
-    #     DrawMode.DEWPOINT    : ((32, RED),    (55, YELLOW),   (_MAX, GREEN)),
-    #     DrawMode.TEMPERATURE : ((32, BLUE),   (80, YELLOW),   (_MAX, RED)),
-    #     DrawMode.PRESSURE    : ((975, GREEN), (1025, YELLOW), (_MAX, RED)),
-    #     DrawMode.RAINFALL    : ((2,  RED),    (10, YELLOW),   (_MAX, RED))
-    # }
+    _MAX = 999999999
+    _ATMOS_FIELD_COLOR_MAP = {
+        DrawMode.WIND        : ((10,  _DARKGREEN), (20, _YELLOW), (_MAX, _RED)),
+        DrawMode.DEWPOINT    : ((32,  _RED), (55, _YELLOW), (_MAX, _DARKGREEN)),
+        DrawMode.TEMPERATURE : ((32,  _BLUE), (80, _YELLOW), (_MAX, _RED)),
+        DrawMode.PRESSURE    : ((975, _DARKGREEN), (1025, _YELLOW), (_MAX, _RED)),
+        DrawMode.RAINFALL    : ((2,   _RED), (10, _YELLOW), (_MAX, _RED))
+    }
 
     ###########################################################################
     def __compute_atmos_color(self, draw_mode, field_value):
     ###########################################################################
-        # TODO
-        # for upper_bound, color in self._ATMOS_FIELD_COLOR_MAP[draw_mode]:
-        #     if (field_value < upper_bound):
-        #         return color
+        for upper_bound, color in self._ATMOS_FIELD_COLOR_MAP[draw_mode]:
+            if (field_value < upper_bound):
+                return color
 
-        # prequire(False,
-        #          "Failed to find color for ", draw_mode, ", val ", field_value)
-        pass
+        prequire(False,
+                 "Failed to find color for ", draw_mode, ", val ", field_value)
 
     ###########################################################################
     def __get_field_for_draw_mode(self, item, draw_mode):
     ###########################################################################
         if (draw_mode == DrawMode.WIND):
-            return item.wind()
+            return item.wind().speed()
         elif (draw_mode == DrawMode.DEWPOINT):
             return item.dewpoint()
         elif (draw_mode == DrawMode.TEMPERATURE):
@@ -438,15 +446,20 @@ class DrawPygame(object):
     ###########################################################################
     def __draw_atmosphere(self, item):
     ###########################################################################
-        # TODO
-        # draw_mode = curr_draw_mode()
+        draw_mode = curr_draw_mode()
 
-        # field = self.__get_field_for_draw_mode(item, draw_mode)
-        # color = self.__compute_atmos_color(draw_mode, field)
-        # str_  = str(field).center(self.TILE_TEXT_WIDTH)
+        field = self.__get_field_for_draw_mode(item, draw_mode)
+        color = self.__compute_atmos_color(draw_mode, field)
 
-        # cprint(color, str_)
-        pass
+        to_draw = ("%.2f" % field)
+
+        my_font = pygame.font.SysFont("None", # font name
+                                      20)     # fontsize
+
+        self.__screen.blit(my_font.render(to_draw,
+                                          0, # antialias
+                                          color),
+                           (self.__x_pos + 30, self.__y_pos + 40))
 
     ###########################################################################
     def __draw_anomaly(self, item):
@@ -525,7 +538,7 @@ class DrawPygame(object):
 
                 self.__screen.blit(my_font.render("Size: %d" % item.city().rank(),
                                                   0, # antialias
-                                                  (255, 0, 0)), # red
+                                                  _RED),
                                    (self.__x_pos + 30, self.__y_pos + 75))
 
             elif (item.infra_level() is not None and item.infra_level() > 0):
@@ -545,39 +558,55 @@ class DrawPygame(object):
 
                 self.__screen.blit(my_font.render("Level: %d" % item.infra_level(),
                                                   0, # antialias
-                                                  (255, 255, 0)), # yellow
+                                                  _YELLOW),
                                    (self.__x_pos + 30, self.__y_pos + 75))
 
         elif (draw_mode == DrawMode.MOISTURE):
+            self.__draw_land(item)
             moisture = item.soil_moisture()
             if (moisture is not None):
-                # TODO
-                # if (moisture < 1.0):
-                #     color = YELLOW
-                # elif (moisture < FoodTile.FLOODING_THRESHOLD):
-                #     color = GREEN
-                # elif (moisture < FoodTile.TOTALLY_FLOODED):
-                #     color = BLUE
-                # else:
-                #     color = RED
-                # cprint(color, "%.3f" % moisture)
-                pass
-            else:
-                self.__draw_land(item)
+                if (moisture < 1.0):
+                    color = _YELLOW
+                elif (moisture < FoodTile.FLOODING_THRESHOLD):
+                    color = _DARKGREEN
+                elif (moisture < FoodTile.TOTALLY_FLOODED):
+                    color = _BLUE
+                else:
+                    color = _RED
+
+                to_draw = ("%.3f" % moisture)
+
+                my_font = pygame.font.SysFont("None", # font name
+                                              20)     # fontsize
+
+                self.__screen.blit(my_font.render(to_draw,
+                                                  0, # antialias
+                                                  color),
+                                   (self.__x_pos + 30, self.__y_pos + 40))
 
         elif (draw_mode == DrawMode.YIELD):
-            # TODO
-            # yield_ = item.yield_()
-            # if (yield_.food > 0):
-            #     cprint(GREEN, "%.3f" % yield_.food)
-            # else:
-            #     cprint(RED, "%.3f" % yield_.prod)
-            pass
+            self.__draw_land(item)
+            yield_ = item.yield_()
+            if (yield_.food > 0):
+                color = _DARKGREEN
+                to_draw = "%.3f" % yield_.food
+            else:
+                color = _RED
+                to_draw = "%.3f" % yield_.prod
+
+            my_font = pygame.font.SysFont("None", # font name
+                                          20)     # fontsize
+
+            self.__screen.blit(my_font.render(to_draw,
+                                              0, # antialias
+                                              color),
+                               (self.__x_pos + 30, self.__y_pos + 40))
 
         elif (is_geological(draw_mode)):
             self.draw(item.geology())
 
         elif (is_atmospheric(draw_mode)):
+            self.__draw_land(item)
             self.draw(item.atmosphere())
 
         else:
