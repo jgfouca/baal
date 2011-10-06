@@ -140,7 +140,10 @@ class World(object):
     ###########################################################################
         check_access(self.ALLOW_CYCLE_TURN)
 
-        # Phase 1: Generate anomalies.
+        # Phase 1: Increment time
+        self.__time.next()
+
+        # Phase 2: Generate anomalies.
         # TODO: How to handle overlapping anomalies of same category?
         self.__recent_anomalies = []
         for row in self.__rows:
@@ -151,25 +154,18 @@ class World(object):
                     if (anomaly is not None):
                         self.__recent_anomalies.append(anomaly)
 
-        # Phase 2 of World turn-cycle: Simulate the inter-turn
+        # Phase 3 of World turn-cycle: Simulate the inter-turn
         # (long-term) weather Every turn, the weather since the last
         # turn will be randomly simulated. There will be random
         # abnormal areas, with the epicenter of the abnormality having
         # the most extreme deviations from the normal climate and
         # peripheral tiles having smaller deviations from normal.
         # Abnormalilty types are: drought, moist, cold, hot, high/low
-        # pressure Based on our model of time, we are at the beginning
-        # of the current season, so anomalies affect this season; that
-        # is why time is not incremented until later. Current
-        # conditions for the next turn will be derived from these
-        # anomalies.
+        # pressure. Anomalies affect this season.
         for row in self.__rows:
             for tile in row:
                 tile.cycle_turn(self.__recent_anomalies,
                                 self.__time.season())
-
-        # Phase 3: Increment time
-        self.__time.next()
 
     ###########################################################################
     def __place_city_impl_world(self, location, name):

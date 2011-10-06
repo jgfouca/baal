@@ -92,141 +92,218 @@ class _WorldFactoryHardcoded(_WorldFactoryBase):
         tiles = []
 
         # Row 1
-        tiles.append(TundraTile(Climate(30, 10, Wind(10, Direction.WSW)),
+        tiles.append(TundraTile(Climate([10, 30, 50, 30],
+                                        [4, 2, .5, 2],
+                                        [Wind(10, Direction.WSW)]*4),
                                 Inactive(),
                                 loc_iter.next()))
-        tiles.append(PlainsTile(Climate(40, 12, Wind(10, Direction.WSW)),
+        tiles.append(PlainsTile(Climate([20, 40, 60, 40],
+                                        [5, 2.5, 1, 2.5],
+                                        [Wind(10, Direction.WSW)]*4),
                                 Inactive(),
                                 loc_iter.next()))
-        tiles.append(HillsTile(Climate(35, 14, Wind(15, Direction.WSW)),
+        tiles.append(HillsTile(Climate([15, 35, 50, 35],
+                                       [6, 3.5, 2, 3.5],
+                                       [Wind(15, Direction.WSW)]*4),
                                Inactive(),
                                loc_iter.next()))
         tiles.append(MountainTile(5000,
-                                  Climate(20, 40, Wind(25, Direction.WSW)),
+                                  Climate([10, 25, 40, 25],
+                                          [12, 7, 8, 7],
+                                          [Wind(25, Direction.WSW)]*4),
                                   Subducting(2.0),
                                   loc_iter.next()))
-        tiles.append(LushTile(Climate(60, 30, Wind(10, Direction.WSW)),
+        tiles.append(LushTile(Climate([50, 60, 70, 60],
+                                      [8, 8, 8, 8],
+                                      [Wind(10, Direction.WSW)]*4),
                               Subducting(2.0),
                               loc_iter.next()))
         tiles.append(OceanTile(1000,
-                               Climate(70, 35, Wind(10, Direction.SW)),
+                               Climate([65, 70, 75, 65],
+                                       [9, 9, 9, 9],
+                                       [Wind(10, Direction.SW)]*4),
                                Subducting(2.0),
                                loc_iter.next()))
 
         # Row 2
-        tiles.append(DesertTile(Climate(50, 10, Wind(10, Direction.SW)),
+        tiles.append(DesertTile(Climate([25, 50, 75, 50],
+                                        [4, 1.5, 1, 1.5],
+                                        [Wind(10, Direction.SW)]*4),
                                 Inactive(),
                                 loc_iter.next()))
-        tiles.append(DesertTile(Climate(50, 10, Wind(10, Direction.SW)),
+        tiles.append(DesertTile(Climate([30, 55, 80, 55],
+                                        [4, 1.5, 1, 1.5],
+                                        [Wind(10, Direction.SW)]*4),
                                 Inactive(),
                                 loc_iter.next()))
         tiles.append(MountainTile(5000,
-                                  Climate(20, 40, Wind(25, Direction.SW)),
+                                  Climate([12, 27, 42, 27],
+                                          [12, 7, 8, 7],
+                                          [Wind(25, Direction.SW)]*4),
                                   Inactive(),
                                   loc_iter.next()))
-        tiles.append(HillsTile(Climate(40, 40, Wind(15, Direction.SW)),
+        tiles.append(HillsTile(Climate([40, 55, 70, 55],
+                                       [10, 10, 10, 10],
+                                       [Wind(15, Direction.SW)]*4),
                                Subducting(2.0),
                                loc_iter.next()))
-        tiles.append(LushTile(Climate(62, 30, Wind(10, Direction.SW)),
+        tiles.append(LushTile(Climate([52, 62, 72, 62],
+                                      [8, 8, 8, 8],
+                                      [Wind(10, Direction.SW)]*4),
                               Subducting(2.0),
                               loc_iter.next()))
         tiles.append(OceanTile(1000,
-                               Climate(72, 35, Wind(10, Direction.SSW)),
+                               Climate([67, 72, 77, 67],
+                                       [9, 9, 9, 9],
+                                       [Wind(10, Direction.SSW)]*4),
                                Subducting(2.0),
                                loc_iter.next()))
 
         # Row 3
-        tiles.append(DesertTile(Climate(55, 10, Wind(10, Direction.S)),
+        tiles.append(DesertTile(Climate([30, 55, 80, 55],
+                                        [4, 1.5, 1, 1.5],
+                                        [Wind(10, Direction.S)]*4),
                                 Inactive(),
                                 loc_iter.next()))
         tiles.append(MountainTile(5000,
-                                  Climate(25, 45, Wind(25, Direction.SSW)),
+                                  Climate([14, 29, 44, 29],
+                                          [13, 8, 10, 8],
+                                          [Wind(25, Direction.SSW)]*4),
                                   Inactive(),
                                   loc_iter.next()))
-        tiles.append(HillsTile(Climate(45, 40, Wind(15, Direction.SSW)),
+        tiles.append(HillsTile(Climate([42, 57, 72, 57],
+                                       [11, 11, 11, 11],
+                                       [Wind(15, Direction.SSW)]*4),
                                Subducting(3.0),
                                loc_iter.next()))
-        tiles.append(LushTile(Climate(65, 35, Wind(10, Direction.SSW)),
+        tiles.append(LushTile(Climate([55, 65, 75, 65],
+                                      [9, 9, 9, 9],
+                                      [Wind(10, Direction.SSW)]*4),
                               Subducting(3.0),
                               loc_iter.next()))
         tiles.append(OceanTile(1000,
-                               Climate(75, 35, Wind(10, Direction.S)),
+                               Climate([70, 75, 80, 75],
+                                       [10, 10, 10, 10],
+                                       [Wind(10, Direction.S)]*4),
                                Subducting(3.0),
                                loc_iter.next()))
         tiles.append(OceanTile(1000,
-                               Climate(75, 40, Wind(10, Direction.S)),
+                               Climate([70, 75, 80, 75],
+                                       [10, 10, 10, 10],
+                                       [Wind(10, Direction.S)]*4),
                                Inactive(),
                                loc_iter.next()))
 
         # Row 4
-        tiles.append(HillsTile(Climate(55, 15, Wind(15, Direction.S)),
+        tiles.append(HillsTile(Climate([30, 50, 65, 50],
+                                       [4, 4, 4, 4],
+                                       [Wind(15, Direction.S)]*4),
                                Inactive(),
                                loc_iter.next()))
         tiles.append(MountainTile(5000,
-                                  Climate(30, 50, Wind(25, Direction.S)),
+                                  Climate([18, 33, 48, 33],
+                                          [10, 9, 13, 9],
+                                          [Wind(25, Direction.S)]*4),
                                   Inactive(),
                                   loc_iter.next()))
-        tiles.append(LushTile(Climate(70, 40, Wind(10, Direction.S)),
+        tiles.append(LushTile(Climate([60, 70, 80, 70],
+                                      [8, 10, 12, 10],
+                                      [Wind(10, Direction.S)]*4),
                               Subducting(2.0),
                               loc_iter.next()))
-        tiles.append(LushTile(Climate(70, 40, Wind(10, Direction.S)),
+        tiles.append(LushTile(Climate([60, 70, 80, 70],
+                                      [8, 10, 12, 8],
+                                      [Wind(10, Direction.S)]*4),
                               Subducting(2.0),
                               loc_iter.next()))
         tiles.append(OceanTile(1000,
-                               Climate(80, 45, Wind(10, Direction.SSE)),
+                               Climate([75, 80, 85, 80],
+                                       [11, 11, 11, 11],
+                                       [Wind(10, Direction.SSE)]*4),
                                Inactive(),
                                loc_iter.next()))
         tiles.append(OceanTile(1000,
-                               Climate(80, 45, Wind(10, Direction.SSE)),
+                               Climate([75, 80, 85, 80],
+                                       [11, 11, 11, 11],
+                                       [Wind(10, Direction.SSE)]*4),
                                Inactive(),
                                loc_iter.next()))
 
         # Row 5
-        tiles.append(PlainsTile(Climate(70, 20, Wind(10, Direction.SSE)),
+        tiles.append(PlainsTile(Climate([40, 70, 90, 70],
+                                        [3, 4, 8, 4],
+                                        [Wind(10, Direction.SSE)]*4),
                                 Transform(2.0),
                                 loc_iter.next()))
-        tiles.append(LushTile(Climate(70, 30, Wind(10, Direction.SSE)),
+        tiles.append(LushTile(Climate([57, 67, 77, 67],
+                                      [6, 8, 16, 8],
+                                      [Wind(10, Direction.SSE)]*4),
                               Transform(2.0),
                               loc_iter.next()))
-        tiles.append(LushTile(Climate(70, 30, Wind(10, Direction.SSE)),
+        tiles.append(LushTile(Climate([59, 69, 79, 69],
+                                      [8, 10, 16, 10],
+                                      [Wind(10, Direction.SSE)]*4),
                               Transform(2.0),
                               loc_iter.next()))
         tiles.append(OceanTile(1000,
-                               Climate(80, 45, Wind(10, Direction.SE)),
+                               Climate([75, 80, 85, 80],
+                                       [12, 12, 12, 12],
+                                       [Wind(10, Direction.SE)]*4),
                                Subducting(1.0),
                                loc_iter.next()))
         tiles.append(OceanTile(1000,
-                               Climate(80, 45, Wind(10, Direction.SE)),
+                               Climate([75, 80, 85, 80],
+                                       [12, 12, 12, 12],
+                                       [Wind(10, Direction.SE)]*4),
                                Inactive(),
                                loc_iter.next()))
         tiles.append(OceanTile(1000,
-                               Climate(80, 45, Wind(10, Direction.SE)),
+                               Climate([75, 80, 85, 80],
+                                       [12, 12, 12, 12],
+                                       [Wind(10, Direction.SE)]*4),
                                Inactive(),
                                loc_iter.next()))
 
         # Row 6
         tiles.append(OceanTile(1000,
-                               Climate(85, 45, Wind(10, Direction.ESE)),
+                               Climate([80, 85, 90, 85],
+                                       [12, 12, 12, 12],
+                                       [Wind(10, Direction.ESE)]*4),
                                Inactive(),
                                loc_iter.next()))
         tiles.append(OceanTile(1000,
-                               Climate(85, 45, Wind(10, Direction.ESE)),
+                               Climate([80, 85, 90, 85],
+                                       [12, 12, 12, 12],
+                                       [Wind(10, Direction.ESE)]*4),
+
                                Inactive(),
                                loc_iter.next()))
         tiles.append(OceanTile(1000,
-                               Climate(85, 45, Wind(10, Direction.ESE)),
+                               Climate([80, 85, 90, 85],
+                                       [12, 12, 12, 12],
+                                       [Wind(10, Direction.ESE)]*4),
+
                                Inactive(),
                                loc_iter.next()))
         tiles.append(OceanTile(1000,
-                               Climate(85, 45, Wind(10, Direction.ESE)),
+                               Climate([80, 85, 90, 85],
+                                       [12, 12, 12, 12],
+                                       [Wind(10, Direction.ESE)]*4),
+
                                Inactive(),
                                loc_iter.next()))
         tiles.append(OceanTile(1000,
-                               Climate(85, 45, Wind(10, Direction.ESE)),
+                               Climate([80, 85, 90, 85],
+                                       [12, 12, 12, 12],
+                                       [Wind(10, Direction.ESE)]*4),
+
                                Inactive(),
                                loc_iter.next()))
         tiles.append(OceanTile(1000,
-                               Climate(85, 45, Wind(10, Direction.ESE)),
+                               Climate([80, 85, 90, 85],
+                                       [12, 12, 12, 12],
+                                       [Wind(10, Direction.ESE)]*4),
+
                                Inactive(),
                                loc_iter.next()))
 

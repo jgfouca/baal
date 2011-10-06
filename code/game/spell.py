@@ -755,7 +755,7 @@ class _Fire(Spell):
     """
     Starts a fire at a location. Fires will kill people in cities and
     destroy infrastructure.
-    TODO: has a chance to spead?
+    TODO: has a chance to spread?
 
     Enhanced by high wind, low dewpoint, high temperature, and low soil
     moisture. Reduced by city defense and tech level.
@@ -1092,6 +1092,8 @@ class _Snow(Spell):
     def apply(self):
     ###########################################################################
         # TODO
+        # Increase precip
+        # Increase snowpack
         return 0
 
 ###############################################################################
@@ -1174,6 +1176,7 @@ class _Flood(Spell):
     def apply(self):
     ###########################################################################
         # TODO
+        # Change atmosphere to increase precip
         return 0
 
 ###############################################################################

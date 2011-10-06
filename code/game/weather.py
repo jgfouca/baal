@@ -94,22 +94,28 @@ class Wind(object):
 class Climate(object):
 ###############################################################################
     """
-    Every tile has a climate. Averate temp, average rainfall, and
+    Every tile has a climate. Averate temp, average precip, and
     prevailing wind.
 
-    TODO: This needs to be different from season to season.
+    This needs to be different from season to season.
     """
 
-    def __init__(self, temperature, rainfall, wind):
+    def __init__(self, temperature, precip, wind):
+        num_seasons = Season.size()
+
+        prequire(len(temperature) == num_seasons, "wrong number of temps")
+        prequire(len(precip)      == num_seasons, "wrong number of precips")
+        prequire(len(wind)        == num_seasons, "wrong number of winds")
+
         self.__temperature = temperature # deg farenheit
-        self.__rainfall    = rainfall    # inches water precip / year
-        self.__wind        = wind
+        self.__precip      = precip      # inches water precip / year
+        self.__wind        = wind        # average wind dir and speed
 
-    def temperature(self, season): return self.__temperature
+    def temperature(self, season): return self.__temperature[int(season)]
 
-    def rainfall(self, season): return self.__rainfall
+    def precip(self, season): return self.__precip[int(season)]
 
-    def wind(self, season): return self.__wind
+    def wind(self, season): return self.__wind[int(season)]
 
     def to_xml(self):
         # TODO - Aaron
@@ -137,7 +143,7 @@ class Atmosphere(object):
 
     def dewpoint(self): return self.__dewpoint
 
-    def rainfall(self): return self.__rainfall
+    def precip(self): return self.__precip
 
     def pressure(self): return self.__pressure
 
@@ -191,7 +197,7 @@ class Atmosphere(object):
         season = iter(Season).next()
 
         self.__temperature = climate.temperature(season)
-        self.__rainfall    = climate.rainfall(season)
+        self.__precip    = climate.precip(season)
         self.__pressure    = self.NORMAL_PRESSURE
         self.__wind        = climate.wind(season)
         self.__climate     = climate
@@ -219,7 +225,7 @@ class Atmosphere(object):
 
         self.__temperature = self.__climate.temperature(season) + temp_modifier
         self.__pressure    = self.NORMAL_PRESSURE + pressure_modifier
-        self.__rainfall    = self.__climate.rainfall(season) * precip_modifier
+        self.__precip    = self.__climate.precip(season) * precip_modifier
 
         self.__dewpoint = self._compute_dewpoint()
 
@@ -241,7 +247,7 @@ class Atmosphere(object):
     ###########################################################################
     def __compute_dewpoint_impl(self):
     ###########################################################################
-        # TODO - Probably function of temp and rainfall
+        # TODO - Probably function of temp and precip
         return self.temperature() - 20
 
 class _AnomalyCategoryMeta(type):
@@ -486,22 +492,31 @@ class TestWeather(unittest.TestCase):
         # Change to raising handler for unit-testing
         set_prequire_handler(raising_prequire_handler)
 
-        temp, rain, wind = (80, 10, Wind(10, Direction.NNW))
-        climate = Climate(temp, rain, wind)
+        temps, precips, winds = ([60, 70, 80, 70],
+                                 [1, 2, 3, 4],
+                                 [Wind(10, Direction.NNW)]*4)
+        climate = Climate(temps, precips, winds)
         atmos = Atmosphere(climate)
 
+        # First season should be winter
         first_season = iter(Season).next()
         self.assertEqual(climate.temperature(first_season), atmos.temperature())
-        self.assertEqual(climate.rainfall(first_season),    atmos.rainfall())
+        self.assertEqual(climate.precip(first_season),      atmos.precip())
         self.assertEqual(climate.wind(first_season),        atmos.wind())
 
+        # Check access controls
         self.assertRaises(ProgramError, atmos.cycle_turn, None, None, None)
-
         grant_access(self, Atmosphere.ALLOW_CYCLE_TURN)
-        atmos.cycle_turn([], Location(0,0), first_season)
-        self.assertEqual(climate.temperature(first_season), atmos.temperature())
-        self.assertEqual(climate.rainfall(first_season),    atmos.rainfall())
-        self.assertEqual(climate.wind(first_season),        atmos.wind())
+
+        # Brute-force check of all seasons
+        for idx, season in enumerate(Season):
+            atmos.cycle_turn([], Location(0,0), season)
+            self.assertEqual(climate.temperature(season), atmos.temperature())
+            self.assertEqual(climate.precip(season),      atmos.precip())
+            self.assertEqual(climate.wind(season),        atmos.wind())
+            self.assertEqual(climate.temperature(season), temps[idx])
+            self.assertEqual(climate.precip(season),      precips[idx])
+            self.assertEqual(climate.wind(season),        winds[idx])
 
 if (__name__ == "__main__"):
     unittest.main()

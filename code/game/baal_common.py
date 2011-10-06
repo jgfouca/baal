@@ -430,6 +430,15 @@ class SmartEnum(object):
             self.__value += 1
             return self
 
+    ###########################################################################
+    @classmethod
+    def size(cls):
+    ###########################################################################
+        """
+        Get the number of enum values in this enum
+        """
+        return len(cls._names())
+
     #
     # Private API
     #

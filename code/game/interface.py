@@ -319,9 +319,7 @@ Enjoy!
                             command.apply()
                             self.__flush_spell_report_buffer()
                     except UserError, error:
-                        print "ERROR:", error
-                        print "\nType: 'help [command]' for assistence"
-                        sys.stdout.flush()
+                        self.__drawer.popup("Error", error)
 
                     # Successful commands should redraw
                     if (command_str is not None):

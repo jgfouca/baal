@@ -485,7 +485,7 @@ class MountainTile(LandTile):
     ###########################################################################
         super(MountainTile, self).cycle_turn(anomalies, season)
 
-        precip = self.atmosphere().rainfall()
+        precip = self.atmosphere().precip()
         temp   = self.atmosphere().temperature()
 
         snowfall_portion = \
@@ -574,9 +574,9 @@ class FoodTile(LandTile):
         super(FoodTile, self).cycle_turn(anomalies, season)
 
         # Get the parameters we need to make the calculation
-        precip         = self.atmosphere().rainfall()
+        precip         = self.atmosphere().precip()
         temp           = self.atmosphere().temperature()
-        av_precip      = self.climate().rainfall(season)
+        av_precip      = self.climate().precip(season)
         av_temp        = self.climate().temperature(season)
         prior_moisture = self.soil_moisture()
 

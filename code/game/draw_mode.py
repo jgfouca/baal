@@ -129,7 +129,7 @@ Draws the current pressure in millibars (1000 is average).
     elif (draw_mode == DrawMode.RAINFALL):
         return \
 """
-Draws the amount of rainfall, in inches, that has fallen this season.
+Draws the amount of precip, in inches, that has fallen this season.
 """.strip()
     elif (draw_mode == DrawMode.DEWPOINT):
         return \

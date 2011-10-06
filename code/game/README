@@ -260,13 +260,11 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 
 * Start to fill in more Spell implementations
 * Need much more unit-testing
-* Seasons need to affect atmosphere
-* Use pygame to produce basic 2D graphics
 * Map editor, map-file format defined, map-file loader
 * Implement dewpoint
 * Pressure needs to affect winds
 * Model cloudcover/instability?
-* Should all tiles have snowpack?
+* Should all tiles have snowpack? YES - reduces yield, esp food
 * Get things looking better in pylint and/or set up a pylint config file
   to ignore things we don't care about
 * City-nearby-tiles iterator would be very nice (encapsulate what it means
@@ -284,6 +282,5 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 * Make food req dependent on rank, not pop?
 * Need tracing infrastructure (esp for AI)
 * Should unit-tests be separated from the code?
-* Change "rainfall" to "precip"
 * Implement disasters as mini games?
 * See code TODOs

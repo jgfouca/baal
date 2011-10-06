@@ -172,7 +172,7 @@ class DrawText(object):
         elif (draw_mode == DrawMode.PRESSURE):
             return item.pressure()
         elif (draw_mode == DrawMode.RAINFALL):
-            return item.rainfall()
+            return item.precip()
         else:
             prequire(False, "Bad draw mode: ", draw_mode)
 
