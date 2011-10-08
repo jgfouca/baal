@@ -38,6 +38,9 @@ class Yield(object):
         # TODO - Aaron
         pass
 
+# TODO - Support named properties instead of having individual getters/setters
+# for each property?
+
 ###############################################################################
 class WorldTile(object):
 ###############################################################################
@@ -72,6 +75,8 @@ class WorldTile(object):
     def yield_(self): return self.__yield_impl()
 
     def worked(self): return self.__worked
+
+    def already_casted(self, spell): return spell.name() in self.__casted_spells
 
     def atmosphere(self): return self.__atmosphere
 
@@ -111,17 +116,25 @@ class WorldTile(object):
 
     def cycle_turn(self, anomalies, season):
         """
-        Notify this tile that the turn is cycling, providing current anomalies
-        and season so that we know how to adjust our atmosphere.
+        Notify this tile that the turn is cycling, providing current
+        anomalies and season so that we know how to adjust our atmosphere.
         """
         return self.__cycle_turn_impl(anomalies, season)
+
+    def register_casted_spell(self, spell):
+        """
+        Notify this tile that a spell has been cast on it. We forbid casting
+        the same spell multiple times on the same tile.
+        """
+        return self.__register_casted_spell_impl(spell)
 
     #
     # ==== Class constants ====
     #
 
-    ALLOW_WORK       = "_world_tile_allow_work"
-    ALLOW_CYCLE_TURN = "_world_tile_allow_cycle_turn"
+    ALLOW_WORK           = "_world_tile_allow_work"
+    ALLOW_CYCLE_TURN     = "_world_tile_allow_cycle_turn"
+    ALLOW_REGISTER_SPELL = "_world_tile_allow_register_spell"
 
     #
     # ==== Implementation ====
@@ -130,12 +143,13 @@ class WorldTile(object):
     ###########################################################################
     def __init_impl(self, yield_, climate, geology, location):
     ###########################################################################
-        self.__base_yield = yield_
-        self.__climate    = climate
-        self.__geology    = geology
-        self.__atmosphere = Atmosphere(climate)
-        self.__location   = location
-        self.__worked     = False
+        self.__base_yield    = yield_
+        self.__climate       = climate
+        self.__geology       = geology
+        self.__atmosphere    = Atmosphere(climate)
+        self.__location      = location
+        self.__worked        = False
+        self.__casted_spells = []
 
     ###########################################################################
     def __yield_impl(self):
@@ -167,6 +181,15 @@ class WorldTile(object):
         self.__geology.cycle_turn()
         self.__atmosphere.cycle_turn(anomalies, self.location(), season)
         self.__worked = False
+
+    ###########################################################################
+    def __register_casted_spell_impl(self, spell):
+    ###########################################################################
+        check_access(self.ALLOW_REGISTER_SPELL)
+
+        prequire(spell.name() not in self.__casted_spells)
+
+        self.__casted_spells.append(spell.name())
 
 grant_access(WorldTile, Atmosphere.ALLOW_CYCLE_TURN)
 grant_access(WorldTile, Geology.ALLOW_CYCLE_TURN)

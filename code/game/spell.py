@@ -6,7 +6,8 @@ from baal_common import prequire, urequire, UserError, grant_access
 from city import City
 from engine import engine
 from baal_math import exp_growth, poly_growth, fibonacci_div
-from world_tile import OceanTile, MountainTile, FoodTile, PlainsTile, LushTile
+from world_tile import OceanTile, MountainTile, FoodTile, PlainsTile, \
+    LushTile, WorldTile
 from weather import Atmosphere
 
 ###############################################################################
@@ -73,7 +74,7 @@ class Spell(object):
     def __str__(self): return self.__str_impl()
 
     #
-    # Abstract API
+    # Primary API (default definitions provided, but can be overridden
     #
 
     def verify_apply(self):
@@ -81,7 +82,8 @@ class Spell(object):
         Verify that the user's attempt to cast this spell is valid. This method
         will throw a user-error if there's a problem.
         """
-        prequire(False, "Called abstract version of verify_apply")
+        self._verify_apply_common()
+        return self._verify_apply_impl()
 
     def apply(self):
         """
@@ -90,7 +92,8 @@ class Spell(object):
         to ensure the casting of this spell is valid from the spell's point
         of view.
         """
-        prequire(False, "Called abstract version of apply")
+        self._apply_common()
+        return self._apply_impl()
 
     #
     # ==== Class constants ====
@@ -100,7 +103,6 @@ class Spell(object):
     _NAME      = None
     _BASE_COST = None
     _PREREQS   = None
-
 
     #
     # Tweakable constants
@@ -118,6 +120,18 @@ class Spell(object):
     #
     # ==== Internal API ====
     #
+
+    def _verify_apply_impl(self):
+        """
+        Spell-specific verification code. Must be overridden
+        """
+        prequire(False, "Called abstract version of _verify_apply_impl")
+
+    def _apply_impl(self):
+        """
+        Spell-specific application code. Must be overridden
+        """
+        prequire(False, "Called abstract version of _apply_impl")
 
     def _kill(self, city, pct_killed):
         """
@@ -151,6 +165,25 @@ class Spell(object):
         Report things that are happening because of the spell.
         """
         return self.__report_impl(*args)
+
+    def _apply_common(self):
+        """
+        Contains apply details common to most spells
+        """
+        return self.__apply_common_impl()
+
+    def _verify_apply_common(self):
+        """
+        Contains verification details common to most spells
+        """
+        return self.__verify_apply_common_impl()
+
+    def _verify_not_multi_cast(self):
+        """
+        Raise exception if user trying to cast spell multiple times on same
+        tile.
+        """
+        return self.__verify_not_multi_cast_impl()
 
     #
     # ==== Implementation ====
@@ -238,13 +271,35 @@ class Spell(object):
             self._report("caused a level ", level, " ", name)
 
             return self.__CHAIN_REACTION_BONUS * spell.apply()
-        except UserError:
-            pass
+        except UserError, e:
+            self._report("failed to spawn ", name , " because ", e)
 
         return 0 # No exp if spell could not be applied
 
+    ###########################################################################
+    def __verify_not_multi_cast_impl(self):
+    ###########################################################################
+        # Spells can only be cast once on a tile per turn
+        tile = engine().world().tile(self.location())
+        urequire(not tile.already_casted(self),
+                 "Cannot cast same spell multiple times on a tile in a turn")
+
+    ###########################################################################
+    def __verify_apply_common_impl(self):
+    ###########################################################################
+        # Spells can only be cast once per tile
+        self._verify_not_multi_cast()
+
+    ###########################################################################
+    def __apply_common_impl(self):
+    ###########################################################################
+        # Register that this spell has been cast on this tile
+        tile = engine().world().tile(self.location())
+        tile.register_casted_spell(self)
+
 # We allow Spell to be able to kill
 grant_access(Spell, City.ALLOW_KILL)
+grant_access(Spell, WorldTile.ALLOW_REGISTER_SPELL)
 
 ###############################################################################
 class _SpellPrereq(object):
@@ -329,13 +384,13 @@ class _Hot(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # No-op. This spell can be cast anywhere, anytime.
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         world = engine().world()
         tile  = world.tile(self.location())
@@ -451,13 +506,13 @@ class _Cold(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # No-op. This spell can be cast anywhere, anytime.
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         world = engine().world()
         tile  = world.tile(self.location())
@@ -573,7 +628,7 @@ class _Infect(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
         # This spell can only be cast on cities
         tile = engine().world().tile(self.location())
@@ -581,7 +636,7 @@ class _Infect(Spell):
                  "Must cast ", self.name(), " on a city.")
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         world = engine().world()
         tile  = world.tile(self.location())
@@ -687,13 +742,13 @@ class _Wind(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # No-op. This spell can be cast anywhere, anytime.
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         world = engine().world()
         tile  = world.tile(self.location())
@@ -825,7 +880,7 @@ class _Fire(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
         # This spell can only be cast on tiles with plant growth
         tile = engine().world().tile(self.location())
@@ -833,7 +888,7 @@ class _Fire(Spell):
                  "Fire can only be cast on tiles with plant growth")
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         world = engine().world()
         tile  = world.tile(self.location())
@@ -982,7 +1037,7 @@ class _Tstorm(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
         # This spell can only be cast on plains or lush tiles
         tile = engine().world().tile(self.location())
@@ -990,7 +1045,7 @@ class _Tstorm(Spell):
                  "Tstorms can only be cast on plains or lush tiles")
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         world = engine().world()
         tile  = world.tile(self.location())
@@ -1083,13 +1138,13 @@ class _Snow(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # TODO
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         # Increase precip
@@ -1126,13 +1181,13 @@ class _Avalanche(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # TODO
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         return 0
@@ -1167,13 +1222,13 @@ class _Flood(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # TODO
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         # Change atmosphere to increase precip
@@ -1209,13 +1264,13 @@ class _Dry(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # TODO
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         return 0
@@ -1250,13 +1305,13 @@ class _Blizzard(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # TODO
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         return 0
@@ -1292,13 +1347,13 @@ class _Tornado(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # TODO
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         return 0
@@ -1333,13 +1388,13 @@ class _Heatwave(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # TODO
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         return 0
@@ -1374,13 +1429,13 @@ class _Coldwave(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # TODO
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         return 0
@@ -1415,13 +1470,13 @@ class _Drought(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # TODO
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         return 0
@@ -1456,13 +1511,13 @@ class _Monsoon(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # TODO
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         return 0
@@ -1496,13 +1551,13 @@ class _Disease(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # TODO
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         return 0
@@ -1537,13 +1592,13 @@ class _Earthquake(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # No-op. This spell can be cast anywhere, anytime.
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         return 0
@@ -1580,13 +1635,13 @@ class _Hurricane(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # No-op. This spell can be cast anywhere, anytime.
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         return 0
@@ -1620,13 +1675,13 @@ class _Plague(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # No-op. This spell can be cast anywhere, anytime.
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         return 0
@@ -1661,13 +1716,13 @@ class _Volcano(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # No-op. This spell can be cast anywhere, anytime.
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         return 0
@@ -1701,13 +1756,13 @@ class _Asteroid(Spell):
         super(self.__class__, self).__init__(level, location)
 
     ###########################################################################
-    def verify_apply(self):
+    def _verify_apply_impl(self):
     ###########################################################################
-        # No-op. This spell can be cast anywhere, anytime.
+        # No special verification needed for this spell
         pass
 
     ###########################################################################
-    def apply(self):
+    def _apply_impl(self):
     ###########################################################################
         # TODO
         return 0
