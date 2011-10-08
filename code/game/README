@@ -258,7 +258,7 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 
 - TODO List -
 
-* Start to fill in more Spell implementations
+* Continue to fill in more Spell implementations
 * Need much more unit-testing
 * Map editor, map-file format defined, map-file loader
 * Need to have a way of supporting bigger worlds (world scrolling)

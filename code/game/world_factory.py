@@ -92,28 +92,32 @@ class _WorldFactoryHardcoded(_WorldFactoryBase):
         tiles = []
 
         # Row 1
-        tiles.append(TundraTile(Climate([10, 30, 50, 30],
+        tiles.append(TundraTile(2000,
+                                Climate([10, 30, 50, 30],
                                         [4, 2, .5, 2],
                                         [Wind(10, Direction.WSW)]*4),
                                 Inactive(),
                                 loc_iter.next()))
-        tiles.append(PlainsTile(Climate([20, 40, 60, 40],
+        tiles.append(PlainsTile(2500,
+                                Climate([20, 40, 60, 40],
                                         [5, 2.5, 1, 2.5],
                                         [Wind(10, Direction.WSW)]*4),
                                 Inactive(),
                                 loc_iter.next()))
-        tiles.append(HillsTile(Climate([15, 35, 50, 35],
+        tiles.append(HillsTile(5000,
+                               Climate([15, 35, 50, 35],
                                        [6, 3.5, 2, 3.5],
                                        [Wind(15, Direction.WSW)]*4),
                                Inactive(),
                                loc_iter.next()))
-        tiles.append(MountainTile(5000,
+        tiles.append(MountainTile(10000,
                                   Climate([10, 25, 40, 25],
                                           [12, 7, 8, 7],
                                           [Wind(25, Direction.WSW)]*4),
                                   Subducting(2.0),
                                   loc_iter.next()))
-        tiles.append(LushTile(Climate([50, 60, 70, 60],
+        tiles.append(LushTile(1000,
+                              Climate([50, 60, 70, 60],
                                       [8, 8, 8, 8],
                                       [Wind(10, Direction.WSW)]*4),
                               Subducting(2.0),
@@ -126,28 +130,32 @@ class _WorldFactoryHardcoded(_WorldFactoryBase):
                                loc_iter.next()))
 
         # Row 2
-        tiles.append(DesertTile(Climate([25, 50, 75, 50],
+        tiles.append(DesertTile(2000,
+                                Climate([25, 50, 75, 50],
                                         [4, 1.5, 1, 1.5],
                                         [Wind(10, Direction.SW)]*4),
                                 Inactive(),
                                 loc_iter.next()))
-        tiles.append(DesertTile(Climate([30, 55, 80, 55],
+        tiles.append(DesertTile(3000,
+                                Climate([30, 55, 80, 55],
                                         [4, 1.5, 1, 1.5],
                                         [Wind(10, Direction.SW)]*4),
                                 Inactive(),
                                 loc_iter.next()))
-        tiles.append(MountainTile(5000,
+        tiles.append(MountainTile(10000,
                                   Climate([12, 27, 42, 27],
                                           [12, 7, 8, 7],
                                           [Wind(25, Direction.SW)]*4),
                                   Inactive(),
                                   loc_iter.next()))
-        tiles.append(HillsTile(Climate([40, 55, 70, 55],
+        tiles.append(HillsTile(5000,
+                               Climate([40, 55, 70, 55],
                                        [10, 10, 10, 10],
                                        [Wind(15, Direction.SW)]*4),
                                Subducting(2.0),
                                loc_iter.next()))
-        tiles.append(LushTile(Climate([52, 62, 72, 62],
+        tiles.append(LushTile(1000,
+                              Climate([52, 62, 72, 62],
                                       [8, 8, 8, 8],
                                       [Wind(10, Direction.SW)]*4),
                               Subducting(2.0),
@@ -160,23 +168,26 @@ class _WorldFactoryHardcoded(_WorldFactoryBase):
                                loc_iter.next()))
 
         # Row 3
-        tiles.append(DesertTile(Climate([30, 55, 80, 55],
+        tiles.append(DesertTile(2500,
+                                Climate([30, 55, 80, 55],
                                         [4, 1.5, 1, 1.5],
                                         [Wind(10, Direction.S)]*4),
                                 Inactive(),
                                 loc_iter.next()))
-        tiles.append(MountainTile(5000,
+        tiles.append(MountainTile(9000,
                                   Climate([14, 29, 44, 29],
                                           [13, 8, 10, 8],
                                           [Wind(25, Direction.SSW)]*4),
                                   Inactive(),
                                   loc_iter.next()))
-        tiles.append(HillsTile(Climate([42, 57, 72, 57],
+        tiles.append(HillsTile(4000,
+                               Climate([42, 57, 72, 57],
                                        [11, 11, 11, 11],
                                        [Wind(15, Direction.SSW)]*4),
                                Subducting(3.0),
                                loc_iter.next()))
-        tiles.append(LushTile(Climate([55, 65, 75, 65],
+        tiles.append(LushTile(1000,
+                              Climate([55, 65, 75, 65],
                                       [9, 9, 9, 9],
                                       [Wind(10, Direction.SSW)]*4),
                               Subducting(3.0),
@@ -195,23 +206,26 @@ class _WorldFactoryHardcoded(_WorldFactoryBase):
                                loc_iter.next()))
 
         # Row 4
-        tiles.append(HillsTile(Climate([30, 50, 65, 50],
+        tiles.append(HillsTile(5000,
+                               Climate([30, 50, 65, 50],
                                        [4, 4, 4, 4],
                                        [Wind(15, Direction.S)]*4),
                                Inactive(),
                                loc_iter.next()))
-        tiles.append(MountainTile(5000,
+        tiles.append(MountainTile(8000,
                                   Climate([18, 33, 48, 33],
                                           [10, 9, 13, 9],
                                           [Wind(25, Direction.S)]*4),
                                   Inactive(),
                                   loc_iter.next()))
-        tiles.append(LushTile(Climate([60, 70, 80, 70],
+        tiles.append(LushTile(1500,
+                              Climate([60, 70, 80, 70],
                                       [8, 10, 12, 10],
                                       [Wind(10, Direction.S)]*4),
                               Subducting(2.0),
                               loc_iter.next()))
-        tiles.append(LushTile(Climate([60, 70, 80, 70],
+        tiles.append(LushTile(500,
+                              Climate([60, 70, 80, 70],
                                       [8, 10, 12, 8],
                                       [Wind(10, Direction.S)]*4),
                               Subducting(2.0),
@@ -230,17 +244,20 @@ class _WorldFactoryHardcoded(_WorldFactoryBase):
                                loc_iter.next()))
 
         # Row 5
-        tiles.append(PlainsTile(Climate([40, 70, 90, 70],
+        tiles.append(PlainsTile(1500,
+                                Climate([40, 70, 90, 70],
                                         [3, 4, 8, 4],
                                         [Wind(10, Direction.SSE)]*4),
                                 Transform(2.0),
                                 loc_iter.next()))
-        tiles.append(LushTile(Climate([57, 67, 77, 67],
+        tiles.append(LushTile(500,
+                              Climate([57, 67, 77, 67],
                                       [6, 8, 16, 8],
                                       [Wind(10, Direction.SSE)]*4),
                               Transform(2.0),
                               loc_iter.next()))
-        tiles.append(LushTile(Climate([59, 69, 79, 69],
+        tiles.append(LushTile(500,
+                              Climate([59, 69, 79, 69],
                                       [8, 10, 16, 10],
                                       [Wind(10, Direction.SSE)]*4),
                               Transform(2.0),

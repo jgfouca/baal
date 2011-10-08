@@ -1216,13 +1216,14 @@ class _Snow(Spell):
     def _verify_apply_impl(self):
     ###########################################################################
         # No special verification needed for this spell
+        # Temp must be below 32
         pass
 
     ###########################################################################
     def _apply_impl(self):
     ###########################################################################
         # TODO
-        # Increase precip
+        # Increase precip?
         # Increase snowpack
         return 0
 

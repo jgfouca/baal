@@ -278,15 +278,15 @@ class LandTile(WorldTile):
 ###############################################################################
     """
     Base class for all land tiles. Adds the concepts of tile damage, cities,
-    and infrastructure.
+    infrastructure, elevation, and snowpack.
     """
 
     #
     # ==== Public API ====
     #
 
-    def __init__(self, yield_, climate, geology, location):
-        self.__init_impl(yield_, climate, geology, location)
+    def __init__(self, elevation, yield_, climate, geology, location):
+        self.__init_impl(elevation, yield_, climate, geology, location)
 
     #
     # Queries/Getter API
@@ -302,6 +302,10 @@ class LandTile(WorldTile):
 
     def can_build_infra(self):
         return self.infra_level() < self.LAND_TILE_MAX_INFRA
+
+    def snowpack(self): return self.__snowpack
+
+    def elevation(self): return self.__elevation
 
     #
     # Modification API
@@ -321,15 +325,19 @@ class LandTile(WorldTile):
 
     def remove_city(self): return self.__remove_city_impl()
 
+    def set_snowpack(self, new_snowpack):
+        return self.__set_snowpack_impl(new_snowpack)
+
     #
     # ==== Class Constants ====
     #
 
     LAND_TILE_MAX_INFRA = 5
 
-    ALLOW_DAMAGE        = "_allow_damage_land_tile"
-    ALLOW_BUILD_INFRA   = "_allow_build_infra_land_tile"
-    ALLOW_DESTROY_INFRA = "_allow_destroy_infra_land_tile"
+    ALLOW_DAMAGE        = "_land_tile_damage"
+    ALLOW_BUILD_INFRA   = "_land_tile_allow_build_infra"
+    ALLOW_DESTROY_INFRA = "_land_tile_allow_destroy_infra"
+    ALLOW_SET_SNOWPACK  = "_land_tile_allow_set_snowpack"
 
     #
     # Tweakable Constants
@@ -345,18 +353,38 @@ class LandTile(WorldTile):
     def _COMPUTE_YIELD_FUNC(cls, normal_yield, infra_level, tile_hp):
         return normal_yield * (1 + infra_level) * tile_hp
 
+    @classmethod
+    def _PORTION_OF_PRECIP_THAT_FALLS_AS_SNOW_FUNC(cls, temp):
+        if (temp < 30):
+            return 1.0
+        elif (temp < 60):
+            return float(60 - temp) / 30
+        else:
+            return 0.0
+
+    @classmethod
+    def _PORTION_OF_SNOWPACK_THAT_MELTED(cls, temp):
+        if (temp < 30):
+            return 0.0
+        elif (temp < 75):
+            return float(temp - 30) / 45
+        else:
+            return 1.0
+
     #
     # ==== Implementation ====
     #
 
     ###########################################################################
-    def __init_impl(self, yield_, climate, geology, location):
+    def __init_impl(self, elevation, yield_, climate, geology, location):
     ###########################################################################
         super(LandTile, self).__init__(yield_, climate, geology, location)
 
-        self.__hp = 1.0 # 0..1
+        self.__hp          = 1.0 # 0..1
         self.__infra_level = 0
-        self.__city = None
+        self.__city        = None
+        self.__elevation   = elevation
+        self.__snowpack    = 0 # TODO - Hack, should have preexiting snowpack
 
     ###########################################################################
     def __yield_impl(self):
@@ -383,7 +411,23 @@ class LandTile(WorldTile):
     ###########################################################################
         super(LandTile, self).cycle_turn(anomalies, season)
 
+        # Compute HP recovery
         self.__hp = self._LAND_TILE_RECOVERY_FUNC(self.__hp)
+
+        # Compute change in snowpack
+        precip = self.atmosphere().precip()
+        temp   = self.atmosphere().temperature()
+
+        # TODO - Take elevation into account?
+
+        snowfall_portion = \
+            self._PORTION_OF_PRECIP_THAT_FALLS_AS_SNOW_FUNC(temp)
+        snowpack_melt_portion = self._PORTION_OF_SNOWPACK_THAT_MELTED(temp)
+
+        snowfall = (precip * 12) * snowfall_portion # 12 inches snow per inch
+
+        self.__snowpack = (snowfall + self.snowpack()) * snowpack_melt_portion
+
 
     ###########################################################################
     def __build_infra_impl(self):
@@ -424,101 +468,6 @@ class LandTile(WorldTile):
 
         self.__city = None
 
-###############################################################################
-class MountainTile(LandTile):
-###############################################################################
-    """
-    Represents mountain tiles. Mountains introduce the concepts of elevation
-    and snowpack.
-    """
-
-    #
-    # ==== Public API ====
-    #
-
-    def __init__(self, elevation, climate, geology, location):
-        self.__init_impl(elevation, climate, geology, location)
-
-    #
-    # Query/Getter API
-    #
-
-    def elevation(self): return self.__elevation
-
-    def snowpack(self): return self.__snowpack
-
-    def supports_city(self): return False
-
-    #
-    # Modification API
-    #
-
-    def cycle_turn(self, anomalies, season):
-        return self.__cycle_turn_impl(anomalies, season)
-
-    def set_snowpack(self, new_snowpack):
-        return self.__set_snowpack_impl(new_snowpack)
-
-    #
-    # ==== Class Constants ====
-    #
-
-    ALLOW_SET_SNOWPACK = "_mountain_tile_allow_set_snowpack"
-
-    _PROD_YIELD = 2
-
-    #
-    # Tweakable Constants
-    #
-
-    @classmethod
-    def _PORTION_OF_PRECIP_THAT_FALLS_AS_SNOW_FUNC(cls, temp):
-        if (temp < 30):
-            return 1.0
-        elif (temp < 60):
-            return float(60 - temp) / 30
-        else:
-            return 0.0
-
-    @classmethod
-    def _PORTION_OF_SNOWPACK_THAT_MELTED(cls, temp):
-        if (temp < 30):
-            return 0.0
-        elif (temp < 75):
-            return float(temp - 30) / 45
-        else:
-            return 1.0
-
-    #
-    # ==== Implementation ====
-    #
-
-    ###########################################################################
-    def __init_impl(self, elevation, climate, geology, location):
-    ###########################################################################
-        super(MountainTile, self).__init__(Yield(0, self._PROD_YIELD),
-                                           climate,
-                                           geology,
-                                           location)
-        self.__elevation = elevation
-        self.__snowpack  = 0 # TODO - Hack, should have preexiting snowpack
-
-    ###########################################################################
-    def __cycle_turn_impl(self, anomalies, season):
-    ###########################################################################
-        super(MountainTile, self).cycle_turn(anomalies, season)
-
-        precip = self.atmosphere().precip()
-        temp   = self.atmosphere().temperature()
-
-        snowfall_portion = \
-            self._PORTION_OF_PRECIP_THAT_FALLS_AS_SNOW_FUNC(temp)
-        snowpack_melt_portion = self._PORTION_OF_SNOWPACK_THAT_MELTED(temp)
-
-        snowfall = (precip * 12) * snowfall_portion # 12 inches snow per inch
-
-        self.__snowpack = (snowfall + self.snowpack()) * snowpack_melt_portion
-
     ###########################################################################
     def __set_snowpack_impl(self, new_snowpack):
     ###########################################################################
@@ -527,14 +476,34 @@ class MountainTile(LandTile):
         self.__snowpack = new_snowpack
 
 ###############################################################################
+class MountainTile(LandTile):
+###############################################################################
+    """
+    Represents mountain tiles. Mountains don't add any new concepts. Cities
+    can't be built on mountains.
+    """
+
+    def __init__(self, elevation, climate, geology, location):
+        super(MountainTile, self).__init__(elevation,
+                                           Yield(0, self._PROD_YIELD),
+                                           climate,
+                                           geology,
+                                           location)
+
+    def supports_city(self): return False
+
+    _PROD_YIELD = 2
+
+###############################################################################
 class DesertTile(LandTile):
 ###############################################################################
     """
     Represents desert tiles. Deserts add no concepts, so this class is simple.
     """
 
-    def __init__(self, climate, geology, location):
-        super(DesertTile, self).__init__(Yield(0, self._PROD_YIELD),
+    def __init__(self, elevation, climate, geology, location):
+        super(DesertTile, self).__init__(elevation,
+                                         Yield(0, self._PROD_YIELD),
                                          climate,
                                          geology,
                                          location)
@@ -548,8 +517,9 @@ class TundraTile(LandTile):
     Represents tundra tiles. Tundra add no concepts, so this class is simple.
     """
 
-    def __init__(self, climate, geology, location):
-        super(TundraTile, self).__init__(Yield(0, self._PROD_YIELD),
+    def __init__(self, elevation, climate, geology, location):
+        super(TundraTile, self).__init__(elevation,
+                                         Yield(0, self._PROD_YIELD),
                                          climate,
                                          geology,
                                          location)
@@ -566,8 +536,9 @@ class HillsTile(LandTile):
     for many disasters. Resolve this issue.
     """
 
-    def __init__(self, climate, geology, location):
-        super(HillsTile, self).__init__(Yield(0, self._PROD_YIELD),
+    def __init__(self, elevation, climate, geology, location):
+        super(HillsTile, self).__init__(elevation,
+                                        Yield(0, self._PROD_YIELD),
                                         climate,
                                         geology,
                                         location)
@@ -582,8 +553,8 @@ class FoodTile(LandTile):
     moisture.
     """
 
-    def __init__(self, yield_, climate, geology, location):
-        super(FoodTile, self).__init__(yield_, climate, geology, location)
+    def __init__(self, elevation, yield_, climate, geology, location):
+        super(FoodTile, self).__init__(elevation, yield_, climate, geology, location)
         self.__soil_moisture = 1.0 # % of normal
 
     def soil_moisture(self): return self.__soil_moisture
@@ -655,8 +626,9 @@ class PlainsTile(FoodTile):
     Represents plains tiles. Plains add no concepts, so this class is simple.
     """
 
-    def __init__(self, climate, geology, location):
-        super(PlainsTile, self).__init__(Yield(self._FOOD_YIELD, 0),
+    def __init__(self, elevation, climate, geology, location):
+        super(PlainsTile, self).__init__(elevation,
+                                         Yield(self._FOOD_YIELD, 0),
                                          climate,
                                          geology,
                                          location)
@@ -671,8 +643,9 @@ class LushTile(FoodTile):
     tiles are like plains tiles except they have higher food yields.
     """
 
-    def __init__(self, climate, geology, location):
-        super(LushTile, self).__init__(Yield(self._FOOD_YIELD, 0),
+    def __init__(self, elevation, climate, geology, location):
+        super(LushTile, self).__init__(elevation,
+                                       Yield(self._FOOD_YIELD, 0),
                                        climate,
                                        geology,
                                        location)
