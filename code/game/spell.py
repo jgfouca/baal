@@ -111,6 +111,7 @@ class Spell(object):
     __CITY_DESTROY_EXP_BONUS = 1000
     __CHAIN_REACTION_BONUS = 2
     __INFRA_EXP_FUNC = lambda infra_destroyed: pow(2, infra_destroyed) * 200
+    __DEFENSE_EXP_FUNC = lambda levels_destroyed: pow(2, levels_destroyed) * 400
 
     @classmethod
     def _COST_FUNC(cls, level):
@@ -139,6 +140,12 @@ class Spell(object):
         Returns the exp gained.
         """
         return self.__kill_impl(city, pct_killed)
+
+    def _destroy_city_defense(self, city, levels):
+        """
+        Reduce city defense level. Returns the exp gained.
+        """
+        return self.__destroy_city_defense_impl(city, levels)
 
     def _destroy_infra(self, tile, max_destroyed):
         """
@@ -185,6 +192,20 @@ class Spell(object):
         """
         return self.__verify_not_multi_cast_impl()
 
+    def _infra_damage_common(self, tile, base_amount, tech_penalty):
+        """
+        Common implementation of calculating and applying damage to tile
+        infrastructure. Returns exp gained.
+        """
+        return self.__infra_damage_common_impl(tile, base_amount, tech_penalty)
+
+    def _defense_damage_common(self, city, base_amount, tech_penalty):
+        """
+        Common implementation of calculating and applying damage to city
+        defenses. Returns exp gained.
+        """
+        return self.__defense_damage_common_impl(city, base_amount, tech_penalty)
+
     #
     # ==== Implementation ====
     #
@@ -214,10 +235,11 @@ class Spell(object):
     ###########################################################################
     def __kill_impl(self, city, pct_killed):
     ###########################################################################
-        prequire(pct_killed > 0.0, "Do not call this if no one killed")
+        if (pct_killed == 0.0):
+            return 0
 
         pct_killed = min(pct_killed, 100.0)
-        num_killed = city.population() * (pct_killed / 100)
+        num_killed = int(round(city.population() * (pct_killed / 100)))
         city.kill(num_killed)
         self._report("killed ", num_killed)
 
@@ -246,6 +268,19 @@ class Spell(object):
 
         # Convert to exp
         return self.__INFRA_EXP_FUNC(num_destroyed)
+
+    ###########################################################################
+    def __destroy_city_defense_impl(self, city, levels):
+    ###########################################################################
+        if (levels == 0):
+            return 0
+
+        # Cannot destroy defense that isn't there
+        levels_destroyed = min(city.defense(), levels)
+        city.destroy_defense(levels_destroyed)
+
+        # Convert to exp
+        return self.__DEFENSE_EXP_FUNC(levels_destroyed)
 
     ###########################################################################
     def __damage_tile_impl(self, tile, pct_damaged):
@@ -297,8 +332,38 @@ class Spell(object):
         tile = engine().world().tile(self.location())
         tile.register_casted_spell(self)
 
+    ###########################################################################
+    def __infra_damage_common_impl(self, tile, base_amount, tech_penalty):
+    ###########################################################################
+        if (tile.infra_level() is not None and
+            tile.infra_level() > 0         and
+            base_amount > 0.0):
+
+            max_infra_destroyed = round(base_amount / tech_penalty)
+
+            self._report("base infra damage is ", base_amount)
+            self._report("tech penalty (divisor) is ", tech_penalty)
+
+            return self._destroy_infra(tile, max_infra_destroyed)
+        else:
+            return 0
+
+    ###########################################################################
+    def __defense_damage_common_impl(self, city, base_amount, tech_penalty):
+    ###########################################################################
+        if (city.defense() > 0 and base_amount > 0.0):
+            max_defense_destroyed = round(base_amount, tech_penalty)
+
+            self._report("base city defense damage is ", base_amount)
+            self._report("tech penalty is ", tech_penalty)
+
+            return self._destroy_city_defense(city, max_defense_destroyed)
+        else:
+            return 0
+
 # We allow Spell to be able to kill
 grant_access(Spell, City.ALLOW_KILL)
+grant_access(Spell, City.ALLOW_DESTROY_DEFENSE)
 grant_access(Spell, WorldTile.ALLOW_REGISTER_SPELL)
 
 ###############################################################################
@@ -436,6 +501,7 @@ class _Hot(Spell):
                 exp += self._kill(city, pct_killed)
 
         return exp
+
 # Hot can change temp
 grant_access(_Hot, Atmosphere.ALLOW_SET_TEMPERATURE)
 
@@ -559,6 +625,7 @@ class _Cold(Spell):
                 exp += self._kill(city, pct_killed)
 
         return exp
+
 # Cold can change temp
 grant_access(_Cold, Atmosphere.ALLOW_SET_TEMPERATURE)
 
@@ -714,6 +781,11 @@ class _Wind(Spell):
         return exp_growth(1.03, wind.speed(), threshold=60)
 
     @classmethod
+    def _BASE_DEFENSE_DESTROY_FUNC(cls, wind):
+        # 1.02^(wind_speed-80)
+        return exp_growth(1.02, wind.speed(), threshold=80)
+
+    @classmethod
     def _COLD_BONUS_FUNC(cls, temp, orig_wind, new_wind):
         # 1.02^(new_wind) - 1.02^(orig_wind)
         if (temp < 0):
@@ -765,17 +837,9 @@ class _Wind(Spell):
         self._report("increased wind from ", orig_wind, " to ", new_wind)
 
         # Wind can destroy infrastructure
-        if (tile.infra_level() is not None and tile.infra_level() > 0):
-            base_infra_destroy = self._BASE_INFRA_DESTROY_FUNC(new_wind)
-            if (base_infra_destroy > 0.0):
-                tech_penalty = self._TECH_PENALTY_FUNC(tech)
-
-                max_infra_destroyed = round(base_infra_destroy / tech_penalty)
-
-                self._report("base infra damage % is ", base_infra_destroy)
-                self._report("tech penalty (divisor) is ", tech_penalty)
-
-                exp += self._destroy_infra(tile, max_infra_destroyed);
+        exp += self._infra_damage_common(tile,
+                                         self._BASE_INFRA_DESTROY_FUNC(new_wind),
+                                         self._TECH_PENALTY_FUNC(tech))
 
         # This spell can kill if cast on a city and winds get high enough
         city = tile.city()
@@ -800,7 +864,13 @@ class _Wind(Spell):
 
                 exp += self._kill(city, pct_killed)
 
+            # Now compute damage to city defenses
+            exp += self._defense_damage_common(city,
+                                               self._BASE_DEFENSE_DESTROY_FUNC(new_wind),
+                                               self._TECH_PENALTY_FUNC(tech))
+
         return exp
+
 # Wind can change wind
 grant_access(_Wind, Atmosphere.ALLOW_SET_WIND)
 
@@ -855,6 +925,11 @@ class _Fire(Spell):
     def _BASE_INFRA_DESTROY_FUNC(cls, destructiveness):
         # 1.05^destructiveness
         return exp_growth(1.05, destructiveness)
+
+    @classmethod
+    def _BASE_DEFENSE_DESTROY_FUNC(cls, destructiveness):
+        # 1.03^destructiveness
+        return exp_growth(1.03, destructiveness)
 
     @classmethod
     def _BASE_KILL_FUNC(cls, destructiveness):
@@ -919,17 +994,12 @@ class _Fire(Spell):
         self._report("total destructiveness ",  destructiveness)
 
         # Fire can destroy infrastructure
+        exp += self._infra_damage_common(tile,
+                                         self._BASE_INFRA_DESTROY_FUNC(destructiveness),
+                                         self._TECH_PENALTY_FUNC(tech))
+
+        # Fire can damage tiles
         if (tile.infra_level() is not None and tile.infra_level() > 0):
-            base_infra_destroy = self._BASE_INFRA_DESTROY_FUNC(destructiveness)
-            tech_penalty       = self._TECH_PENALTY_FUNC(tech)
-
-            max_infra_destroyed = round(base_infra_destroy / tech_penalty)
-
-            self._report("base infra damage % is ", base_infra_destroy)
-            self._report("tech penalty (divisor) is ", tech_penalty)
-
-            exp += self._destroy_infra(tile, max_infra_destroyed)
-
             self._damage_tile(tile, destructiveness)
 
         # This spell will kill if cast on a city
@@ -947,6 +1017,11 @@ class _Fire(Spell):
             self._report("final kill % is ", pct_killed)
 
             exp += self._kill(city, pct_killed)
+
+            # Now compute damage to city defenses
+            exp += self._defense_damage_common(city,
+                                               self._BASE_DEFENSE_DESTROY_FUNC(destructiveness),
+                                               self._TECH_PENALTY_FUNC(tech))
 
         return exp
 

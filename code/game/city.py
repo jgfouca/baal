@@ -50,6 +50,13 @@ class City(object):
         """
         return self.__kill_impl(killed)
 
+    def destroy_defense(self, levels):
+        """
+        Destroy city defenses, lowering them by an amount equal to the
+        'levels' parameter.
+        """
+        return self.__destroy_defense(levels)
+
     #
     # ==== Class constants ====
     #
@@ -75,8 +82,9 @@ class City(object):
     _PROD_BEFORE_SETTLER   = 7.0
 
     # Access-limiting vars
-    ALLOW_KILL       = "_allow_city_kill"
-    ALLOW_CYCLE_TURN = "_allow_city_cycle"
+    ALLOW_KILL            = "_allow_city_kill"
+    ALLOW_DESTROY_DEFENSE = "_allow_city_destroy_defense"
+    ALLOW_CYCLE_TURN      = "_allow_city_cycle"
 
     #
     # ==== Implementation ====
@@ -285,7 +293,7 @@ class City(object):
     ###########################################################################
     def __kill_impl(self, killed):
     ###########################################################################
-        check_access(self.__class__.ALLOW_KILL)
+        check_access(self.ALLOW_KILL)
 
         prequire(self.__population >= killed, "Invalid killed: ", killed)
 
@@ -296,6 +304,15 @@ class City(object):
                self.__rank > 1):
             self.__rank -= 1
             self.__next_rank_pop /= City._CITY_RANK_UP_MULTIPLIER
+
+    ###########################################################################
+    def __destroy_defense(self, levels):
+    ###########################################################################
+        check_access(self.ALLOW_DESTROY_DEFENSE)
+
+        prequire(self.defense() >= levels, "Invalid destroy levels: ", levels)
+
+        self.__defense -= levels
 
     ###########################################################################
     def __build_infra(self, tile):
