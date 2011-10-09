@@ -20,7 +20,7 @@ class PlayerAI(object):
     # ==== Public API ====
     #
 
-    def __init__(self): self.__init_impl()
+    def __init__(self, world): self.__init_impl(world)
 
     #
     # Queries / getters
@@ -33,7 +33,7 @@ class PlayerAI(object):
         """
         return self.__get_adjusted_yield_impl(base_yield)
 
-    def population(self): return self.__population
+    def population(self): return self.__population_impl()
 
     def tech_level(self): return self.__tech_level
 
@@ -82,14 +82,14 @@ class PlayerAI(object):
     #
 
     ###########################################################################
-    def __init_impl(self):
+    def __init_impl(self, world):
     ###########################################################################
         cls = self.__class__
 
         self.__tech_level           = cls.__STARTING_TECH_LEVEL
         self.__tech_points          = 0
         self.__next_tech_level_cost = cls.__FIRST_TECH_LEVEL_COST
-        self.__population           = 0
+        self.__world                = world
 
         grant_access(self, City.ALLOW_CYCLE_TURN)
 
@@ -106,6 +106,14 @@ class PlayerAI(object):
         pass
 
     ###########################################################################
+    def __population_impl(self):
+    ###########################################################################
+        population = 0
+        for city in self.__world.cities():
+            population += city.population()
+        return population
+
+    ###########################################################################
     def __cycle_turn_impl(self):
     ###########################################################################
         check_access(self.ALLOW_CYCLE_TURN)
@@ -118,11 +126,6 @@ class PlayerAI(object):
         # be created, which is why we needed the list copy above
         for city in cities_orig:
             city.cycle_turn()
-
-        # Compute population
-        self.__population = 0
-        for city in world.cities():
-            self.__population += city.population()
 
         # Adjust tech based on population
         tech_points = cls.__TECH_POINT_FUNC(self.population())

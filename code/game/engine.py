@@ -90,7 +90,7 @@ class Engine(object):
         self.__interface = create_interface()
         self.__world     = create_world()
         self.__player    = Player()
-        self.__ai_player = PlayerAI()
+        self.__ai_player = PlayerAI(self.__world)
         self.__quit      = False
 
     ###########################################################################
@@ -170,12 +170,14 @@ class TestEngine(unittest.TestCase):
 
         # Create configuration
         from interface import Interfaces
-        config = Configuration._create(interface_config=str(Interfaces.TEXT))
+        config = Configuration._create(interface_config=str(Interfaces.TEXT),
+                                       world_config="1")
 
         # Grab global instance
         eng = engine()
 
-        # TODO - Add more
+        # Integration test
+        self.assertEqual(eng.ai_player().population(), 1000)
 
 if (__name__ == "__main__"):
     unittest.main()

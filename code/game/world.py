@@ -204,8 +204,20 @@ class TestWorld(unittest.TestCase):
     ###########################################################################
     def test_world(self):
     ###########################################################################
-        # TODO
-        pass
+        from configuration import Configuration
+        from world_factory import create_world
+
+        Configuration._create()
+
+        world = create_world()
+
+        grant_access(self, World.ALLOW_CYCLE_TURN)
+
+        # Test cycle turn
+        time1_val = int(world.time().season())
+        world.cycle_turn()
+        time2 = world.time()
+        self.assertEqual(time1_val + 1, int(time2.season()))
 
 if (__name__ == "__main__"):
     unittest.main()

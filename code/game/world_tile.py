@@ -182,6 +182,8 @@ class WorldTile(object):
         self.__atmosphere.cycle_turn(anomalies, self.location(), season)
         self.__worked = False
 
+        self.__casted_spells = []
+
     ###########################################################################
     def __register_casted_spell_impl(self, spell):
     ###########################################################################
