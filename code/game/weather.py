@@ -267,7 +267,7 @@ class AnomalyCategory(SmartEnum):
     # Enum values. Note these are *placeholders*, the free code below this
     # class will replace these values with proper AnomalyCategory objects.
     TEMPERATURE, \
-    RAINFALL, \
+    PRECIP, \
     PRESSURE = range(3)
 
     # Derive names from class members.
@@ -421,7 +421,7 @@ class Anomaly(object):
         # model for determining an anomaly's effect on a location. For
         # the moment, anomalies only affect the immediate location.
 
-        if (self.__category != AnomalyCategory.RAINFALL or
+        if (self.__category != AnomalyCategory.PRECIP or
             self.__location != location):
             return 1.0 # No effect
         else:
@@ -461,7 +461,7 @@ def is_atmospheric(draw_mode):
     return draw_mode in [DrawMode.WIND,
                          DrawMode.DEWPOINT,
                          DrawMode.TEMPERATURE,
-                         DrawMode.RAINFALL,
+                         DrawMode.PRECIP,
                          DrawMode.PRESSURE]
 
 #
@@ -483,7 +483,7 @@ class TestWeather(unittest.TestCase):
 
         anom = None
         while (anom is None):
-            anom = Anomaly.generate_anomaly(AnomalyCategory.RAINFALL, None)
+            anom = Anomaly.generate_anomaly(AnomalyCategory.PRECIP, None)
         anom.precip_effect(None)
 
     ###########################################################################

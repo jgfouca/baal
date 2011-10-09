@@ -26,13 +26,15 @@ from engine import engine
 
 # Some RGB color constants
 
-_RED       = (255, 0, 0)
-_GREEN     = (0, 255, 0)
-_BLUE      = (0, 0, 255)
-_YELLOW    = (255, 255, 0)
-_WHITE     = (255, 255, 255)
-_BLACK     = (0, 0, 0)
-_DARKGREEN = (0, 125, 0)
+_RED        = (255, 0, 0)
+_GREEN      = (0, 255, 0)
+_BLUE       = (0, 0, 255)
+_YELLOW     = (255, 255, 0)
+_WHITE      = (255, 255, 255)
+_GREY       = (155, 155, 155)
+_BLACK      = (0, 0, 0)
+_DARKGREEN  = (0, 125, 0)
+_DARKYELLOW = (125, 125, 0)
 
 ###############################################################################
 class DrawPygame(object):
@@ -247,7 +249,7 @@ class DrawPygame(object):
                 color = _RED
 
             my_font = pygame.font.SysFont("None", # font name
-                                          20)     # fontsize
+                                          24)     # fontsize
 
             self.__screen.blit(my_font.render(to_draw,
                                               0, # antialias
@@ -268,7 +270,7 @@ class DrawPygame(object):
         self.__x_pos += 100
 
         my_font = pygame.font.SysFont("None", # font name
-                                      20)     # fontsize
+                                      24)     # fontsize
 
         self.__screen.blit(my_font.render("PLAYER STATS:",
                                    0, # antialias
@@ -371,7 +373,7 @@ class DrawPygame(object):
         self.__x_pos += 100
 
         my_font = pygame.font.SysFont("None", # font name
-                                      20)     # fontsize
+                                      24)     # fontsize
 
         self.__screen.blit(my_font.render("AI PLAYER STATS:",
                                           0, # antialias
@@ -414,7 +416,7 @@ class DrawPygame(object):
         DrawMode.DEWPOINT    : ((32,  _RED), (55, _YELLOW), (_MAX, _DARKGREEN)),
         DrawMode.TEMPERATURE : ((32,  _BLUE), (80, _YELLOW), (_MAX, _RED)),
         DrawMode.PRESSURE    : ((975, _DARKGREEN), (1025, _YELLOW), (_MAX, _RED)),
-        DrawMode.RAINFALL    : ((2,   _RED), (10, _YELLOW), (_MAX, _RED))
+        DrawMode.PRECIP      : ((2,   _RED), (10, _YELLOW), (_MAX, _GREEN))
     }
 
     ###########################################################################
@@ -438,7 +440,7 @@ class DrawPygame(object):
             return item.temperature()
         elif (draw_mode == DrawMode.PRESSURE):
             return item.pressure()
-        elif (draw_mode == DrawMode.RAINFALL):
+        elif (draw_mode == DrawMode.PRECIP):
             return item.precip()
         else:
             prequire(False, "Bad draw mode: ", draw_mode)
@@ -454,7 +456,7 @@ class DrawPygame(object):
         to_draw = ("%.2f" % field)
 
         my_font = pygame.font.SysFont("None", # font name
-                                      20)     # fontsize
+                                      24)     # fontsize
 
         self.__screen.blit(my_font.render(to_draw,
                                           0, # antialias
@@ -518,7 +520,7 @@ class DrawPygame(object):
     def __draw_world_tile(self, item):
     ###########################################################################
         my_font = pygame.font.SysFont("None", # font name
-                                      20)     # fontsize
+                                      24)     # fontsize
 
         draw_mode = curr_draw_mode()
 
@@ -576,9 +578,6 @@ class DrawPygame(object):
 
                 to_draw = ("%.3f" % moisture)
 
-                my_font = pygame.font.SysFont("None", # font name
-                                              20)     # fontsize
-
                 self.__screen.blit(my_font.render(to_draw,
                                                   0, # antialias
                                                   color),
@@ -594,13 +593,64 @@ class DrawPygame(object):
                 color = _RED
                 to_draw = "%.3f" % yield_.prod
 
-            my_font = pygame.font.SysFont("None", # font name
-                                          20)     # fontsize
-
             self.__screen.blit(my_font.render(to_draw,
                                               0, # antialias
                                               color),
                                (self.__x_pos + 30, self.__y_pos + 40))
+
+        elif (draw_mode == DrawMode.ELEVATION):
+            self.__draw_land(item)
+            elevation = item.elevation()
+            if (elevation is not None):
+                if (elevation < 2500):
+                    color = _DARKGREEN
+                elif (elevation < 7000):
+                    color = _YELLOW
+                else:
+                    color = _GREY
+
+                to_draw = ("%d" % elevation)
+
+                self.__screen.blit(my_font.render(to_draw,
+                                                  0, # antialias
+                                                  color),
+                                   (self.__x_pos + 30, self.__y_pos + 40))
+
+        elif (draw_mode == DrawMode.SNOWPACK):
+            self.__draw_land(item)
+            snowpack = item.snowpack()
+            if (snowpack is not None):
+                if (snowpack < 12):
+                    color = _YELLOW
+                elif (snowpack < 40):
+                    color = _BLUE
+                else:
+                    color = _GREY
+
+                to_draw = ("%.2f" % snowpack)
+
+                self.__screen.blit(my_font.render(to_draw,
+                                                  0, # antialias
+                                                  color),
+                                   (self.__x_pos + 30, self.__y_pos + 40))
+
+        elif (draw_mode == DrawMode.SEASURFACETEMP):
+            self.__draw_land(item)
+            sea_temp = item.sea_surface_temp()
+            if (sea_temp is not None):
+                if (sea_temp < 65):
+                    color = _BLUE
+                elif (sea_temp < 80):
+                    color = _YELLOW
+                else:
+                    color = _RED
+
+                to_draw = ("%.2f" % sea_temp)
+
+                self.__screen.blit(my_font.render(to_draw,
+                                                  0, # antialias
+                                                  color),
+                                   (self.__x_pos + 30, self.__y_pos + 40))
 
         elif (is_geological(draw_mode)):
             self.draw(item.geology())

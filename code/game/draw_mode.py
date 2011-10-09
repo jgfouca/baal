@@ -33,6 +33,9 @@ class DrawMode(SmartEnum):
     CIV, \
     LAND, \
     YIELD, \
+    ELEVATION, \
+    SNOWPACK, \
+    SEASURFACETEMP, \
     MOISTURE, \
     GEOLOGY, \
     MAGMA, \
@@ -40,8 +43,8 @@ class DrawMode(SmartEnum):
     WIND, \
     TEMPERATURE, \
     PRESSURE, \
-    RAINFALL, \
-    DEWPOINT = range(12)
+    PRECIP, \
+    DEWPOINT = range(15)
 
     # Derive names from class members.
     _NAMES = create_names_by_enum_value(vars())
@@ -91,6 +94,21 @@ Draws the basic lay of the land.
 """
 Draws tile yields (food and production).
 """.strip()
+    elif (draw_mode == DrawMode.ELEVATION):
+        return \
+"""
+Draws elevation of land tiles in feet.
+""".strip()
+    elif (draw_mode == DrawMode.SNOWPACK):
+        return \
+"""
+Draws depth of snowpack in inches.
+""".strip()
+    elif (draw_mode == DrawMode.SEASURFACETEMP):
+        return \
+"""
+Draws temperature of water at sea surface in farenheit.
+""".strip()
     elif (draw_mode == DrawMode.MOISTURE):
         return \
 """
@@ -126,7 +144,7 @@ Draws the current average (not high or low) temperature in degrees farenheit.
 """
 Draws the current pressure in millibars (1000 is average).
 """.strip()
-    elif (draw_mode == DrawMode.RAINFALL):
+    elif (draw_mode == DrawMode.PRECIP):
         return \
 """
 Draws the amount of precip, in inches, that has fallen this season.

@@ -98,7 +98,7 @@ class WorldTile(object):
 
     def depth(self): return None
 
-    def surface_temp(self): return None
+    def sea_surface_temp(self): return None
 
     def elevation(self): return None
 
@@ -217,7 +217,7 @@ class OceanTile(WorldTile):
 
     def depth(self): return self.__depth
 
-    def surface_temp(self): return self.__surface_temp
+    def sea_surface_temp(self): return self.__surface_temp
 
     #
     # Modification API
@@ -366,10 +366,10 @@ class LandTile(WorldTile):
 
     @classmethod
     def _PORTION_OF_SNOWPACK_THAT_MELTED(cls, temp):
-        if (temp < 30):
+        if (temp < 15):
             return 0.0
         elif (temp < 75):
-            return float(temp - 30) / 45
+            return float(temp - 15) / 60
         else:
             return 1.0
 
@@ -428,8 +428,7 @@ class LandTile(WorldTile):
 
         snowfall = (precip * 12) * snowfall_portion # 12 inches snow per inch
 
-        self.__snowpack = (snowfall + self.snowpack()) * snowpack_melt_portion
-
+        self.__snowpack = (snowfall + self.snowpack()) * (1 - snowpack_melt_portion)
 
     ###########################################################################
     def __build_infra_impl(self):

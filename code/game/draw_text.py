@@ -147,7 +147,7 @@ class DrawText(object):
         DrawMode.DEWPOINT    : ((32, RED),    (55, YELLOW),   (_MAX, GREEN)),
         DrawMode.TEMPERATURE : ((32, BLUE),   (80, YELLOW),   (_MAX, RED)),
         DrawMode.PRESSURE    : ((975, GREEN), (1025, YELLOW), (_MAX, RED)),
-        DrawMode.RAINFALL    : ((2,  RED),    (10, YELLOW),   (_MAX, RED))
+        DrawMode.PRECIP      : ((2,  RED),    (10, YELLOW),   (_MAX, GREEN))
     }
 
     ###########################################################################
@@ -171,7 +171,7 @@ class DrawText(object):
             return item.temperature()
         elif (draw_mode == DrawMode.PRESSURE):
             return item.pressure()
-        elif (draw_mode == DrawMode.RAINFALL):
+        elif (draw_mode == DrawMode.PRECIP):
             return item.precip()
         else:
             prequire(False, "Bad draw mode: ", draw_mode)
@@ -294,6 +294,45 @@ class DrawText(object):
                 cprint(GREEN, "%.3f" % yield_.food)
             else:
                 cprint(RED, "%.3f" % yield_.prod)
+
+        elif (draw_mode == DrawMode.ELEVATION):
+            elevation = item.elevation()
+            if (elevation is not None):
+                if (elevation < 2500):
+                    color = GREEN
+                elif (elevation < 7000):
+                    color = YELLOW
+                else:
+                    color = WHITE
+                cprint(color, ("%d" % elevation).center(self.TILE_TEXT_WIDTH))
+            else:
+                self.__draw_land(item)
+
+        elif (draw_mode == DrawMode.SNOWPACK):
+            snowpack = item.snowpack()
+            if (snowpack is not None):
+                if (snowpack < 12):
+                    color = YELLOW
+                elif (snowpack < 40):
+                    color = BLUE
+                else:
+                    color = WHITE
+                cprint(color, ("%.1f" % snowpack).center(self.TILE_TEXT_WIDTH))
+            else:
+                self.__draw_land(item)
+
+        elif (draw_mode == DrawMode.SEASURFACETEMP):
+            sea_surface_temp = item.sea_surface_temp()
+            if (sea_surface_temp is not None):
+                if (sea_surface_temp < 65):
+                    color = BLUE
+                elif (sea_surface_temp < 80):
+                    color = YELLOW
+                else:
+                    color = RED
+                cprint(color, "%.2f" % sea_surface_temp)
+            else:
+                self.__draw_land(item)
 
         elif (is_geological(draw_mode)):
             self.draw(item.geology())
