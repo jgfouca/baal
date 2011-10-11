@@ -7,7 +7,7 @@ from city import City
 from engine import engine
 from baal_math import exp_growth, poly_growth, fibonacci_div
 from world_tile import OceanTile, MountainTile, FoodTile, PlainsTile, \
-    LushTile, WorldTile
+    LushTile, WorldTile, LandTile
 from weather import Atmosphere
 
 ###############################################################################
@@ -536,7 +536,7 @@ class _Cold(Spell):
     def _DEGREES_COOLED_ATMOS_FUNC(cls, curr_temp, dewpoint, level):
         # TODO: high dewpoint makes it harder to cool
         # curr_temp may be used in the future to implement diminishing returns
-        return -7 * level  # very simple for now, 7 deg per level
+        return 7 * level  # very simple for now, 7 deg per level
 
     @classmethod
     def _DEGREES_COOLED_OCEAN_FUNC(cls, curr_surf_temp, level):
@@ -1188,7 +1188,9 @@ class _Tstorm(Spell):
 class _Snow(Spell):
 ###############################################################################
     """
-    Spawn a large snow storm. Temporarily drastically reduces yields on tiles.
+    Spawn a large snow storm. Temporarily drastically reduces yields on tiles,
+    especially food tiles. Snow storms can cause deaths, but they are not
+    particularly effective at killing people directly.
 
     Enhanced by high dewpoint, low temperature, low pressure.
 
@@ -1202,6 +1204,47 @@ class _Snow(Spell):
     _NAME      = "snow"
     _BASE_COST = 100
     _PREREQS   = _SpellPrereq(5, ((_Cold.name(), 1),) ) # Requires cold
+    _MAX_TEMP  = 32
+
+    #
+    # Tweakable Constants
+    #
+
+    @classmethod
+    def _BASE_SNOWFALL_FUNC(cls, level):
+        # level * 4
+        return level * 4
+
+    @classmethod
+    def _PRESSURE_EFFECT_FUNC(cls, pressure):
+        # 1.05^(pressure - tipping_pt(990))
+        return exp_growth(1.05, 990 - pressure)
+
+    @classmethod
+    def _TEMP_EFFECT_FUNC(cls, temp):
+        # 1.03^(_MAX_TEMP - temp)
+        prequire(temp <= cls._MAX_TEMP, "bad temp")
+        return exp_growth(1.03, cls._MAX_TEMP - temp, diminishing_returns=15)
+
+    @classmethod
+    def _DEWPOINT_EFFECT_FUNC(cls, dewpoint):
+        # 1.05^(dewpoint - tipping_pt(20))
+        return exp_growth(1.05, dewpoint, threshold=20)
+
+    @classmethod
+    def _BASE_KILL_FUNC(cls, snowfall):
+        # 1.03^(snowfall)
+        return exp_growth(1.03, snowfall, diminishing_returns=50)
+
+    @classmethod
+    def _DEFENSE_PENALTY_FUNC(cls, defense):
+        # sqrt(defense)
+        return poly_growth(defense, 0.5)
+
+    @classmethod
+    def _TECH_PENALTY_FUNC(cls, tech):
+        # sqrt(tech)
+        return poly_growth(tech, 0.5)
 
     #
     # Public API
@@ -1215,23 +1258,76 @@ class _Snow(Spell):
     ###########################################################################
     def _verify_apply_impl(self):
     ###########################################################################
-        # No special verification needed for this spell
+        # Tile must be a land tile
+        tile = engine().world().tile(self.location())
+        urequire(isinstance(tile, LandTile),
+                 "Snowstorms can only be cast on land tiles")
+
         # Temp must be below 32
-        pass
+        atmos = tile.atmosphere()
+        urequire(atmos.temperature() <= self._MAX_TEMP,
+                 "It is not cold enough to cast this spell")
 
     ###########################################################################
     def _apply_impl(self):
     ###########################################################################
-        # TODO
-        # Increase precip?
+        world = engine().world()
+        tile  = world.tile(self.location())
+        atmos = tile.atmosphere()
+        tech  = engine().ai_player().tech_level()
+        exp   = 0
+
+        # Query properties relevant to snowstorm effectiveness
+        temp          = atmos.temperature()
+        dewpoint      = atmos.dewpoint()
+        pressure      = atmos.pressure()
+        orig_snowpack = tile.snowpack()
+
+        # Compute destructiveness of snow storm.
+        base_snowfall       = self._BASE_SNOWFALL_FUNC(self.level())
+        temp_multiplier     = self._TEMP_EFFECT_FUNC(temp)
+        pressure_multiplier = self._PRESSURE_EFFECT_FUNC(pressure)
+        dewpoint_multiplier = self._DEWPOINT_EFFECT_FUNC(dewpoint)
+        snowfall            = (base_snowfall *
+                               temp_multiplier *
+                               pressure_multiplier *
+                               dewpoint_multiplier)
+
+        self._report("base snowfall ",          base_snowfall)
+        self._report("temperature multiplier ", temp_multiplier)
+        self._report("dewpoint multiplier ",    dewpoint_multiplier)
+        self._report("presure multiplier ",     pressure_multiplier)
+        self._report("total snowfall ",         snowfall)
+
+        tile.set_snowpack(orig_snowpack + snowfall)
+
+        # TODO: Chance to spawn avalanche if on hills/mountain?
+
+        city = tile.city()
+        if (city is not None):
+            base_kill_pct   = self._BASE_KILL_FUNC(snowfall)
+            tech_penalty    = self._TECH_PENALTY_FUNC(tech)
+            defense_penalty = self._DEFENSE_PENALTY_FUNC(city.defense())
+
+            pct_killed = (base_kill_pct / tech_penalty) / defense_penalty
+
+            self._report("base kill % is ", base_kill_pct)
+            self._report("tech penalty (divisor) is ", tech_penalty)
+            self._report("defense penalty (divisor) is ", defense_penalty)
+            self._report("final kill % is ", pct_killed)
+
+            exp += self._kill(city, pct_killed)
+
         # Increase snowpack
-        return 0
+        return exp
+
+grant_access(_Snow, LandTile.ALLOW_SET_SNOWPACK)
 
 ###############################################################################
 class _Avalanche(Spell):
 ###############################################################################
     """
-    Cause an avalanche. This can devastate mountain infrasture and mountain
+    Cause an avalanche. This can devastate mountain/hill infrasture and hill
     cities.
 
     Enhanced by high snowpack, ongoing snowstorm/blizzard.

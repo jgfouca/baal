@@ -244,9 +244,6 @@ casted.
         except UserError:
             urequire(False, "arg ", "'%s' not a valid location" % args[2])
 
-        grant_access(self, Player.ALLOW_CAST)
-        grant_access(self, Player.ALLOW_GAIN_EXP)
-
     ###########################################################################
     def apply(self):
     ###########################################################################
@@ -311,6 +308,9 @@ casted.
                 engine().player().spell_skill(spell_name)
 
             return help_str
+
+grant_access(_CastCommand, Player.ALLOW_CAST)
+grant_access(_CastCommand, Player.ALLOW_GAIN_EXP)
 
 ###############################################################################
 class _LearnCommand(Command):
@@ -468,6 +468,8 @@ Click to give yourself a free level!
             exp_gained = player.next_level_cost() - player.exp()
 
         engine().player().gain_exp(exp_gained)
+
+grant_access(_HackCommand, Player.ALLOW_GAIN_EXP)
 
 #
 # Internal methods

@@ -84,6 +84,12 @@ class DrawPygame(object):
 
         self.__spell_to_cast = None
 
+        self.__next_button_pos = None
+        self.__next_button_dim = None
+
+        self.__hack_button_pos = None
+        self.__hack_button_dim = None
+
     ###########################################################################
     def end_draw(self):
     ###########################################################################
@@ -189,6 +195,12 @@ class DrawPygame(object):
                        self.__next_button_dim[0],
                        self.__next_button_dim[1])):
             return "end" if action == DO else "help end"
+
+        # Case 4: User is clicking hack
+        if (_is_within(mouse_pos, self.__hack_button_pos,
+                       self.__hack_button_dim[0],
+                       self.__hack_button_dim[1])):
+            return "hack" if action == DO else "help hack"
 
         return None
 
@@ -404,6 +416,15 @@ class DrawPygame(object):
                            (orig_x_pos + 50, self.__y_pos, 100, 50))
         self.__next_button_pos = (orig_x_pos + 50, self.__y_pos)
         self.__next_button_dim = (100, 50)
+
+        hack_button_img = pygame.image.load(os.path.join(self.__path_to_data,
+                                                         "images", "misc",
+                                                         "hack.jpg"))
+
+        self.__screen.blit(hack_button_img,
+                           (orig_x_pos + 175, self.__y_pos, 100, 50))
+        self.__hack_button_pos = (orig_x_pos + 175, self.__y_pos)
+        self.__hack_button_dim = (100, 50)
 
         self.__y_pos += 50
 

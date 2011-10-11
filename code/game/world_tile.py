@@ -563,7 +563,8 @@ class FoodTile(LandTile):
     def yield_(self):
         normal_yield = super(FoodTile, self).yield_()
         return normal_yield * \
-            self._MOISTURE_YIELD_EFFECT_FUNC(self.soil_moisture())
+            self._MOISTURE_YIELD_EFFECT_FUNC(self.soil_moisture()) * \
+            self._SNOWPACK_YIELD_EFFECT_FUNC(self.snowpack())
 
     def cycle_turn(self, anomalies, season):
         super(FoodTile, self).cycle_turn(anomalies, season)
@@ -607,6 +608,13 @@ class FoodTile(LandTile):
             # Things are flooded and can't get any worse. Farmers are able to
             # salvage some fixed portion of their crops.
             return 0.25
+
+    @classmethod
+    def _SNOWPACK_YIELD_EFFECT_FUNC(cls, snowpack):
+        if (snowpack > 100):
+            return 0.0
+        else:
+            return (100.0 - snowpack) / 100
 
     @classmethod
     def _PRECIP_EFFECT_ON_MOISTURE_FUNC(cls, average_precip, precip):

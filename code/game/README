@@ -258,6 +258,7 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 
 - TODO List -
 
+* draw_pygame is a mess
 * Continue to fill in more Spell implementations
 * Need much more unit-testing
 * Map editor, map-file format defined, map-file loader
@@ -266,7 +267,6 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 * Implement dewpoint
 * Pressure needs to affect winds
 * Model cloudcover/instability?
-* Should all tiles have snowpack? YES - reduces yield, esp food
 * Get things looking better in pylint and/or set up a pylint config file
   to ignore things we don't care about
 * City-nearby-tiles iterator would be very nice (encapsulate what it means
