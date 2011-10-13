@@ -76,7 +76,7 @@ class WorldTile(object):
 
     def worked(self): return self.__worked
 
-    def already_casted(self, spell): return spell.name() in self.__casted_spells
+    def already_casted(self, spell): return self.__already_casted_impl(spell)
 
     def atmosphere(self): return self.__atmosphere
 
@@ -192,6 +192,17 @@ class WorldTile(object):
         prequire(spell.name() not in self.__casted_spells)
 
         self.__casted_spells.append(spell.name())
+
+    ###########################################################################
+    def __already_casted_impl(self, spell):
+    ###########################################################################
+        from spell import Spell
+        if (isinstance(spell, Spell)):
+            return spell.name() in self.__casted_spells
+        elif (isinstance(spell, str)):
+            return spell in self.__casted_spells
+        else:
+            prequire(False, "Unsupported type")
 
 grant_access(WorldTile, Atmosphere.ALLOW_CYCLE_TURN)
 grant_access(WorldTile, Geology.ALLOW_CYCLE_TURN)
@@ -560,6 +571,10 @@ class FoodTile(LandTile):
 
     def soil_moisture(self): return self.__soil_moisture
 
+    def set_soil_moisture(self, moisture):
+        check_access(self.ALLOW_SET_SOIL_MOISTURE)
+        self.__soil_moisture = moisture
+
     def yield_(self):
         normal_yield = super(FoodTile, self).yield_()
         return normal_yield * \
@@ -594,6 +609,8 @@ class FoodTile(LandTile):
 
     FLOODING_THRESHOLD = 1.5
     TOTALLY_FLOODED    = 2.75
+
+    ALLOW_SET_SOIL_MOISTURE = "_food_tile_allow_set_soil_moisture"
 
     @classmethod
     def _MOISTURE_YIELD_EFFECT_FUNC(cls, moisture):

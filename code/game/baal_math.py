@@ -11,7 +11,7 @@ from baal_common import prequire
 ###############################################################################
 def exp_growth(base, value, threshold=0, diminishing_returns=None):
 ###############################################################################
-    prequire(base >= 1.01 and base <= 1.10, "Invalid base: ", base)
+    prequire(base > 1, "Invalid base: ", base)
 
     x = value - threshold
 

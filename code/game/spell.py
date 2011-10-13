@@ -7,7 +7,7 @@ from city import City
 from engine import engine
 from baal_math import exp_growth, poly_growth, fibonacci_div
 from world_tile import OceanTile, MountainTile, FoodTile, PlainsTile, \
-    LushTile, WorldTile, LandTile
+    LushTile, WorldTile, LandTile, HillsTile
 from weather import Atmosphere
 
 ###############################################################################
@@ -883,7 +883,8 @@ class _Fire(Spell):
     TODO: has a chance to spread?
 
     Enhanced by high wind, low dewpoint, high temperature, and low soil
-    moisture. Reduced by city defense and tech level.
+    moisture. Reduced by city defense and tech level. Greatly reduced by
+    snowpack.
 
     This is a tier 2 spell
     """
@@ -920,6 +921,11 @@ class _Fire(Spell):
     def _MOISTURE_EFFECT_FUNC(cls, raw_moisture):
         # 1.05^(tipping_pt(75) - raw_moisture*100), diminishes at 30% below dry
         return exp_growth(1.05, 75 - raw_moisture*100, diminishing_returns=30)
+
+    @classmethod
+    def _SNOWPACK_EFFECT_FUNC(cls, snowpack):
+        # 1.3^snowpack
+        return exp_growth(1.3, snowpack)
 
     @classmethod
     def _BASE_INFRA_DESTROY_FUNC(cls, destructiveness):
@@ -976,21 +982,24 @@ class _Fire(Spell):
         temp          = atmos.temperature()
         dewpoint      = atmos.dewpoint()
         soil_moisture = tile.soil_moisture()
+        snowpack      = tile.snowpack()
 
         # Compute destructiveness of fire
         base_destructiveness = self._BASE_DESTRUCTIVENESS_FUNC(self.level())
         temp_multiplier      = self._TEMP_EFFECT_FUNC(temp)
         wind_multiplier      = self._WIND_EFFECT_FUNC(wind)
         moisture_multiplier  = self._MOISTURE_EFFECT_FUNC(soil_moisture)
+        snowpack_divisor     = self._SNOWPACK_EFFECT_FUNC(snowpack)
         destructiveness      = (base_destructiveness *
                                 temp_multiplier *
                                 wind_multiplier *
-                                moisture_multiplier)
+                                moisture_multiplier) / snowpack_divisor
 
         self._report("base destructiveness ",   base_destructiveness)
         self._report("temperature multiplier ", temp_multiplier)
         self._report("wind multiplier ",        wind_multiplier)
         self._report("moisture multiplier ",    moisture_multiplier)
+        self._report("snowpack divisor ",       snowpack_divisor)
         self._report("total destructiveness ",  destructiveness)
 
         # Fire can destroy infrastructure
@@ -1053,6 +1062,8 @@ class _Tstorm(Spell):
     #
     # Tweakable Constants
     #
+
+    _DRY_STORM_MOISTURE_ADD = .1
 
     @classmethod
     def _BASE_DESTRUCTIVENESS_FUNC(cls, level):
@@ -1162,6 +1173,11 @@ class _Tstorm(Spell):
 
         if (flood_spawn_lvl > 0):
             exp += self._spawn(_Flood.name(), flood_spawn_lvl)
+        else:
+            # Some minimal impact on soil moisture, but this tstorm was not
+            # a big rain producer
+            new_moisture = tile.soil_moisture() + self._DRY_STORM_MOISTURE_ADD
+            tile.set_soil_moisture(new_moisture)
 
         if (tornado_spawn_lvl > 0):
             exp += self._spawn(_Tornado.name(), tornado_spawn_lvl)
@@ -1183,6 +1199,8 @@ class _Tstorm(Spell):
             exp += self._kill(city, pct_killed)
 
         return exp
+
+grant_access(_Tstorm, FoodTile.ALLOW_SET_SOIL_MOISTURE)
 
 ###############################################################################
 class _Snow(Spell):
@@ -1301,8 +1319,6 @@ class _Snow(Spell):
 
         tile.set_snowpack(orig_snowpack + snowfall)
 
-        # TODO: Chance to spawn avalanche if on hills/mountain?
-
         city = tile.city()
         if (city is not None):
             base_kill_pct   = self._BASE_KILL_FUNC(snowfall)
@@ -1318,7 +1334,6 @@ class _Snow(Spell):
 
             exp += self._kill(city, pct_killed)
 
-        # Increase snowpack
         return exp
 
 grant_access(_Snow, LandTile.ALLOW_SET_SNOWPACK)
@@ -1330,7 +1345,7 @@ class _Avalanche(Spell):
     Cause an avalanche. This can devastate mountain/hill infrasture and hill
     cities.
 
-    Enhanced by high snowpack, ongoing snowstorm/blizzard.
+    Enhanced by high snowpack, high elevation, ongoing snowstorm/blizzard.
 
     This is a tier 3 spell
     """
@@ -1344,6 +1359,54 @@ class _Avalanche(Spell):
     _PREREQS   = _SpellPrereq(10, ((_Snow.name(), 1),) ) # Requires snow
 
     #
+    # Tweakable Constants
+    #
+
+    @classmethod
+    def _BASE_DESTRUCTIVENESS_FUNC(cls, level):
+        # level^1.3
+        return poly_growth(level, 1.3)
+
+    @classmethod
+    def _SNOWSTORM_BONUS_FUNC(cls, ongoing_snowstorm):
+        # Double-damage if during snowstorm
+        return 1.5 if ongoing_snowstorm else 1.0
+
+    @classmethod
+    def _BLIZZARD_BONUS_FUNC(cls, ongoing_blizzard):
+        # Double-damage if during blizzard
+        return 2.0 if ongoing_blizzard else 1.0
+
+    @classmethod
+    def _ELEVATION_BONUS_FUNC(cls, elevation):
+        # 1.1^(elevation/1000 - 2)
+        return exp_growth(1.1, elevation/1000, threshold=2)
+
+    @classmethod
+    def _SNOWPACK_EFFECT_FUNC(cls, snowpack):
+        # 1.002^(snowpack - 100)
+        return exp_growth(1.002, snowpack, threshold=100)
+
+    @classmethod
+    def _BASE_INFRA_DESTROY_FUNC(cls, destructiveness):
+        # 1.05^destructiveness
+        return exp_growth(1.05, destructiveness)
+
+    @classmethod
+    def _BASE_KILL_FUNC(cls, destructiveness):
+        return destructiveness # Linear
+
+    @classmethod
+    def _TECH_PENALTY_FUNC(cls, tech):
+        # sqrt(tech)
+        return poly_growth(tech, 0.5)
+
+    @classmethod
+    def _DEFENSE_PENALTY_FUNC(cls, defense):
+        # sqrt(defense)
+        return poly_growth(defense, 0.5)
+
+    #
     # Public API
     #
 
@@ -1355,14 +1418,72 @@ class _Avalanche(Spell):
     ###########################################################################
     def _verify_apply_impl(self):
     ###########################################################################
-        # No special verification needed for this spell
-        pass
+        # Tile must be hill or mountain
+        tile = engine().world().tile(self.location())
+        urequire(isinstance(tile, HillsTile) or isinstance(tile, MountainTile),
+                 "Avalanches can only be cast on mountains or hills")
+
+        # There must be snow on this tile
+        urequire(tile.snowpack() > 0,
+                 "There is no snow on this tile")
 
     ###########################################################################
     def _apply_impl(self):
     ###########################################################################
-        # TODO
-        return 0
+        world = engine().world()
+        tile  = world.tile(self.location())
+        atmos = tile.atmosphere()
+        tech  = engine().ai_player().tech_level()
+        exp   = 0
+
+        # Query properties relevant to snowstorm effectiveness
+        is_snowstorm_ongoing = tile.already_casted(_Snow._NAME)
+        is_blizzard_ongoing  = tile.already_casted(_Blizzard._NAME)
+        elevation            = tile.elevation()
+        snowpack             = tile.snowpack()
+
+        # Compute destructiveness of snow storm.
+        base_destructiveness = self._BASE_DESTRUCTIVENESS_FUNC(self.level())
+        snowstorm_multiplier = self._SNOWSTORM_BONUS_FUNC(is_snowstorm_ongoing)
+        blizzard_multiplier  = self._BLIZZARD_BONUS_FUNC(is_blizzard_ongoing)
+        elevation_multiplier = self._ELEVATION_BONUS_FUNC(elevation)
+        snowpack_multiplier  = self._SNOWPACK_EFFECT_FUNC(snowpack)
+        destructiveness      = (base_destructiveness *
+                                snowstorm_multiplier *
+                                blizzard_multiplier *
+                                elevation_multiplier *
+                                snowpack_multiplier)
+
+        self._report("base destructiveness ",  base_destructiveness)
+        self._report("snowstorm multiplier ",  snowstorm_multiplier)
+        self._report("blizzard multiplier ",   blizzard_multiplier)
+        self._report("elevation multiplier ",  elevation_multiplier)
+        self._report("snowpack multiplier ",   snowpack_multiplier)
+        self._report("total destructiveness ", destructiveness)
+
+        # Avalanches can destroy infrastructure
+        exp += self._infra_damage_common(tile,
+                                         self._BASE_INFRA_DESTROY_FUNC(destructiveness),
+                                         self._TECH_PENALTY_FUNC(tech))
+
+        # This spell will kill if cast on a city
+        city = tile.city()
+        if (city is not None):
+            base_kill_pct   = self._BASE_KILL_FUNC(destructiveness)
+            tech_penalty    = self._TECH_PENALTY_FUNC(tech)
+            defense_penalty = self._DEFENSE_PENALTY_FUNC(city.defense())
+
+            pct_killed = (base_kill_pct / tech_penalty) / defense_penalty
+
+            self._report("base kill % is ", base_kill_pct)
+            self._report("tech penalty (divisor) is ", tech_penalty)
+            self._report("defense penalty (divisor) is ", defense_penalty)
+            self._report("final kill % is ", pct_killed)
+
+            exp += self._kill(city, pct_killed)
+
+        # Increase snowpack
+        return exp
 
 ###############################################################################
 class _Flood(Spell):
@@ -1403,7 +1524,7 @@ class _Flood(Spell):
     def _apply_impl(self):
     ###########################################################################
         # TODO
-        # Change atmosphere to increase precip
+        # TODO - Add a lot to soil moisture
         return 0
 
 ###############################################################################
@@ -1480,6 +1601,9 @@ class _Blizzard(Spell):
     def _verify_apply_impl(self):
     ###########################################################################
         # No special verification needed for this spell
+        # Can we cast a snowstorm and a blizzard on the same tile? This seems
+        # to introduce stacking problems that were solved by the no-repeated
+        # spells rule.
         pass
 
     ###########################################################################
@@ -1522,6 +1646,8 @@ class _Tornado(Spell):
     def _verify_apply_impl(self):
     ###########################################################################
         # No special verification needed for this spell
+        # Requires that tstorm has been cast on this tile. If that tstorm spawned
+        # a weak tornado, it's OK, now we'll spawn a bigger one!
         pass
 
     ###########################################################################
