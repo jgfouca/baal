@@ -34,6 +34,20 @@ class Yield(object):
     def __mul__(self, multiplier):
         return Yield(self.food * multiplier, self.prod * multiplier)
 
+    def __lt__(self, rhs):
+        if (self.food > 0 and rhs.food > 0):
+            return self.food < rhs.food
+        elif (self.prod > 0 and rhs.prod > 0):
+            return self.prod < rhs.prod
+        else:
+            return False # Not comparable
+
+    def __float__(self):
+        return self.food if self.food > 0 else self.prod
+
+    def __abs__(self):
+        return float(self)
+
     def to_xml(self):
         # TODO - Aaron
         pass

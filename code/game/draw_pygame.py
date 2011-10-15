@@ -13,7 +13,7 @@ from draw_mode import DrawMode, curr_draw_mode, _set_draw_mode
 from baal_time import Time, Season
 from geology import Geology, is_geological, \
     Divergent, Subducting, Orogenic, Transform, Inactive
-from world_tile import WorldTile, \
+from world_tile import WorldTile, Yield, \
     OceanTile, MountainTile, DesertTile, TundraTile, HillsTile, PlainsTile, \
     LushTile, get_flooding_threshold, get_totally_flooded_threshold
 from player import Player
@@ -60,6 +60,12 @@ class DrawPygame(object):
         pygame.init()
         self.__screen = pygame.display.set_mode((self.SCREEN_WIDTH,
                                                  self.SCREEN_HEIGHT))
+
+        self._LARGE_FONT  = pygame.font.SysFont("None", # font name
+                                                30)     # fontsize
+        self._NORMAL_FONT = pygame.font.SysFont("None", # font name
+                                                24)     # fontsize
+
 
         # Compute path to data area
         self.__path_to_data = os.path.abspath(
@@ -209,6 +215,44 @@ class DrawPygame(object):
     #
 
     ###########################################################################
+    def _print(self, text, color, position, font=None):
+    ###########################################################################
+        font = self._NORMAL_FONT if font is None else font
+        self.__screen.blit(font.render(text,
+                                       True, # antialias
+                                       color),
+                           position)
+
+    ###########################################################################
+    def _print_with_offset(self, text, color, offset=(0,0), font=None):
+    ###########################################################################
+        """
+        Print at a position relative to the current x_pos, y_pos
+        """
+        return self._print(text,
+                           color,
+                          (self.__x_pos + offset[0], self.__y_pos + offset[1]),
+                           font)
+
+    ###########################################################################
+    def _draw(self, dirname, filename, size, position):
+    ###########################################################################
+        image = pygame.image.load(os.path.join(self.__path_to_data,
+                                               "images", dirname,
+                                               filename))
+        self.__screen.blit(image,
+                           (position[0], position[1], size[0], size[1]))
+
+    ###########################################################################
+    def _draw_with_offset(self, dirname, filename, size, offset=(0,0)):
+    ###########################################################################
+        """
+        Draw an image at a position relative to the current x_pos, y_pos
+        """
+        self._draw(dirname, filename, size,
+                   (self.__x_pos + offset[0], self.__y_pos + offset[1]))
+
+    ###########################################################################
     def __draw_time(self, item):
     ###########################################################################
         # Compute color
@@ -223,12 +267,10 @@ class DrawPygame(object):
         else:
             prequire(False, "Unhandled season ", item.season())
 
-        my_font = pygame.font.SysFont("None", # font name
-                                      30)     # fontsize
-        self.__screen.blit(my_font.render("%s, Year: %s" % (item.season(), item.year()),
-                                          0, # antialias
-                                          color),
-                           (self.__x_pos + 200, self.__y_pos + 5))
+        self._print_with_offset("%s, Year: %s" % (item.season(), item.year()),
+                                color,
+                                (200, 5),
+                                font=self._LARGE_FONT)
 
         self.__y_pos += 30
         self.__x_pos = 0
@@ -239,11 +281,9 @@ class DrawPygame(object):
         draw_mode = curr_draw_mode()
         prequire(is_geological(draw_mode), "Bad draw mode ", draw_mode)
 
-        geological_image = pygame.image.load(os.path.join(self.__path_to_data,
-                                                          "images", "geology",
-                                                          item.__class__.__name__.lower() + ".jpg"))
-        self.__screen.blit(geological_image,
-                           (self.__x_pos, self.__y_pos, 100, 100))
+        self._draw_with_offset("geology",
+                               item.__class__.__name__.lower() + ".jpg",
+                               (100, 100))
 
         # Figure out what string to print and what color it should be
         if (draw_mode == DrawMode.GEOLOGY):
@@ -260,58 +300,34 @@ class DrawPygame(object):
             else:
                 color = _RED
 
-            my_font = pygame.font.SysFont("None", # font name
-                                          24)     # fontsize
-
-            self.__screen.blit(my_font.render(to_draw,
-                                              0, # antialias
-                                              color),
-                               (self.__x_pos + 30, self.__y_pos + 40))
+            self._print_with_offset(to_draw, color, (30, 40))
         else:
             prequire(False, "Should not draw geology in mode: ", draw_mode)
 
     ###########################################################################
     def __draw_player(self, item):
     ###########################################################################
-        player_image = pygame.image.load(os.path.join(self.__path_to_data,
-                                                      "images", "player",
-                                                      "baal.jpg"))
-        self.__screen.blit(player_image,
-            (self.__x_pos, self.__y_pos, 100, 100)) # allow 100x100 pixels
+        self._draw_with_offset("player", "baal.jpg", (100, 100))
 
         self.__x_pos += 100
 
-        my_font = pygame.font.SysFont("None", # font name
-                                      24)     # fontsize
+        self._print_with_offset("PLAYER STATS:", _WHITE)
 
-        self.__screen.blit(my_font.render("PLAYER STATS:",
-                                   0, # antialias
-                                   _WHITE),
-                    (self.__x_pos, self.__y_pos))
         self.__y_pos += 20
 
-        self.__screen.blit(my_font.render("  name: %s" % item.name(),
-                                   0, # antialias
-                                   _WHITE),
-                    (self.__x_pos, self.__y_pos))
+        self._print_with_offset("  name: %s" % item.name(), _WHITE)
+
         self.__y_pos += 20
 
-        self.__screen.blit(my_font.render("  level: %d" % item.level(),
-                                   0, # antialias
-                                   _GREEN),
-                    (self.__x_pos, self.__y_pos))
+        self._print_with_offset("  level: %d" % item.level(), _GREEN)
+
         self.__y_pos += 20
 
-        self.__screen.blit(my_font.render("  mana: %d / %d" % (item.mana(), item.max_mana()),
-                                   0, # antialias
-                                   _BLUE),
-                    (self.__x_pos, self.__y_pos))
+        self._print_with_offset("  mana: %d / %d" % (item.mana(), item.max_mana()), _BLUE)
+
         self.__y_pos += 20
 
-        self.__screen.blit(my_font.render("  exp: %d / %d" % (item.exp(), item.next_level_cost()),
-                                          0, # antialias
-                                          _YELLOW),
-                           (self.__x_pos, self.__y_pos))
+        self._print_with_offset("  exp: %d / %d" % (item.exp(), item.next_level_cost()), _YELLOW)
 
         self.__x_pos += 200
         self.__y_pos -= 80
@@ -321,29 +337,20 @@ class DrawPygame(object):
         x_button_pos = self.SCREEN_WIDTH - 600
         y_button_pos = 0
 
-        self.__screen.blit(my_font.render("CAST:",
-                                          0, # antialias
-                                          _RED),
-                           (x_button_pos + 5, y_button_pos))
+        self._print("CAST:", _RED, (x_button_pos + 5, y_button_pos))
 
-        self.__screen.blit(my_font.render("LEARN:",
-                                          0, # antialias
-                                          _GREEN),
-                           (x_button_pos + 165, y_button_pos))
+        self._print("LEARN:", _GREEN, (x_button_pos + 165, y_button_pos))
 
-        self.__screen.blit(my_font.render("DRAW MODES:",
-                                          0, # antialias
-                                          _WHITE),
-                           (x_button_pos + 275, y_button_pos))
+        self._print("DRAW MODES:", _WHITE, (x_button_pos + 275, y_button_pos))
 
         y_button_pos = 15
 
         for spell_name, spell_level in item.talents():
-            spell_image = pygame.image.load(os.path.join(self.__path_to_data,
-                                                         "images", "spell-icons",
-                                                         "%s.jpg" % spell_name))
-            self.__screen.blit(spell_image,
-                               (x_button_pos, y_button_pos, 50, 50))
+            self._draw("spell-icons",
+                       "%s.jpg" % spell_name,
+                       (50, 50),
+                       (x_button_pos, y_button_pos))
+
             self.__cast_spell_button_loc_map[spell_name] = (x_button_pos, y_button_pos)
             y_button_pos += 50
 
@@ -351,11 +358,11 @@ class DrawPygame(object):
         y_button_pos = 15
 
         for spell_name, spell_level in item.learnable():
-            spell_image = pygame.image.load(os.path.join(self.__path_to_data,
-                                                         "images", "spell-icons",
-                                                         "%s.jpg" % spell_name))
-            self.__screen.blit(spell_image,
-                               (x_button_pos, y_button_pos, 50, 50))
+            self._draw("spell-icons",
+                       "%s.jpg" % spell_name,
+                       (50, 50),
+                       (x_button_pos, y_button_pos))
+
             self.__learn_spell_button_loc_map[spell_name] = (x_button_pos, y_button_pos)
             y_button_pos += 50
 
@@ -364,65 +371,41 @@ class DrawPygame(object):
 
         for draw_mode in DrawMode:
             draw_mode_str = str(draw_mode).lower()
-            mode_image = pygame.image.load(os.path.join(self.__path_to_data,
-                                                         "images", "draw-modes",
-                                                         "%s.jpg" % draw_mode_str))
-            self.__screen.blit(mode_image,
-                               (x_button_pos, y_button_pos, 50, 50))
+            self._draw("draw-modes",
+                       "%s.jpg" % draw_mode_str,
+                       (50, 50),
+                       (x_button_pos, y_button_pos))
+
             self.__draw_mode_button_loc_map[draw_mode_str] = (x_button_pos, y_button_pos)
             y_button_pos += 50
 
     ###########################################################################
     def __draw_player_ai(self, item):
     ###########################################################################
-        player_image = pygame.image.load(os.path.join(self.__path_to_data,
-                                                      "images", "player",
-                                                      "peasant.png"))
-        self.__screen.blit(player_image,
-            (self.__x_pos, self.__y_pos, 100, 100)) # allow 100x100 pixels
+        self._draw_with_offset("player", "peasant.png", (100, 100))
 
         orig_x_pos = self.__x_pos
         self.__x_pos += 100
 
-        my_font = pygame.font.SysFont("None", # font name
-                                      24)     # fontsize
-
-        self.__screen.blit(my_font.render("AI PLAYER STATS:",
-                                          0, # antialias
-                                          _WHITE),
-                    (self.__x_pos, self.__y_pos))
+        self._print_with_offset("AI PLAYER STATS:", _WHITE)
         self.__y_pos += 20
 
-        self.__screen.blit(my_font.render("  tech level: %d" % item.tech_level(),
-                                          0, # antialias
-                                          _GREEN),
-                    (self.__x_pos, self.__y_pos))
+        self._print_with_offset("  tech level: %d" % item.tech_level(), _GREEN)
         self.__y_pos += 20
 
-        self.__screen.blit(my_font.render("  population: %d" % item.population(),
-                                          0, # antialias
-                                          _BLUE),
-                    (self.__x_pos, self.__y_pos))
+        self._print_with_offset("  population: %d" % item.population(), _BLUE)
 
         self.__x_pos = 0
         self.__y_pos += 75
 
         # We choose to draw this here since we have extra room
-        next_button_img = pygame.image.load(os.path.join(self.__path_to_data,
-                                                         "images", "misc",
-                                                         "next_turn.jpg"))
+        self._draw("misc", "next_turn.jpg", (100, 50), (orig_x_pos + 50, self.__y_pos))
 
-        self.__screen.blit(next_button_img,
-                           (orig_x_pos + 50, self.__y_pos, 100, 50))
         self.__next_button_pos = (orig_x_pos + 50, self.__y_pos)
         self.__next_button_dim = (100, 50)
 
-        hack_button_img = pygame.image.load(os.path.join(self.__path_to_data,
-                                                         "images", "misc",
-                                                         "hack.jpg"))
+        self._draw("misc", "hack.jpg", (100, 50), (orig_x_pos + 175, self.__y_pos))
 
-        self.__screen.blit(hack_button_img,
-                           (orig_x_pos + 175, self.__y_pos, 100, 50))
         self.__hack_button_pos = (orig_x_pos + 175, self.__y_pos)
         self.__hack_button_dim = (100, 50)
 
@@ -432,7 +415,7 @@ class DrawPygame(object):
     # Describes how to draw the various fields. The first value in the pair
     # is the upper-bound for the corresponding color.
     _MAX = 999999999
-    _ATMOS_FIELD_COLOR_MAP = {
+    _ATMOS_COLOR_MAP = {
         DrawMode.WIND        : ((10,  _DARKGREEN), (20, _YELLOW), (_MAX, _RED)),
         DrawMode.DEWPOINT    : ((32,  _RED), (55, _YELLOW), (_MAX, _DARKGREEN)),
         DrawMode.TEMPERATURE : ((32,  _BLUE), (80, _YELLOW), (_MAX, _RED)),
@@ -441,9 +424,9 @@ class DrawPygame(object):
     }
 
     ###########################################################################
-    def __compute_atmos_color(self, draw_mode, field_value):
+    def __compute_color(self, draw_mode, field_value, color_map):
     ###########################################################################
-        for upper_bound, color in self._ATMOS_FIELD_COLOR_MAP[draw_mode]:
+        for upper_bound, color in color_map[draw_mode]:
             if (field_value < upper_bound):
                 return color
 
@@ -472,17 +455,11 @@ class DrawPygame(object):
         draw_mode = curr_draw_mode()
 
         field = self.__get_field_for_draw_mode(item, draw_mode)
-        color = self.__compute_atmos_color(draw_mode, field)
+        color = self.__compute_color(draw_mode, field, self._ATMOS_COLOR_MAP)
 
         to_draw = ("%.2f" % field)
 
-        my_font = pygame.font.SysFont("None", # font name
-                                      24)     # fontsize
-
-        self.__screen.blit(my_font.render(to_draw,
-                                          0, # antialias
-                                          color),
-                           (self.__x_pos + 30, self.__y_pos + 40))
+        self._print_with_offset(to_draw, color, (30, 40))
 
     ###########################################################################
     def __draw_anomaly(self, item):
@@ -531,18 +508,59 @@ class DrawPygame(object):
     def __draw_land(self, item):
     ###########################################################################
         filename = self._TILE_MAP[item.__class__]
-        tile_image = pygame.image.load(os.path.join(self.__path_to_data,
-                                                    "images", "tiles",
-                                                    filename))
-        self.__screen.blit(tile_image,
-            (self.__x_pos, self.__y_pos, 100, 100)) # allow 100x100 pixels
+        self._draw_with_offset("tiles", filename, (100, 100))
+
+    _LAND_COLOR_MAP = {
+        DrawMode.MOISTURE       : ((1.0, _YELLOW),
+                                   (get_flooding_threshold(), _DARKGREEN),
+                                   (get_totally_flooded_threshold(), _BLUE),
+                                   (_MAX, _RED)),
+        DrawMode.YIELD          : ((Yield(_MAX, 0), _DARKGREEN),
+                                   (Yield(0, _MAX), _RED)),
+        DrawMode.ELEVATION      : ((2500, _DARKGREEN),
+                                   (7000, _YELLOW),
+                                   (_MAX, _GREY)),
+        DrawMode.SNOWPACK       : ((12, _YELLOW), (40, _BLUE), (_MAX, _GREY)),
+        DrawMode.SEASURFACETEMP : ((65, _BLUE), (80, _YELLOW), (_MAX, _RED))
+    }
+
+    ###########################################################################
+    def __determine_precision(self, field):
+    ###########################################################################
+        if (abs(field) > 1000):
+            return "%d" % field
+        elif (abs(field) > 10):
+            return "%.2f" % field
+        else:
+            return "%.3f" % field
+
+    ###########################################################################
+    def __draw_land_property(self, draw_mode, tile):
+    ###########################################################################
+        self.__draw_land(tile)
+
+        if (draw_mode == DrawMode.MOISTURE):
+            field = tile.soil_moisture()
+        elif (draw_mode == DrawMode.YIELD):
+            field = tile.yield_()
+        elif (draw_mode == DrawMode.ELEVATION):
+            field = tile.elevation()
+        elif (draw_mode == DrawMode.SNOWPACK):
+            field = tile.snowpack()
+        elif (draw_mode == DrawMode.SEASURFACETEMP):
+            field = tile.sea_surface_temp()
+        else:
+            prequire(False, "Unknown draw mode ", draw_mode)
+
+        if (field is not None):
+            color   = self.__compute_color(draw_mode, field, self._LAND_COLOR_MAP)
+            to_draw = self.__determine_precision(field)
+
+            self._print_with_offset(to_draw, color, (30, 40))
 
     ###########################################################################
     def __draw_world_tile(self, item):
     ###########################################################################
-        my_font = pygame.font.SysFont("None", # font name
-                                      24)     # fontsize
-
         draw_mode = curr_draw_mode()
 
         if (draw_mode == DrawMode.LAND):
@@ -551,127 +569,16 @@ class DrawPygame(object):
         elif (draw_mode == DrawMode.CIV):
             self.__draw_land(item)
             if (item.city() is not None):
-                city_image = pygame.image.load(os.path.join(self.__path_to_data,
-                                                            "images", "misc",
-                                                            "city.jpg"))
-                self.__screen.blit(city_image,
-                                   (self.__x_pos + 25,
-                                    self.__y_pos + 25,
-                                    50, 50))
+                self._draw_with_offset("misc", "city.jpg", (50, 50), (25, 25))
 
-                self.__screen.blit(my_font.render("Size: %d" % item.city().rank(),
-                                                  0, # antialias
-                                                  _RED),
-                                   (self.__x_pos + 30, self.__y_pos + 75))
+                self._print_with_offset("Size: %d" % item.city().rank(), _RED, (30, 75))
 
             elif (item.infra_level() is not None and item.infra_level() > 0):
-                if (item.yield_().food > 0):
-                    infra_image = pygame.image.load(os.path.join(self.__path_to_data,
-                                                                 "images", "misc",
-                                                                 "farm.jpg"))
-                else:
-                    infra_image = pygame.image.load(os.path.join(self.__path_to_data,
-                                                                 "images", "misc",
-                                                                 "mine.jpg"))
+                image = "farm.jpg" if (item.yield_().food > 0) else "mine.jpg"
 
-                self.__screen.blit(infra_image,
-                                   (self.__x_pos + 25,
-                                    self.__y_pos + 25,
-                                    50, 50))
+                self._draw_with_offset("misc", image, (50, 50), (25, 25))
 
-                self.__screen.blit(my_font.render("Level: %d" % item.infra_level(),
-                                                  0, # antialias
-                                                  _YELLOW),
-                                   (self.__x_pos + 30, self.__y_pos + 75))
-
-        elif (draw_mode == DrawMode.MOISTURE):
-            self.__draw_land(item)
-            moisture = item.soil_moisture()
-            if (moisture is not None):
-                if (moisture < 1.0):
-                    color = _YELLOW
-                elif (moisture < get_flooding_threshold()):
-                    color = _DARKGREEN
-                elif (moisture < get_totally_flooded_threshold()):
-                    color = _BLUE
-                else:
-                    color = _RED
-
-                to_draw = ("%.3f" % moisture)
-
-                self.__screen.blit(my_font.render(to_draw,
-                                                  0, # antialias
-                                                  color),
-                                   (self.__x_pos + 30, self.__y_pos + 40))
-
-        elif (draw_mode == DrawMode.YIELD):
-            self.__draw_land(item)
-            yield_ = item.yield_()
-            if (yield_.food > 0):
-                color = _DARKGREEN
-                to_draw = "%.3f" % yield_.food
-            else:
-                color = _RED
-                to_draw = "%.3f" % yield_.prod
-
-            self.__screen.blit(my_font.render(to_draw,
-                                              0, # antialias
-                                              color),
-                               (self.__x_pos + 30, self.__y_pos + 40))
-
-        elif (draw_mode == DrawMode.ELEVATION):
-            self.__draw_land(item)
-            elevation = item.elevation()
-            if (elevation is not None):
-                if (elevation < 2500):
-                    color = _DARKGREEN
-                elif (elevation < 7000):
-                    color = _YELLOW
-                else:
-                    color = _GREY
-
-                to_draw = ("%d" % elevation)
-
-                self.__screen.blit(my_font.render(to_draw,
-                                                  0, # antialias
-                                                  color),
-                                   (self.__x_pos + 30, self.__y_pos + 40))
-
-        elif (draw_mode == DrawMode.SNOWPACK):
-            self.__draw_land(item)
-            snowpack = item.snowpack()
-            if (snowpack is not None):
-                if (snowpack < 12):
-                    color = _YELLOW
-                elif (snowpack < 40):
-                    color = _BLUE
-                else:
-                    color = _GREY
-
-                to_draw = ("%.2f" % snowpack)
-
-                self.__screen.blit(my_font.render(to_draw,
-                                                  0, # antialias
-                                                  color),
-                                   (self.__x_pos + 30, self.__y_pos + 40))
-
-        elif (draw_mode == DrawMode.SEASURFACETEMP):
-            self.__draw_land(item)
-            sea_temp = item.sea_surface_temp()
-            if (sea_temp is not None):
-                if (sea_temp < 65):
-                    color = _BLUE
-                elif (sea_temp < 80):
-                    color = _YELLOW
-                else:
-                    color = _RED
-
-                to_draw = ("%.2f" % sea_temp)
-
-                self.__screen.blit(my_font.render(to_draw,
-                                                  0, # antialias
-                                                  color),
-                                   (self.__x_pos + 30, self.__y_pos + 40))
+                self._print_with_offset("Level: %d" % item.infra_level(), _YELLOW, (30, 75))
 
         elif (is_geological(draw_mode)):
             self.draw(item.geology())
@@ -681,7 +588,7 @@ class DrawPygame(object):
             self.draw(item.atmosphere())
 
         else:
-            prequire(False, "Unhandled mode: ", draw_mode)
+            self.__draw_land_property(draw_mode, item)
 
         self.__x_pos += 100
 
