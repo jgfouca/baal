@@ -52,7 +52,7 @@ class Direction(SmartEnum):
     _NAMES = create_names_by_enum_value(vars())
 
     def __init__(self, value):
-        super(self.__class__, self).__init__(value)
+        super(Direction, self).__init__(value)
 
 # Finish Direction initialization
 for name in Direction._names():
@@ -274,7 +274,7 @@ class AnomalyCategory(SmartEnum):
     _NAMES = create_names_by_enum_value(vars())
 
     def __init__(self, value):
-        super(self.__class__, self).__init__(value)
+        super(AnomalyCategory, self).__init__(value)
 
 # Finish AnomalyCategory initialization
 for name in AnomalyCategory._names():

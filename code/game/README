@@ -258,6 +258,8 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 
 - TODO List -
 
+* Access system needs to be reviewed. Shouldn't the class that's being
+  modified be the granter of access?
 * Should spells like Flood/Tstorm/Snow, which imply increased precip,
   change the precip field for the atmosphere? If so, they will be
   double-counted when moisture is computed at end of turn since they also

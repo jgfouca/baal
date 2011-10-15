@@ -15,7 +15,7 @@ from geology import Geology, is_geological, \
     Divergent, Subducting, Orogenic, Transform, Inactive
 from world_tile import WorldTile, \
     OceanTile, MountainTile, DesertTile, TundraTile, HillsTile, PlainsTile, \
-    LushTile, FoodTile
+    LushTile, get_flooding_threshold, get_totally_flooded_threshold
 from player import Player
 from player_ai import PlayerAI
 from weather import Atmosphere, Anomaly, is_atmospheric
@@ -565,7 +565,7 @@ class DrawPygame(object):
                                    (self.__x_pos + 30, self.__y_pos + 75))
 
             elif (item.infra_level() is not None and item.infra_level() > 0):
-                if (isinstance(item, FoodTile)):
+                if (item.yield_().food > 0):
                     infra_image = pygame.image.load(os.path.join(self.__path_to_data,
                                                                  "images", "misc",
                                                                  "farm.jpg"))
@@ -590,9 +590,9 @@ class DrawPygame(object):
             if (moisture is not None):
                 if (moisture < 1.0):
                     color = _YELLOW
-                elif (moisture < FoodTile.FLOODING_THRESHOLD):
+                elif (moisture < get_flooding_threshold()):
                     color = _DARKGREEN
-                elif (moisture < FoodTile.TOTALLY_FLOODED):
+                elif (moisture < get_totally_flooded_threshold()):
                     color = _BLUE
                 else:
                     color = _RED

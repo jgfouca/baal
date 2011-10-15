@@ -29,7 +29,7 @@ class Season(SmartEnum):
     _NAMES = create_names_by_enum_value(vars())
 
     def __init__(self, value):
-        super(self.__class__, self).__init__(value)
+        super(Season, self).__init__(value)
 
 # Finish Season initialization
 for name in Season._names():

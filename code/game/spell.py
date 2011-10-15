@@ -6,8 +6,9 @@ from baal_common import prequire, urequire, UserError, grant_access
 from city import City
 from engine import engine
 from baal_math import exp_growth, poly_growth, fibonacci_div
-from world_tile import OceanTile, MountainTile, FoodTile, PlainsTile, \
-    LushTile, WorldTile, LandTile, HillsTile
+from world_tile import OceanTile, MountainTile, PlainsTile, \
+    LushTile, WorldTile, HillsTile, allow_set_soil_moisture, \
+    allow_set_snowpack
 from weather import Atmosphere
 
 ###############################################################################
@@ -110,8 +111,16 @@ class Spell(object):
 
     __CITY_DESTROY_EXP_BONUS = 1000
     __CHAIN_REACTION_BONUS = 2
-    __INFRA_EXP_FUNC = lambda infra_destroyed: pow(2, infra_destroyed) * 200
-    __DEFENSE_EXP_FUNC = lambda levels_destroyed: pow(2, levels_destroyed) * 400
+
+    @classmethod
+    def __INFRA_EXP_FUNC(cls, infra_destroyed):
+        # 2^infra_destroyed * 200
+        return pow(2, infra_destroyed) * 200
+
+    @classmethod
+    def __DEFENSE_EXP_FUNC(cls, levels_destroyed):
+        # 2^levels_destroyed * 400
+        return pow(2, levels_destroyed) * 400
 
     @classmethod
     def _COST_FUNC(cls, level):
@@ -352,7 +361,7 @@ class Spell(object):
     def __defense_damage_common_impl(self, city, base_amount, tech_penalty):
     ###########################################################################
         if (city.defense() > 0 and base_amount > 0.0):
-            max_defense_destroyed = round(base_amount, tech_penalty)
+            max_defense_destroyed = round(base_amount / tech_penalty)
 
             self._report("base city defense damage is ", base_amount)
             self._report("tech penalty is ", tech_penalty)
@@ -446,7 +455,7 @@ class _Hot(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Hot, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -569,7 +578,7 @@ class _Cold(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Cold, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -692,7 +701,7 @@ class _Infect(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Infect, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -811,7 +820,7 @@ class _Wind(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Wind, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -958,14 +967,14 @@ class _Fire(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Fire, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
     ###########################################################################
         # This spell can only be cast on tiles with plant growth
         tile = engine().world().tile(self.location())
-        urequire(isinstance(tile, FoodTile),
+        urequire(tile.soil_moisture() is not None,
                  "Fire can only be cast on tiles with plant growth")
 
     ###########################################################################
@@ -1120,7 +1129,7 @@ class _Tstorm(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Tstorm, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -1200,7 +1209,7 @@ class _Tstorm(Spell):
 
         return exp
 
-grant_access(_Tstorm, FoodTile.ALLOW_SET_SOIL_MOISTURE)
+allow_set_soil_moisture(_Tstorm)
 
 ###############################################################################
 class _Snow(Spell):
@@ -1271,15 +1280,15 @@ class _Snow(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Snow, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
     ###########################################################################
         # Tile must be a land tile
         tile = engine().world().tile(self.location())
-        urequire(isinstance(tile, LandTile),
-                 "Snowstorms can only be cast on land tiles")
+        urequire(tile.snowpack() is not None,
+                 "Snowstorms can only be cast on tiles that can accrue snow")
 
         # Temp must be below 32
         atmos = tile.atmosphere()
@@ -1336,7 +1345,7 @@ class _Snow(Spell):
 
         return exp
 
-grant_access(_Snow, LandTile.ALLOW_SET_SNOWPACK)
+allow_set_snowpack(_Snow)
 
 ###############################################################################
 class _Avalanche(Spell):
@@ -1397,6 +1406,11 @@ class _Avalanche(Spell):
         return destructiveness # Linear
 
     @classmethod
+    def _BASE_DEFENSE_DESTROY_FUNC(cls, destructiveness):
+        # 1.03^destructiveness
+        return exp_growth(1.03, destructiveness)
+
+    @classmethod
     def _TECH_PENALTY_FUNC(cls, tech):
         # sqrt(tech)
         return poly_growth(tech, 0.5)
@@ -1413,7 +1427,7 @@ class _Avalanche(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Avalanche, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -1482,6 +1496,11 @@ class _Avalanche(Spell):
 
             exp += self._kill(city, pct_killed)
 
+            # Now compute damage to city defenses
+            exp += self._defense_damage_common(city,
+                                               self._BASE_DEFENSE_DESTROY_FUNC(destructiveness),
+                                               self._TECH_PENALTY_FUNC(tech))
+
         # Increase snowpack
         return exp
 
@@ -1492,7 +1511,8 @@ class _Flood(Spell):
     Cause a flooding rainstorm. Can kill people in cities and destroy
     infrastructure.
 
-    Enhanced by high soil moisture, high dewpoints, low pressure.
+    Enhanced by high soil moisture, high dewpoints, low pressure. On elevated
+    tiles, flood destructiveness is increased due to flash-flooding.
 
     This is a tier 3 spell
     """
@@ -1506,26 +1526,160 @@ class _Flood(Spell):
     _PREREQS   = _SpellPrereq(10, ((_Tstorm.name(), 1),) ) # Requires tstorm
 
     #
+    # Tweakable Constants
+    #
+
+    _MIN_TEMP = 33
+
+    @classmethod
+    def _BASE_RAINFALL_FUNC(cls, level):
+        # level
+        return level
+
+    @classmethod
+    def _DEWPOINT_EFFECT_FUNC(cls, dewpoint):
+        # 1.03^(dewpoint - tipping_pt(55))
+        return exp_growth(1.03, dewpoint, threshold=55)
+
+    @classmethod
+    def _PRESSURE_EFFECT_FUNC(cls, pressure):
+        # 1.03^(pressure - tipping_pt(990))
+        return exp_growth(1.03, pressure, threshold=990)
+
+    @classmethod
+    def _MOISTURE_EFFECT_FUNC(cls, moisture):
+        # 1.05^(moisture * 10 - tipping_pt(10))
+        return exp_growth(1.05, moisture * 10, threshold=10)
+
+    @classmethod
+    def _ELEVATION_EFFECT_FUNC(cls, elevation):
+        # 1.1^(elevation/500)
+        return exp_growth(1.1, elevation/500)
+
+    @classmethod
+    def _BASE_INFRA_DESTROY_FUNC(cls, destructiveness):
+        # 1.05^destructiveness
+        return exp_growth(1.05, destructiveness)
+
+    @classmethod
+    def _BASE_DEFENSE_DESTROY_FUNC(cls, destructiveness):
+        # 1.03^destructiveness
+        return exp_growth(1.03, destructiveness)
+
+    @classmethod
+    def _BASE_KILL_FUNC(cls, destructiveness):
+        return destructiveness # Linear
+
+    @classmethod
+    def _DEFENSE_PENALTY_FUNC(cls, defense):
+        # defense
+        return defense
+
+    @classmethod
+    def _TECH_PENALTY_FUNC(cls, tech):
+        # sqrt(tech)
+        return poly_growth(tech, 0.5)
+
+    #
     # Public API
     #
 
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Flood, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
     ###########################################################################
-        # No special verification needed for this spell
-        pass
+        # Tile must be a land tile
+        tile = engine().world().tile(self.location())
+        urequire(tile.soil_moisture() is not None,
+                 "Floods can only be cast on tiles that have moisture")
+
+        # Temp must be above 32
+        atmos = tile.atmosphere()
+        urequire(atmos.temperature() >= self._MIN_TEMP,
+                 "It is too cold to rain")
 
     ###########################################################################
     def _apply_impl(self):
     ###########################################################################
-        # TODO
-        # TODO - Add a lot to soil moisture
-        return 0
+        world = engine().world()
+        tile  = world.tile(self.location())
+        atmos = tile.atmosphere()
+        tech  = engine().ai_player().tech_level()
+        exp   = 0
+
+        # Query properties relevant to flood effectiveness
+        dewpoint           = atmos.dewpoint()
+        pressure           = atmos.pressure()
+        average_precip     = tile.climate().precip(world.time().season())
+        orig_soil_moisture = tile.soil_moisture()
+
+        # First, figure out how much rain was generated
+        base_rainfall       = self._BASE_RAINFALL_FUNC(self.level())
+        dewpoint_multiplier = self._DEWPOINT_EFFECT_FUNC(dewpoint)
+        pressure_multiplier = self._PRESSURE_EFFECT_FUNC(pressure)
+        total_rainfall      = (base_rainfall *
+                               dewpoint_multiplier *
+                               pressure_multiplier)
+
+        self._report("base rainfall ",       base_rainfall)
+        self._report("dewpoint multiplier ", dewpoint_multiplier)
+        self._report("presure multiplier ",  pressure_multiplier)
+        self._report("total rainfall ",      total_rainfall, "\n")
+
+        # Add rain to soil moisture
+        added_moisture = total_rainfall / average_precip
+        new_moisture   = orig_soil_moisture + added_moisture
+        tile.set_soil_moisture(new_moisture)
+
+        self._report("soil moisture raised from ", orig_soil_moisture,
+                     " to ", new_moisture, "\n")
+
+        # Compute destructiveness of snow storm.
+        base_destructiveness = total_rainfall
+        moisture_multiplier  = self._MOISTURE_EFFECT_FUNC(new_moisture)
+        elevation_multiplier = self._ELEVATION_EFFECT_FUNC(pressure)
+        destructiveness      = (base_destructiveness *
+                                moisture_multiplier *
+                                elevation_multiplier)
+
+        self._report("base destructiveness ",  base_destructiveness)
+        self._report("moisture multiplier ",   moisture_multiplier)
+        self._report("elevation multiplier ",  elevation_multiplier)
+        self._report("total destructiveness ", destructiveness)
+
+        # Floods can destroy infrastructure
+        exp += self._infra_damage_common(tile,
+                                         self._BASE_INFRA_DESTROY_FUNC(destructiveness),
+                                         self._TECH_PENALTY_FUNC(tech))
+
+        # Floods can kill if cast on a city
+        city = tile.city()
+        if (city is not None):
+            base_kill_pct   = self._BASE_KILL_FUNC(destructiveness)
+            tech_penalty    = self._TECH_PENALTY_FUNC(tech)
+            defense_penalty = self._DEFENSE_PENALTY_FUNC(city.defense())
+
+            pct_killed = (base_kill_pct / tech_penalty) / defense_penalty
+
+            self._report("base kill % is ", base_kill_pct)
+            self._report("tech penalty (divisor) is ", tech_penalty)
+            self._report("defense penalty (divisor) is ", defense_penalty)
+            self._report("final kill % is ", pct_killed)
+
+            exp += self._kill(city, pct_killed)
+
+            # Now compute damage to city defenses
+            exp += self._defense_damage_common(city,
+                                               self._BASE_DEFENSE_DESTROY_FUNC(destructiveness),
+                                               self._TECH_PENALTY_FUNC(tech))
+
+        return exp
+
+allow_set_soil_moisture(_Flood)
 
 ###############################################################################
 class _Dry(Spell):
@@ -1554,7 +1708,7 @@ class _Dry(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Dry, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -1595,7 +1749,7 @@ class _Blizzard(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Blizzard, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -1640,7 +1794,7 @@ class _Tornado(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Tornado, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -1683,7 +1837,7 @@ class _Heatwave(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Heatwave, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -1724,7 +1878,7 @@ class _Coldwave(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Coldwave, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -1765,7 +1919,7 @@ class _Drought(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Drought, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -1806,7 +1960,7 @@ class _Monsoon(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Monsoon, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -1846,7 +2000,7 @@ class _Disease(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Disease, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -1887,7 +2041,7 @@ class _Earthquake(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Earthquake, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -1930,7 +2084,7 @@ class _Hurricane(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Hurricane, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -1970,7 +2124,7 @@ class _Plague(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Plague, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -2011,7 +2165,7 @@ class _Volcano(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Volcano, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):
@@ -2051,7 +2205,7 @@ class _Asteroid(Spell):
     ###########################################################################
     def __init__(self, level, location):
     ###########################################################################
-        super(self.__class__, self).__init__(level, location)
+        super(_Asteroid, self).__init__(level, location)
 
     ###########################################################################
     def _verify_apply_impl(self):

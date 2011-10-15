@@ -41,7 +41,7 @@ class Interfaces(SmartEnum):
     _NAMES = create_names_by_enum_value(vars())
 
     def __init__(self, value):
-        super(self.__class__, self).__init__(value)
+        super(Interfaces, self).__init__(value)
 
 # Finish Interfaces initialization
 for name in Interfaces._names():
@@ -172,7 +172,7 @@ class TextInterface(Interface):
     ###########################################################################
     def __init__(self):
     ###########################################################################
-        super(self.__class__, self).__init__()
+        super(TextInterface, self).__init__()
 
         # Set up readline
         readline.set_completer(_readline_completer)
@@ -257,7 +257,7 @@ class PygameInterface(Interface):
     ###########################################################################
     def __init__(self):
     ###########################################################################
-        super(self.__class__, self).__init__()
+        super(PygameInterface, self).__init__()
 
         self.__drawer = DrawPygame()
 

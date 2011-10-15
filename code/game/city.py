@@ -102,19 +102,19 @@ class City(object):
         self.__defense = 1
         self.__famine = False
 
-        from world_tile import WorldTile, LandTile
+        from world_tile import WorldTile, allow_build_infra
         from world import World
 
         grant_access(self, WorldTile.ALLOW_WORK)
-        grant_access(self, LandTile.ALLOW_BUILD_INFRA)
         grant_access(self, World.ALLOW_PLACE_CITY)
+        allow_build_infra(self)
 
     ###########################################################################
     def __cycle_turn_impl(self):
     ###########################################################################
         # TODO: This method is still too big, break it up more
 
-        check_access(self.__class__.ALLOW_CYCLE_TURN)
+        check_access(self.ALLOW_CYCLE_TURN)
 
         prequire(self.__population > 0,
                  "This city has no people and should have been deleted")

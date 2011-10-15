@@ -50,7 +50,7 @@ class DrawMode(SmartEnum):
     _NAMES = create_names_by_enum_value(vars())
 
     def __init__(self, value):
-        super(self.__class__, self).__init__(value)
+        super(DrawMode, self).__init__(value)
 
 # Finish DrawMode initialization
 for name in DrawMode._names():

@@ -130,7 +130,7 @@ class Divergent(Geology):
     _TENSION_BUILDUP = 0.000
 
     def __init__(self, plate_movement):
-        super(self.__class__, self).__init__(plate_movement)
+        super(Divergent, self).__init__(plate_movement)
 
     @classmethod
     def _base_magma_buildup(cls): return cls._MAGMA_BUILDUP
@@ -150,7 +150,7 @@ class Subducting(Geology):
     _TENSION_BUILDUP = 0.002
 
     def __init__(self, plate_movement):
-        super(self.__class__, self).__init__(plate_movement)
+        super(Subducting, self).__init__(plate_movement)
 
     @classmethod
     def _base_magma_buildup(cls): return cls._MAGMA_BUILDUP
@@ -169,7 +169,7 @@ class Orogenic(Geology):
     _TENSION_BUILDUP = 0.002
 
     def __init__(self, plate_movement):
-        super(self.__class__, self).__init__(plate_movement)
+        super(Orogenic, self).__init__(plate_movement)
 
     @classmethod
     def _base_magma_buildup(cls): return cls._MAGMA_BUILDUP
@@ -188,7 +188,7 @@ class Transform(Geology):
     _TENSION_BUILDUP = 0.003
 
     def __init__(self, plate_movement):
-        super(self.__class__, self).__init__(plate_movement)
+        super(Transform, self).__init__(plate_movement)
 
     @classmethod
     def _base_magma_buildup(cls): return cls._MAGMA_BUILDUP
@@ -207,7 +207,7 @@ class Inactive(Geology):
     _TENSION_BUILDUP = 0.000
 
     def __init__(self):
-        super(self.__class__, self).__init__(0.0)
+        super(Inactive, self).__init__(0.0)
 
     @classmethod
     def _base_magma_buildup(cls): return cls._MAGMA_BUILDUP

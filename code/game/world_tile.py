@@ -287,7 +287,7 @@ class OceanTile(WorldTile):
         self.__surface_temp = new_temp
 
 ###############################################################################
-class LandTile(WorldTile):
+class _LandTile(WorldTile):
 ###############################################################################
     """
     Base class for all land tiles. Adds the concepts of tile damage, cities,
@@ -391,7 +391,10 @@ class LandTile(WorldTile):
     ###########################################################################
     def __init_impl(self, elevation, yield_, climate, geology, location):
     ###########################################################################
-        super(LandTile, self).__init__(yield_, climate, geology, location)
+        super(_LandTile, self).__init__(yield_,
+                                        climate,
+                                        geology,
+                                        location)
 
         self.__hp          = 1.0 # 0..1
         self.__infra_level = 0
@@ -402,7 +405,7 @@ class LandTile(WorldTile):
     ###########################################################################
     def __yield_impl(self):
     ###########################################################################
-        normal_yield = super(LandTile, self).yield_()
+        normal_yield = super(_LandTile, self).yield_()
         return self._COMPUTE_YIELD_FUNC(normal_yield,
                                         self.infra_level(),
                                         self.__hp)
@@ -422,7 +425,7 @@ class LandTile(WorldTile):
     ###########################################################################
     def __cycle_turn_impl(self, anomalies, season):
     ###########################################################################
-        super(LandTile, self).cycle_turn(anomalies, season)
+        super(_LandTile, self).cycle_turn(anomalies, season)
 
         # Compute HP recovery
         self.__hp = self._LAND_TILE_RECOVERY_FUNC(self.__hp)
@@ -488,7 +491,7 @@ class LandTile(WorldTile):
         self.__snowpack = new_snowpack
 
 ###############################################################################
-class MountainTile(LandTile):
+class MountainTile(_LandTile):
 ###############################################################################
     """
     Represents mountain tiles. Mountains don't add any new concepts. Cities
@@ -507,66 +510,21 @@ class MountainTile(LandTile):
     _PROD_YIELD = 2
 
 ###############################################################################
-class DesertTile(LandTile):
+class _TileWithSoil(_LandTile):
 ###############################################################################
     """
-    Represents desert tiles. Deserts add no concepts, so this class is simple.
-    """
+    Represents land tiles that have soil and retain
+    moisture. Introduces the concept of soil moisture.
 
-    def __init__(self, elevation, climate, geology, location):
-        super(DesertTile, self).__init__(elevation,
-                                         Yield(0, self._PROD_YIELD),
-                                         climate,
-                                         geology,
-                                         location)
-
-    _PROD_YIELD = 0.5
-
-###############################################################################
-class TundraTile(LandTile):
-###############################################################################
-    """
-    Represents tundra tiles. Tundra add no concepts, so this class is simple.
-    """
-
-    def __init__(self, elevation, climate, geology, location):
-        super(TundraTile, self).__init__(elevation,
-                                         Yield(0, self._PROD_YIELD),
-                                         climate,
-                                         geology,
-                                         location)
-
-    _PROD_YIELD = 0.5
-
-###############################################################################
-class HillsTile(LandTile):
-###############################################################################
-    """
-    Represents hill tiles. Hills add no concepts, so this class is simple.
-
-    TODO: Hill-tile lack of moisture make it awkward to handle
-    for many disasters. Resolve this issue.
-    """
-
-    def __init__(self, elevation, climate, geology, location):
-        super(HillsTile, self).__init__(elevation,
-                                        Yield(0, self._PROD_YIELD),
-                                        climate,
-                                        geology,
-                                        location)
-
-    _PROD_YIELD = 1
-
-###############################################################################
-class FoodTile(LandTile):
-###############################################################################
-    """
-    Represents land tiles that yield food. Introduces the concept of soil
-    moisture.
+    This is an abstract tile type and should not be created directly.
     """
 
     def __init__(self, elevation, yield_, climate, geology, location):
-        super(FoodTile, self).__init__(elevation, yield_, climate, geology, location)
+        super(_TileWithSoil, self).__init__(elevation,
+                                            yield_,
+                                            climate,
+                                            geology,
+                                            location)
         self.__soil_moisture = 1.0 # % of normal
 
     def soil_moisture(self): return self.__soil_moisture
@@ -575,14 +533,8 @@ class FoodTile(LandTile):
         check_access(self.ALLOW_SET_SOIL_MOISTURE)
         self.__soil_moisture = moisture
 
-    def yield_(self):
-        normal_yield = super(FoodTile, self).yield_()
-        return normal_yield * \
-            self._MOISTURE_YIELD_EFFECT_FUNC(self.soil_moisture()) * \
-            self._SNOWPACK_YIELD_EFFECT_FUNC(self.snowpack())
-
     def cycle_turn(self, anomalies, season):
-        super(FoodTile, self).cycle_turn(anomalies, season)
+        super(_TileWithSoil, self).cycle_turn(anomalies, season)
 
         # Get the parameters we need to make the calculation
         precip         = self.atmosphere().precip()
@@ -607,31 +559,7 @@ class FoodTile(LandTile):
         prequire(self.__soil_moisture >= 0.0 and self.__soil_moisture < 100,
                 "Moisture ", self.__soil_moisture, " not valid")
 
-    FLOODING_THRESHOLD = 1.5
-    TOTALLY_FLOODED    = 2.75
-
-    ALLOW_SET_SOIL_MOISTURE = "_food_tile_allow_set_soil_moisture"
-
-    @classmethod
-    def _MOISTURE_YIELD_EFFECT_FUNC(cls, moisture):
-        if (moisture < cls.FLOODING_THRESHOLD):
-            # Up to the flooding threshold, yields improve as moisture
-            # increases
-            return moisture
-        elif (moisture < cls.TOTALLY_FLOODED):
-            # Yields drop quickly as soil becomes over-saturated
-            return cls.FLOODING_THRESHOLD - (moisture - cls.FLOODING_THRESHOLD)
-        else:
-            # Things are flooded and can't get any worse. Farmers are able to
-            # salvage some fixed portion of their crops.
-            return 0.25
-
-    @classmethod
-    def _SNOWPACK_YIELD_EFFECT_FUNC(cls, snowpack):
-        if (snowpack > 100):
-            return 0.0
-        else:
-            return (100.0 - snowpack) / 100
+    ALLOW_SET_SOIL_MOISTURE = "_soil_tile_allow_set_soil_moisture"
 
     @classmethod
     def _PRECIP_EFFECT_ON_MOISTURE_FUNC(cls, average_precip, precip):
@@ -646,7 +574,99 @@ class FoodTile(LandTile):
         return ((current_forcing * 2) + prior) / 3
 
 ###############################################################################
-class PlainsTile(FoodTile):
+class DesertTile(_TileWithSoil):
+###############################################################################
+    """
+    Represents desert tiles. Deserts add no concepts, so this class is simple.
+    """
+
+    def __init__(self, elevation, climate, geology, location):
+        super(DesertTile, self).__init__(elevation,
+                                         Yield(0, self._PROD_YIELD),
+                                         climate,
+                                         geology,
+                                         location)
+
+    _PROD_YIELD = 0.5
+
+###############################################################################
+class TundraTile(_TileWithSoil):
+###############################################################################
+    """
+    Represents tundra tiles. Tundra add no concepts, so this class is simple.
+    """
+
+    def __init__(self, elevation, climate, geology, location):
+        super(TundraTile, self).__init__(elevation,
+                                         Yield(0, self._PROD_YIELD),
+                                         climate,
+                                         geology,
+                                         location)
+
+    _PROD_YIELD = 0.5
+
+###############################################################################
+class HillsTile(_TileWithSoil):
+###############################################################################
+    """
+    Represents hill tiles. Hills add no concepts, so this class is simple.
+    """
+
+    def __init__(self, elevation, climate, geology, location):
+        super(HillsTile, self).__init__(elevation,
+                                        Yield(0, self._PROD_YIELD),
+                                        climate,
+                                        geology,
+                                        location)
+
+    _PROD_YIELD = 1
+
+###############################################################################
+class _FoodTile(_TileWithSoil):
+###############################################################################
+    """
+    Represents land tiles that yield food. This is an abstract tile type.
+    """
+
+    def __init__(self, elevation, yield_, climate, geology, location):
+        super(_FoodTile, self).__init__(elevation,
+                                        yield_,
+                                        climate,
+                                        geology,
+                                        location)
+
+    def yield_(self):
+        normal_yield = super(_FoodTile, self).yield_()
+        return normal_yield * \
+            self._MOISTURE_YIELD_EFFECT_FUNC(self.soil_moisture()) * \
+            self._SNOWPACK_YIELD_EFFECT_FUNC(self.snowpack())
+
+    _FLOODING_THRESHOLD = 1.5
+    _TOTALLY_FLOODED    = 2.75
+
+    @classmethod
+    def _MOISTURE_YIELD_EFFECT_FUNC(cls, moisture):
+        if (moisture < cls._FLOODING_THRESHOLD):
+            # Up to the flooding threshold, yields improve as moisture
+            # increases
+            return moisture
+        elif (moisture < cls._TOTALLY_FLOODED):
+            # Yields drop quickly as soil becomes over-saturated
+            return cls._FLOODING_THRESHOLD - (moisture - cls._FLOODING_THRESHOLD)
+        else:
+            # Things are flooded and can't get any worse. Farmers are able to
+            # salvage some fixed portion of their crops.
+            return 0.25
+
+    @classmethod
+    def _SNOWPACK_YIELD_EFFECT_FUNC(cls, snowpack):
+        if (snowpack > 100):
+            return 0.0
+        else:
+            return (100.0 - snowpack) / 100
+
+###############################################################################
+class PlainsTile(_FoodTile):
 ###############################################################################
     """
     Represents plains tiles. Plains add no concepts, so this class is simple.
@@ -662,7 +682,7 @@ class PlainsTile(FoodTile):
     _FOOD_YIELD = 1
 
 ###############################################################################
-class LushTile(FoodTile):
+class LushTile(_FoodTile):
 ###############################################################################
     """
     Represents lush tiles. Lush add no concepts, so this class is simple. Lush
@@ -677,6 +697,51 @@ class LushTile(FoodTile):
                                        location)
 
     _FOOD_YIELD = 2
+
+#
+# Free function API
+#
+
+###############################################################################
+def get_flooding_threshold():
+###############################################################################
+    """
+    Get the soil-moisture threshold at which things begin to flood.
+    """
+    return _FoodTile._FLOODING_THRESHOLD
+
+###############################################################################
+def get_totally_flooded_threshold():
+###############################################################################
+    """
+    Get the soil-moisture threshold at which flooding becomes catastophic
+    """
+    return _FoodTile._TOTALLY_FLOODED
+
+###############################################################################
+def allow_set_soil_moisture(entity):
+###############################################################################
+    grant_access(entity, _FoodTile.ALLOW_SET_SOIL_MOISTURE)
+
+###############################################################################
+def allow_set_snowpack(entity):
+###############################################################################
+    grant_access(entity, _LandTile.ALLOW_SET_SNOWPACK)
+
+###############################################################################
+def allow_damage_to_tile(entity):
+###############################################################################
+    grant_access(entity, _LandTile.ALLOW_DAMAGE)
+
+###############################################################################
+def allow_build_infra(entity):
+###############################################################################
+    grant_access(entity, _LandTile.ALLOW_BUILD_INFRA)
+
+###############################################################################
+def allow_destroy_infra(entity):
+###############################################################################
+    grant_access(entity, _LandTile.ALLOW_DESTROY_INFRA)
 
 #
 # Tests

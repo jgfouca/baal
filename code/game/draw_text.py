@@ -14,7 +14,7 @@ from geology import Geology, is_geological, \
     Divergent, Subducting, Orogenic, Transform, Inactive
 from world_tile import WorldTile, \
     OceanTile, MountainTile, DesertTile, TundraTile, HillsTile, PlainsTile, \
-    LushTile, FoodTile
+    LushTile, get_flooding_threshold, get_totally_flooded_threshold
 from player import Player
 from player_ai import PlayerAI
 from weather import Atmosphere, Anomaly, is_atmospheric
@@ -278,9 +278,9 @@ class DrawText(object):
             if (moisture is not None):
                 if (moisture < 1.0):
                     color = YELLOW
-                elif (moisture < FoodTile.FLOODING_THRESHOLD):
+                elif (moisture < get_flooding_threshold()):
                     color = GREEN
-                elif (moisture < FoodTile.TOTALLY_FLOODED):
+                elif (moisture < get_totally_flooded_threshold()):
                     color = BLUE
                 else:
                     color = RED
