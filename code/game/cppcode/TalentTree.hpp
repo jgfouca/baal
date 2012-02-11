@@ -24,7 +24,7 @@ class TalentTree
 
   bool has(const Spell& spell) const;
 
-  bool has(const std::string& spell_name, unsigned spell_level) const;
+  bool has(const std::string& spell_name, unsigned spell_level = 1) const;
 
   unsigned num_learned() const { return m_num_learned; }
 

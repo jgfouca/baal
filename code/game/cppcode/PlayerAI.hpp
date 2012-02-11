@@ -40,11 +40,11 @@ class PlayerAI : public Drawable
   unsigned m_next_tech_level_cost;
   unsigned m_population;
 
-  static const unsigned STARTING_TECH_LEVEL   = 1;
-  static const unsigned FIRST_TECH_LEVEL_COST = 1000;
-  static const float TECH_LEVEL_COST_INCREASE = 2.0;
-  static const unsigned POP_PER_TECH_POINT    = 100;
-  static const float YIELD_GAIN_PER_TECH      = 0.1;
+  static constexpr unsigned STARTING_TECH_LEVEL   = 1;
+  static constexpr unsigned FIRST_TECH_LEVEL_COST = 1000;
+  static constexpr float TECH_LEVEL_COST_INCREASE = 2.0;
+  static constexpr unsigned POP_PER_TECH_POINT    = 100;
+  static constexpr float YIELD_GAIN_PER_TECH      = 0.1;
 
   // Forbidden
   PlayerAI(const PlayerAI&);

@@ -1,6 +1,6 @@
 include ../../common.mk
 
-BOOSTCXXFLAGS :=
+BOOSTCXXFLAGS := -I ~/manually-installed-packages/boost_1_48_0
 BOOSTLDFLAGS := -lboost_thread
 
 XMLCXXFLAGS := -I /usr/include/libxml2

@@ -83,8 +83,8 @@ class Divergent : public Geology
   virtual const char* geology_type() const { return "Divergent"; }
 
  private:
-  static const float DIVERGENT_MAGMA_BUILDUP   = 0.001;
-  static const float DIVERGENT_TENSION_BUILDUP = 0.000;
+  static constexpr float DIVERGENT_MAGMA_BUILDUP   = 0.001;
+  static constexpr float DIVERGENT_TENSION_BUILDUP = 0.000;
 };
 
 /**
@@ -108,8 +108,8 @@ class Subducting : public Geology
   virtual const char* geology_type() const { return "Subducting"; }
 
  private:
-  static const float SUBDUCTING_MAGMA_BUILDUP   = 0.002;
-  static const float SUBDUCTING_TENSION_BUILDUP = 0.002;
+  static constexpr float SUBDUCTING_MAGMA_BUILDUP   = 0.002;
+  static constexpr float SUBDUCTING_TENSION_BUILDUP = 0.002;
 };
 
 /**
@@ -132,8 +132,8 @@ class Orogenic : public Geology
   virtual const char* geology_type() const { return "Orogenic"; }
 
  private:
-  static const float OROGENIC_MAGMA_BUILDUP   = 0.002;
-  static const float OROGENIC_TENSION_BUILDUP = 0.002;
+  static constexpr float OROGENIC_MAGMA_BUILDUP   = 0.002;
+  static constexpr float OROGENIC_TENSION_BUILDUP = 0.002;
 };
 
 /**
@@ -156,8 +156,8 @@ class Transform : public Geology
   virtual const char* geology_type() const { return "Transform"; }
 
  private:
-  static const float TRANSFORM_MAGMA_BUILDUP   = 0.000;
-  static const float TRANSFORM_TENSION_BUILDUP = 0.003;
+  static constexpr float TRANSFORM_MAGMA_BUILDUP   = 0.000;
+  static constexpr float TRANSFORM_TENSION_BUILDUP = 0.003;
 };
 
 /**
@@ -180,8 +180,8 @@ class Inactive : public Geology
   virtual const char* geology_type() const { return "Inactive"; }
 
  private:
-  static const float INACTIVE_MAGMA_BUILDUP   = 0.000;
-  static const float INACTIVE_TENSION_BUILDUP = 0.000;
+  static constexpr float INACTIVE_MAGMA_BUILDUP   = 0.000;
+  static constexpr float INACTIVE_TENSION_BUILDUP = 0.000;
 };
 
 }

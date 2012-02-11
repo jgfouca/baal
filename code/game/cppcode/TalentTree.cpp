@@ -140,17 +140,11 @@ void TalentTree::check_prereqs(const Spell& spell, const Player& player) const
 {
   const SpellPrereq& prereq = spell.prereq();
 
-  RequireUser(player.level() >= prereq.m_min_player_level,
+  RequireUser(player.level() >= prereq.min_player_level(),
               "You are not high-enough level to learn that spell");
 
-  for (std::vector<std::pair<std::string, unsigned> >::const_iterator
-       itr =  prereq.m_min_spell_prereqs.begin();
-       itr != prereq.m_min_spell_prereqs.end();
-       ++itr) {
-    std::string spell_name  = itr->first;
-    unsigned    spell_level = itr->second;
-    RequireUser(has(spell_name, spell_level),
-      "Missing required prereq " << spell_name << '[' << spell_level << ']');
+  for (const std::string& spell_name : prereq) {
+    RequireUser(has(spell_name), "Missing required prereq " << spell_name);
   }
 }
 

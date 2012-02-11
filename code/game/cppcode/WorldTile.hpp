@@ -207,8 +207,8 @@ class LandTile: public WorldTile
 
   void build_infra();
 
-  static const unsigned LAND_TILE_MAX_INFRA  = 5;
-  static const float LAND_TILE_RECOVERY_RATE = 0.10;
+  static constexpr unsigned LAND_TILE_MAX_INFRA  = 5;
+  static constexpr float LAND_TILE_RECOVERY_RATE = 0.10;
 
  protected:
 
@@ -343,8 +343,8 @@ class FoodTile : public LandTile
                           const Location& location,
                           Season season);
 
-  static const float FLOODING_THRESHOLD = 1.5;
-  static const float TOTALLY_FLOODED = 2.75;
+  static constexpr float FLOODING_THRESHOLD = 1.5;
+  static constexpr float TOTALLY_FLOODED = 2.75;
 
  protected:
   float m_soil_moisture;

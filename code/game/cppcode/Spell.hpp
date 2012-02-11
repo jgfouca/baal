@@ -7,7 +7,15 @@
 
 #include <iosfwd>
 #include <vector>
+#include <utility>
 #include <tr1/functional>
+
+#include <boost/mpl/for_each.hpp>
+#include <boost/mpl/vector.hpp>
+#include <boost/mpl/transform.hpp>
+#include <boost/mpl/placeholders.hpp>
+
+#include <boost/type_traits/add_pointer.hpp>
 
 namespace baal {
 
@@ -18,30 +26,68 @@ class WorldTile;
 class City;
 
 /**
- * Constructor will initialize all the static prereq members in
- * all the spell classes.
- */
-class SpellPrereqStaticInitializer
-{
- public:
-  SpellPrereqStaticInitializer();
-};
-
-typedef std::pair<std::string, unsigned> Prereq;
-
-/**
  * Defines the prerequisits for a spell. The previous level of any
  * spell > level 1 is always a prereq.
  */
-struct SpellPrereq
+class SpellPrereq
 {
-  SpellPrereq()
-    : m_min_player_level(1),
-      m_min_spell_prereqs()
+  typedef std::vector<std::string> spell_list;
+  typedef spell_list::const_iterator const_iterator;
+
+  struct add_to_list
+  {
+    add_to_list(spell_list& list) : m_list(list) {}
+
+    template <typename T>
+    void operator()(T*) const
+    {
+      m_list.push_back(T::NAME);
+    }
+
+    spell_list& m_list;
+  };
+
+  SpellPrereq() = default;
+
+ public:
+  SpellPrereq(SpellPrereq&& rhs)
+    : m_min_player_level(rhs.m_min_player_level),
+      m_min_spell_prereqs(std::move(rhs.m_min_spell_prereqs))
   {}
 
+  SpellPrereq& operator=(SpellPrereq&& rhs)
+  {
+    m_min_player_level  = m_min_player_level;
+    m_min_spell_prereqs = std::move(rhs.m_min_spell_prereqs);
+    return *this;
+  }
+
+  template <typename SpellList, unsigned MinLevel>
+  static SpellPrereq spell_prereq_factory()
+  {
+    SpellPrereq rv;
+    rv.m_min_player_level = MinLevel;
+
+    // Spells are not default constructable, so we must transform
+    // the list of spell types into pointer types so that they can
+    // be instantiated with a default constructor and given to for_each.
+    typedef typename boost::mpl::transform
+      <SpellList,
+       boost::add_pointer<boost::mpl::placeholders::_1> >::type
+      spell_ptr_list;
+    boost::mpl::for_each<spell_ptr_list>(add_to_list(rv.m_min_spell_prereqs));
+    return rv;
+  }
+
+  unsigned min_player_level() const { return m_min_player_level; }
+
+  const_iterator begin() const { return std::begin(m_min_spell_prereqs); }
+
+  const_iterator end() const { return std::end(m_min_spell_prereqs); }
+
+ private:
   unsigned m_min_player_level;
-  std::vector<Prereq> m_min_spell_prereqs;
+  spell_list m_min_spell_prereqs;
 };
 
 /**
@@ -82,7 +128,7 @@ class Spell
  protected:
 
   // Members
-  std::string        m_name;
+  const std::string& m_name;
   unsigned           m_spell_level;
   Location           m_location;
   unsigned           m_base_cost;
@@ -91,8 +137,8 @@ class Spell
 
   // Constants
 
-  static const unsigned CITY_DESTROY_EXP_BONUS = 1000;
-  static const unsigned CHAIN_REACTION_BONUS = 2;
+  static constexpr unsigned CITY_DESTROY_EXP_BONUS = 1000;
+  static constexpr unsigned CHAIN_REACTION_BONUS = 2;
 
   // Internal methods
 
@@ -158,12 +204,13 @@ class Hot : public Spell
   virtual void verify_apply() const;
   virtual unsigned apply() const;
 
-  static const unsigned BASE_COST = 50;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static const unsigned DEGREES_PER_LEVEL = 7;
-  static const float OCEAN_SURFACE_CHG_RATIO = .35;
-  static const int KILL_THRESHOLD = 100;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 50;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static constexpr unsigned DEGREES_PER_LEVEL = 7;
+  static constexpr float OCEAN_SURFACE_CHG_RATIO = .35;
+  static constexpr int KILL_THRESHOLD = 100;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 
  private:
   std::tr1::function<float(float)> m_base_kill_func;
@@ -216,13 +263,14 @@ class Cold : public Spell
   virtual void verify_apply() const;
   virtual unsigned apply() const;
 
-  static const unsigned BASE_COST = 50;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static const unsigned DEGREES_PER_LEVEL = 7;
-  static const float OCEAN_SURFACE_CHG_RATIO = .35;
-  static const int KILL_THRESHOLD = 0;
-  static const float FAMINE_BONUS = 2.0;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 50;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static constexpr unsigned DEGREES_PER_LEVEL = 7;
+  static constexpr float OCEAN_SURFACE_CHG_RATIO = .35;
+  static constexpr int KILL_THRESHOLD = 0;
+  static constexpr float FAMINE_BONUS = 2.0;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 
  private:
   std::tr1::function<float(float)> m_base_kill_func;
@@ -283,12 +331,13 @@ class Infect : public Spell
   virtual void verify_apply() const;
   virtual unsigned apply() const;
 
-  static const unsigned BASE_COST = 50;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static const float FAMINE_BONUS = 2.0;
-  static const int WARM_THRESHOLD = 90;
-  static const int COLD_THRESHOLD = 30;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 50;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static constexpr float FAMINE_BONUS = 2.0;
+  static constexpr int WARM_THRESHOLD = 90;
+  static constexpr int COLD_THRESHOLD = 30;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 
  private:
   std::tr1::function<float(float)> m_base_kill_func;
@@ -348,12 +397,13 @@ class WindSpell : public Spell
   virtual void verify_apply() const;
   virtual unsigned apply() const;
 
-  static const unsigned BASE_COST = 50;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static const unsigned MPH_PER_LEVEL = 20;
-  static const unsigned DAMAGE_THRESHOLD = 60;
-  static const unsigned KILL_THRESHOLD = 80;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 50;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static constexpr unsigned MPH_PER_LEVEL = 20;
+  static constexpr unsigned DAMAGE_THRESHOLD = 60;
+  static constexpr unsigned KILL_THRESHOLD = 80;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 
  private:
   std::tr1::function<float(float)> m_base_kill_func;
@@ -442,17 +492,18 @@ class Fire : public Spell
   virtual void verify_apply() const;
   virtual unsigned apply() const;
 
-  static const unsigned BASE_COST = 100;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static const int TEMP_TIPPING_POINT = 75;
-  static const float TEMP_EXP_BASE = 1.03;
-  static const int WIND_TIPPING_POINT = 20;
-  static const float WIND_EXP_BASE = 1.05;
-  static const float MOISTURE_TIPPING_POINT = 0.75;
-  static const float MOISTURE_EXP_BASE = 1.05; // per moisture pct
-  static const float DESTRUCTIVENESS_PER_INFRA = 5.0;
+  static constexpr unsigned BASE_COST = 100;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static constexpr int TEMP_TIPPING_POINT = 75;
+  static constexpr float TEMP_EXP_BASE = 1.03;
+  static constexpr int WIND_TIPPING_POINT = 20;
+  static constexpr float WIND_EXP_BASE = 1.05;
+  static constexpr float MOISTURE_TIPPING_POINT = 0.75;
+  static constexpr float MOISTURE_EXP_BASE = 1.05; // per moisture pct
+  static constexpr float DESTRUCTIVENESS_PER_INFRA = 5.0;
 
-  static SpellPrereq PREREQ;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 
  private:
   std::tr1::function<float(float)> m_base_destructiveness_func;
@@ -492,22 +543,23 @@ class Tstorm : public Spell
   virtual void verify_apply() const;
   virtual unsigned apply() const;
 
-  static const unsigned BASE_COST = 100;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static const int TEMP_TIPPING_POINT = 85;
-  static const float TEMP_EXP_BASE = 1.03;
-  static const int WIND_TIPPING_POINT = 15;
-  static const float WIND_EXP_BASE = 1.03;
-  static const int PRESSURE_TIPPING_POINT = 990;
-  static const float PRESSURE_EXP_BASE = 1.05;
+  static constexpr unsigned BASE_COST = 100;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static constexpr int TEMP_TIPPING_POINT = 85;
+  static constexpr float TEMP_EXP_BASE = 1.03;
+  static constexpr int WIND_TIPPING_POINT = 15;
+  static constexpr float WIND_EXP_BASE = 1.03;
+  static constexpr int PRESSURE_TIPPING_POINT = 990;
+  static constexpr float PRESSURE_EXP_BASE = 1.05;
 
-  static const float WIND_DESTRUCTIVENESS_THRESHOLD = 10.0;
-  static const float FLOOD_DESTRUCTIVENESS_THRESHOLD = 20.0;
-  static const float TORNADO_DESTRUCTIVENESS_THRESHOLD = 40.0;
+  static constexpr float WIND_DESTRUCTIVENESS_THRESHOLD = 10.0;
+  static constexpr float FLOOD_DESTRUCTIVENESS_THRESHOLD = 20.0;
+  static constexpr float TORNADO_DESTRUCTIVENESS_THRESHOLD = 40.0;
 
-  static const float LIGHTING_PCT_KILL_PER_DESTRUCTIVENESS = 0.2;
+  static constexpr float LIGHTING_PCT_KILL_PER_DESTRUCTIVENESS = 0.2;
 
-  static SpellPrereq PREREQ;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -533,9 +585,10 @@ class Snow : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 100;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 100;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -562,9 +615,10 @@ class Avalanche : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 200;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 200;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -591,9 +645,10 @@ class Flood : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 200;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 200;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -620,9 +675,10 @@ class Dry : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 200;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 200;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -649,9 +705,10 @@ class Blizzard : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 200;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 200;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -679,9 +736,10 @@ class Tornado : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 200;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 200;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -708,9 +766,10 @@ class Heatwave : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 400;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 400;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -737,9 +796,10 @@ class Coldwave : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 400;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 400;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -766,9 +826,10 @@ class Drought : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 400;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 400;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -795,9 +856,10 @@ class Monsoon : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 400;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 400;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -823,9 +885,10 @@ class Disease : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 800;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 800;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -852,9 +915,10 @@ class Earthquake : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 800;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 800;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -883,9 +947,10 @@ class Hurricane : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 800;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 800;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -911,9 +976,10 @@ class Plague : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 1600;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 1600;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -940,9 +1006,10 @@ class Volcano : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 1600;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 1600;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 /**
@@ -968,9 +1035,10 @@ class Asteroid : public Spell
   virtual void verify_apply() const { /*TODO*/ }
   virtual unsigned apply() const { return 0; /*TODO*/ }
 
-  static const unsigned BASE_COST = 3200;
-  static const unsigned COST_INC = BASE_COST / 3;
-  static SpellPrereq PREREQ;
+  static constexpr unsigned BASE_COST = 3200;
+  static constexpr unsigned COST_INC = BASE_COST / 3;
+  static const SpellPrereq PREREQ;
+  static const std::string NAME;
 };
 
 }

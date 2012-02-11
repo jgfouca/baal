@@ -12,39 +12,90 @@
 
 using std::ostream;
 using namespace baal;
+namespace mpl = boost::mpl;
 
-SpellPrereq Hot::PREREQ;
-SpellPrereq Cold::PREREQ;
-SpellPrereq WindSpell::PREREQ;
-SpellPrereq Infect::PREREQ;
+const std::string Hot::NAME       = "hot";
+const std::string Cold::NAME      = "cold";
+const std::string WindSpell::NAME = "wind";
+const std::string Infect::NAME    = "infect";
 
-SpellPrereq Fire::PREREQ;
-SpellPrereq Tstorm::PREREQ;
-SpellPrereq Snow::PREREQ;
+const std::string Fire::NAME   = "fire";
+const std::string Tstorm::NAME = "tstorm";
+const std::string Snow::NAME   = "snow";
 
-SpellPrereq Avalanche::PREREQ;
-SpellPrereq Flood::PREREQ;
-SpellPrereq Dry::PREREQ;
-SpellPrereq Blizzard::PREREQ;
-SpellPrereq Tornado::PREREQ;
+const std::string Avalanche::NAME = "avalanche";
+const std::string Flood::NAME     = "flood";
+const std::string Dry::NAME       = "dry";
+const std::string Blizzard::NAME  = "blizzard";
+const std::string Tornado::NAME   = "tornado";
 
-SpellPrereq Heatwave::PREREQ;
-SpellPrereq Coldwave::PREREQ;
-SpellPrereq Drought::PREREQ;
-SpellPrereq Monsoon::PREREQ;
+const std::string Heatwave::NAME = "heatwave";
+const std::string Coldwave::NAME = "coldwave";
+const std::string Drought::NAME  = "drought";
+const std::string Monsoon::NAME  = "monsoon";
 
-SpellPrereq Disease::PREREQ;
-SpellPrereq Earthquake::PREREQ;
-SpellPrereq Hurricane::PREREQ;
+const std::string Disease::NAME    = "disease";
+const std::string Earthquake::NAME = "earthquake";
+const std::string Hurricane::NAME  = "hurricane";
 
-SpellPrereq Plague::PREREQ;
-SpellPrereq Volcano::PREREQ;
+const std::string Plague::NAME  = "plague";
+const std::string Volcano::NAME = "volcano";
 
-SpellPrereq Asteroid::PREREQ;
+const std::string Asteroid::NAME = "asteroid";
+
+const SpellPrereq Hot::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector< >, 1>();
+const SpellPrereq Cold::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector< >, 1>();
+const SpellPrereq WindSpell::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector< >, 1>();
+const SpellPrereq Infect::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector< >, 1>();
+
+const SpellPrereq Fire::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Hot>, 5>();
+const SpellPrereq Tstorm::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<WindSpell>, 5>();
+const SpellPrereq Snow::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Cold>, 5>();
+
+const SpellPrereq Avalanche::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Snow>, 10>();
+const SpellPrereq Flood::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Tstorm>, 10>();
+const SpellPrereq Dry::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Fire>, 10>();
+const SpellPrereq Blizzard::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Snow>, 10>();
+const SpellPrereq Tornado::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Tstorm>, 10>();
+
+const SpellPrereq Heatwave::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Dry>, 15>();
+const SpellPrereq Coldwave::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Blizzard>, 15>();
+const SpellPrereq Drought::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Dry>, 15>();
+const SpellPrereq Monsoon::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Flood>, 15>();
+
+const SpellPrereq Disease::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Infect>, 20>();
+const SpellPrereq Earthquake::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector< >, 20>();
+const SpellPrereq Hurricane::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Monsoon>, 20>();
+
+const SpellPrereq Plague::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Disease>, 25>();
+const SpellPrereq Volcano::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Earthquake>, 25>();
+
+const SpellPrereq Asteroid::PREREQ =
+  SpellPrereq::spell_prereq_factory<mpl::vector<Volcano>, 30>();
+
 
 namespace {
-
-SpellPrereqStaticInitializer static_prereq_init;
 
 // Given a tstorm's destructiveness, compute the level of the spawned disaster
 unsigned tstorm_spawn_helper(float destructiveness, float base_cost)
@@ -62,80 +113,6 @@ unsigned tstorm_spawn_helper(float destructiveness, float base_cost)
   }
 }
 
-}
-
-///////////////////////////////////////////////////////////////////////////////
-SpellPrereqStaticInitializer::SpellPrereqStaticInitializer()
-///////////////////////////////////////////////////////////////////////////////
-{
-  // Tier 1
-
-  // Hot, Cold, Wind, Infect have no prereqs
-
-  // Tier 2
-
-  Fire::PREREQ.m_min_player_level = 5;
-  Fire::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::HOT, 1));
-
-  Tstorm::PREREQ.m_min_player_level = 5;
-  Tstorm::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::WIND, 1));
-
-  Snow::PREREQ.m_min_player_level = 5;
-  Snow::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::COLD, 1));
-
-  // Tier 3
-
-  Avalanche::PREREQ.m_min_player_level = 10;
-  Avalanche::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::SNOW, 1));
-
-  Blizzard::PREREQ.m_min_player_level = 10;
-  Blizzard::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::SNOW, 1));
-
-  Flood::PREREQ.m_min_player_level = 10;
-  Flood::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::TSTORM, 1));
-
-  Dry::PREREQ.m_min_player_level = 10;
-  Dry::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::FIRE, 1));
-
-  Tornado::PREREQ.m_min_player_level = 10;
-  Tornado::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::TSTORM, 1));
-
-  // Tier 4
-
-  Heatwave::PREREQ.m_min_player_level = 15;
-  Heatwave::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::DRY, 1));
-
-  Coldwave::PREREQ.m_min_player_level = 15;
-  Coldwave::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::BLIZZARD, 1));
-
-  Drought::PREREQ.m_min_player_level = 15;
-  Drought::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::DRY, 1));
-
-  Monsoon::PREREQ.m_min_player_level = 15;
-  Monsoon::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::FLOOD, 1));
-
-  // Tier 5
-
-  Disease::PREREQ.m_min_player_level = 20;
-  Disease::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::INFECT, 1));
-
-  Earthquake::PREREQ.m_min_player_level = 20;
-
-  Hurricane::PREREQ.m_min_player_level = 20;
-  Hurricane::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::MONSOON, 1));
-
-  // Tier 6
-
-  Plague::PREREQ.m_min_player_level = 25;
-  Plague::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::DISEASE, 1));
-
-  Volcano::PREREQ.m_min_player_level = 25;
-  Volcano::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::EARTHQUAKE, 1));
-
-  // Tier 7
-
-  Asteroid::PREREQ.m_min_player_level = 30;
-  Asteroid::PREREQ.m_min_spell_prereqs.push_back(Prereq(SpellFactory::VOLCANO, 1));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

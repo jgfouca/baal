@@ -9,10 +9,10 @@ DBG_BUILD_TAG  := dbg
 PROF_BUILD_TAG := prof
 
 # Flag constants
-WARNING_FLAGS  := -Wall
-CXX_OPT_FLAGS  := -O3 -DNDEBUG $(WARNING_FLAGS)
-CXX_DBG_FLAGS  := -g $(WARNING_FLAGS) -D_GLIBCXX_DEBUG
-CXX_PROF_FLAGS := -O2 -DNDEBUG -g $(WARNING_FLAGS)
+ALWAYS_FLAGS   := -Wall -std=c++0x
+CXX_OPT_FLAGS  := -O3 -DNDEBUG $(ALWAYS_FLAGS)
+CXX_DBG_FLAGS  := -g $(ALWAYS_FLAGS) -D_GLIBCXX_DEBUG
+CXX_PROF_FLAGS := -O2 -DNDEBUG -g $(ALWAYS_FLAGS)
 
 # Flag variables, default to debug. Note, build-type selection can be
 # done with:
@@ -48,7 +48,7 @@ ROOT           := $(dir $(lastword $(MAKEFILE_LIST)))
 BIN_DIR        := bin
 GAME           := game
 TEST_DIR       := tests
-GAME_PATH      := $(ROOT)$(GAME)/cppcode-deprecated
+GAME_PATH      := $(ROOT)$(GAME)/cppcode
 TEST_PATH      := $(ROOT)$(TEST_DIR)
 GAME_LIB_FILE  := lib$(GAME).$(LIB_FILE_EXT)
 GAME_LIB_PATH  := $(GAME_PATH)/$(BIN_DIR)/$(GAME_LIB_FILE)
