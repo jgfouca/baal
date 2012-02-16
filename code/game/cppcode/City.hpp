@@ -14,13 +14,27 @@ class LandTile;
 
 /**
  * Represents human-built cities.
+ * TODO: describe conceptually how cities work.
  */
 class City
 {
  public:
-  const std::string& name() const { return m_name; }
 
-  void cycle_turn();
+  //
+  // ==== Public API ====
+  //
+
+  City(const std::string& name, const Location& location);
+
+  City & operator=(const City&) = delete;
+  City(const City&)             = delete;
+  City()                        = delete;
+
+  //
+  // Query / Getter API
+  //
+
+  const std::string& name() const { return m_name; }
 
   unsigned population() const { return m_population; }
 
@@ -32,17 +46,42 @@ class City
 
   unsigned defense() const { return m_defense_level; }
 
-  xmlNodePtr to_xml();
+  xmlNodePtr to_xml() const;
+
+  //
+  // Modification API
+  //
+
+  /**
+   * Tell this city that the turn is cycling
+   */
+  void cycle_turn();
+
+  /**
+   * Kill off some of this city's citizens
+   */
+  void kill(unsigned killed);
+
+  /**
+   * Destroy city defenses, lowering them by an amount equal to the
+   * 'levels' parameter.
+   */
+  void destroy_defense(unsigned levels);
 
  private:
 
-  // Internal methods
+  //
+  // ==== Internal methods ====
+  //
 
-  void ordered_insert(std::list<WorldTile*>& tile_list, WorldTile& tile) const;
-
+  /**
+   * Add a level of infrastructure to a tile.
+   */
   bool build_infra(LandTile& land_tile);
 
-  // Members
+  //
+  // ==== Members ====
+  //
 
   std::string m_name;
   unsigned    m_rank;
@@ -53,8 +92,12 @@ class City
   unsigned    m_defense_level;
   bool        m_famine;
 
-  // Behavioral constants
+ public:
+  //
+  // ==== Class constants ====
+  //
 
+  // City growth/food/production contants
   static constexpr float CITY_BASE_GROWTH_RATE = 0.01; // 1% per turn
   static constexpr float MAX_GROWTH_MODIFIER   = 4.0;
   static constexpr unsigned CITY_RANK_UP_MULTIPLIER = 2;
@@ -64,22 +107,15 @@ class City
   static constexpr float FOOD_FROM_CITY_CENTER = 1.0;
   static constexpr float PROD_FROM_CITY_CENTER = 1.0;
   static constexpr float PROD_FROM_SPECIALIST  = 1.0;
+
+  // Constants for production costs of various buildable items
   static constexpr unsigned SETTLER_PROD_COST  = 200;
   static constexpr unsigned INFRA_PROD_COST    = 50;
   static constexpr unsigned CITY_DEF_PROD_COST = 400;
+
+  // AI constants
   static constexpr float TOO_MANY_FOOD_WORKERS = 0.66;
   static constexpr float PROD_BEFORE_SETTLER   = 7.0;
-
-  // Friend interface
-
-  City(const std::string& name, const Location& location);
-
-  void kill(unsigned killed);
-
-  // Friends
-
-  friend class Spell;
-  friend class World;
 };
 
 }

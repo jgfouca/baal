@@ -7,9 +7,11 @@
 #include <cstdlib>
 #include <cmath>
 #include <list>
+#include <vector>
+#include <algorithm>
 #include <iostream>
 
-using namespace baal;
+namespace baal {
 
 namespace {
 
@@ -17,52 +19,105 @@ namespace {
 bool is_within_distance_of_any_city(const Location& location, int distance)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  const std::vector<City*>& cities = Engine::instance().world().cities();
-  for (std::vector<City*>::const_iterator
-       itr = cities.begin(); itr != cities.end(); ++itr) {
-    const Location& city_loc = (*itr)->location();
-    int loc_row = location.row;
-    int loc_col = location.col;
-    int city_loc_row = city_loc.row;
-    int city_loc_col = city_loc.col;
-    if (std::abs(loc_row - city_loc_row) <= distance &&
-        std::abs(loc_col - city_loc_col) <= distance) {
+  for (City* city : Engine::instance().world().cities()) {
+    const Location& city_loc = city->location();
+    if (std::abs(location.row - city_loc.row) <= distance &&
+        std::abs(location.col - city_loc.col) <= distance) {
       return true;
     }
   }
   return false;
 }
 
+struct FoodGetter
+{
+  float operator()(const WorldTile* tile) const
+  {
+    return tile->yield().m_food;
+  }
+};
+
+struct ProdGetter
+{
+  float operator()(const WorldTile* tile) const
+  {
+    return tile->yield().m_prod;
+  }
+};
+
+template <class Getter>
+struct ReverseOrd
+{
+  bool operator()(const WorldTile* lhs, const WorldTile* rhs)
+  {
+    Getter getter;
+    return getter(lhs) > getter(rhs);
+  }
+};
+
 ///////////////////////////////////////////////////////////////////////////////
-float compute_city_loc_heuristic(const Location& location)
+std::pair<std::vector<WorldTile*>, std::vector<WorldTile*> >
+compute_nearby_food_and_prod_tiles(const Location& location,
+                                   bool filter_tiles_near_other_cities=false)
 ///////////////////////////////////////////////////////////////////////////////
 {
+  // Returns a 2-ple of (food-tiles, production-tiles); both lists are sorted
+  // from highest to lowest based on yield. Only unworked tiles are added.
+
   World& world = Engine::instance().world();
   const unsigned row_loc = location.row;
   const unsigned col_loc = location.col;
-  float available_food = 0.0;
-  float available_prod = 0.0;
+  std::vector<WorldTile*> food_tiles, prod_tiles;
+  static const unsigned NUM_TILES_SURROUNDING_CITY = 8;
+  food_tiles.reserve(NUM_TILES_SURROUNDING_CITY);
+  prod_tiles.reserve(NUM_TILES_SURROUNDING_CITY);
+
   for (int row_delta = -1; row_delta <= 1; ++row_delta) {
     for (int col_delta = -1; col_delta <= 1; ++col_delta) {
       // Cannot work tile that has city
       if (row_delta != 0 || col_delta != 0) {
         Location loc_delta(row_loc + row_delta, col_loc + col_delta);
         if (world.in_bounds(loc_delta) &&
-            !is_within_distance_of_any_city(loc_delta, 1)) {
+            !(filter_tiles_near_other_cities &&
+              is_within_distance_of_any_city(loc_delta, 1))) {
           WorldTile& tile = world.get_tile(loc_delta);
           if (tile.yield().m_food > 0) {
-            available_food += tile.yield().m_food;
+            food_tiles.push_back(&tile);
           }
           else {
-            available_prod += tile.yield().m_prod;
+            prod_tiles.push_back(&tile);
           }
         }
       }
     }
   }
 
+  std::sort(std::begin(food_tiles), std::end(food_tiles), ReverseOrd<FoodGetter>());
+  std::sort(std::begin(prod_tiles), std::end(prod_tiles), ReverseOrd<ProdGetter>());
+
+  // This would be expensive in old C++, but move semantics should make this
+  // fast.
+  return std::make_pair(food_tiles, prod_tiles);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+float compute_city_loc_heuristic(const Location& location)
+///////////////////////////////////////////////////////////////////////////////
+{
+  auto tile_pair = compute_nearby_food_and_prod_tiles(location,
+                                                      true /*filter*/);
+  float available_food = 0.0, available_prod = 0.0;
+
+  for (WorldTile* tile : tile_pair.first) {
+    available_food += tile->yield().m_food;
+  }
+
+  for (WorldTile* tile : tile_pair.second) {
+    available_prod += tile->yield().m_prod;
+  }
+
   // Favor city locations with a good balance of food and production
-  return std::sqrt( (available_food + 1.0) * (available_prod + 1.0) );
+  return available_food * available_prod;
 }
 
 } // empty namespace
@@ -95,28 +150,9 @@ void City::cycle_turn()
 
   // Evaluate nearby tiles, put in to sorted lists (best-to-worst) for each
   // of the two yield types
-  const unsigned row_loc = m_location.row;
-  const unsigned col_loc = m_location.col;
-  std::list<WorldTile*> food_tiles, prod_tiles; // sorted highest to lowest
-  for (int row_delta = -1; row_delta <= 1; ++row_delta) {
-    for (int col_delta = -1; col_delta <= 1; ++col_delta) {
-      // Cannot work tile that has city
-      if (row_delta != 0 || col_delta != 0) {
-        Location loc_delta(row_loc + row_delta, col_loc + col_delta);
-        if (world.in_bounds(loc_delta)) {
-          WorldTile& tile = world.get_tile(loc_delta);
-          if (!tile.worked()) {
-            if (tile.yield().m_food > 0) {
-              ordered_insert(food_tiles, tile);
-            }
-            else {
-              ordered_insert(prod_tiles, tile);
-            }
-          }
-        }
-      }
-    }
-  }
+  auto tile_pair = compute_nearby_food_and_prod_tiles(m_location);
+  std::vector<WorldTile*>& food_tiles = tile_pair.first;
+  std::vector<WorldTile*>& prod_tiles = tile_pair.second;
 
   // Choose which tiles to work. We first make sure we have ample food, then
   // we look for production tiles.
@@ -126,13 +162,12 @@ void City::cycle_turn()
   float prod_gathered = PROD_FROM_CITY_CENTER;
   unsigned num_workers = m_rank;
   unsigned num_workers_used_for_food = 0;
-  for (std::list<WorldTile*>::iterator itr = food_tiles.begin();
-       itr != food_tiles.end() && num_workers > 0; ++itr) {
+  for (WorldTile* food_tile : food_tiles) {
     if (food_gathered < req_food) {
-      (*itr)->work();
+      food_tile->work();
       --num_workers;
       ++num_workers_used_for_food;
-      food_gathered += (*itr)->yield().m_food;
+      food_gathered += food_tile->yield().m_food;
     }
     else {
       // TODO: AI should continue to pile up food to increase it's growth
@@ -144,12 +179,11 @@ void City::cycle_turn()
 
   // TODO: If city is getting close to being food capped, do not sacrafice
   // good production tiles for marginal food tiles.
-  for (std::list<WorldTile*>::iterator itr = prod_tiles.begin();
-       itr != prod_tiles.end() && num_workers > 0; ++itr) {
-    if ((*itr)->yield().m_prod > PROD_FROM_SPECIALIST) {
-      (*itr)->work();
+  for (WorldTile* prod_tile : prod_tiles) {
+    if (prod_tile->yield().m_prod > PROD_FROM_SPECIALIST) {
+      prod_tile->work();
       --num_workers;
-      prod_gathered += (*itr)->yield().m_prod;
+      prod_gathered += prod_tile->yield().m_prod;
     }
   }
 
@@ -183,10 +217,8 @@ void City::cycle_turn()
       static_cast<float>(num_workers_used_for_food) / m_rank;
     if (pct_workers_on_food > TOO_MANY_FOOD_WORKERS ||
         food_gathered < req_food) {
-      for (std::list<WorldTile*>::iterator itr = food_tiles.begin();
-           itr != food_tiles.end();
-           ++itr) {
-        food_tile = dynamic_cast<FoodTile*>(*itr);
+      for (WorldTile* tile : food_tiles) {
+        food_tile = dynamic_cast<FoodTile*>(tile);
         if (food_tile != NULL &&
             (food_tile->infra_level() < LandTile::LAND_TILE_MAX_INFRA)) {
           build_food_infra = true;
@@ -203,10 +235,8 @@ void City::cycle_turn()
   LandTile* prod_tile = NULL;
   {
     if (prod_gathered < PROD_BEFORE_SETTLER) {
-      for (std::list<WorldTile*>::iterator itr = prod_tiles.begin();
-           itr != prod_tiles.end();
-           ++itr) {
-        prod_tile = dynamic_cast<LandTile*>(*itr);
+      for (WorldTile* tile : prod_tiles) {
+        prod_tile = dynamic_cast<LandTile*>(tile);
         Require(prod_tile != NULL, "Production from a non-land tile?");
         if (prod_tile->infra_level() < LandTile::LAND_TILE_MAX_INFRA) {
           build_prod_infra = true;
@@ -227,7 +257,8 @@ void City::cycle_turn()
     float heuristic_of_best_loc_so_far = 0.0;
     for (int row_delta = -max_distance; row_delta <= max_distance; ++row_delta) {
       for (int col_delta = -max_distance; col_delta <= max_distance; ++col_delta) {
-        Location loc_delta(row_loc + row_delta, col_loc + col_delta);
+        Location loc_delta(m_location.row + row_delta,
+                           m_location.col + col_delta);
 
         // Check if this is a valid city loc
         if (world.in_bounds(loc_delta) &&
@@ -250,10 +281,8 @@ void City::cycle_turn()
   // enhance.
   bool fallback_build_prod_infra = false;
   {
-    for (std::list<WorldTile*>::iterator itr = prod_tiles.begin();
-         itr != prod_tiles.end();
-         ++itr) {
-      prod_tile = dynamic_cast<LandTile*>(*itr);
+    for (WorldTile* tile : prod_tiles) {
+      prod_tile = dynamic_cast<LandTile*>(tile);
       Require(prod_tile != NULL, "Production from a non-land tile?");
       if (prod_tile->infra_level() < LandTile::LAND_TILE_MAX_INFRA) {
         fallback_build_prod_infra = true;
@@ -344,38 +373,6 @@ void City::kill(unsigned killed)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void City::ordered_insert(std::list<WorldTile*>& tile_list,
-                          WorldTile& tile) const
-///////////////////////////////////////////////////////////////////////////////
-{
-  for (std::list<WorldTile*>::iterator
-       itr = tile_list.begin(); itr != tile_list.end(); ++itr) {
-    WorldTile* curr_tile = *itr;
-    float curr_tile_food = curr_tile->yield().m_food;
-    float curr_tile_prod = curr_tile->yield().m_prod;
-    float new_tile_food  = tile.yield().m_food;
-    float new_tile_prod  = tile.yield().m_prod;
-    if (curr_tile_food > 0) {
-      Require(new_tile_food > 0, "Mismatch between list and new tile");
-      if (new_tile_food > curr_tile_food) {
-        tile_list.insert(itr, &tile); // OK since iteration is over
-        return;
-      }
-    }
-    else {
-      Require(curr_tile_prod > 0, "Curr tile is neither food nor prod?");
-      Require(new_tile_prod > 0, "Mismatch between list and new tile");
-      if (new_tile_prod > curr_tile_prod) {
-        tile_list.insert(itr, &tile); // OK since iteration is over
-        return;
-      }
-    }
-  }
-
-  tile_list.push_back(&tile);
-}
-
-///////////////////////////////////////////////////////////////////////////////
 bool City::build_infra(LandTile& land_tile)
 ///////////////////////////////////////////////////////////////////////////////
 {
@@ -392,7 +389,7 @@ bool City::build_infra(LandTile& land_tile)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-xmlNodePtr City::to_xml()
+xmlNodePtr City::to_xml() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   xmlNodePtr City_node = xmlNewNode(NULL, BAD_CAST "City");
@@ -426,4 +423,6 @@ xmlNodePtr City::to_xml()
   xmlNewChild(City_node, NULL, BAD_CAST "m_famine", BAD_CAST famine_oss.str().c_str());
 
   return City_node;
+}
+
 }

@@ -13,7 +13,7 @@
 #include <sstream>
 #include <memory>
 
-using namespace baal;
+namespace baal {
 
 namespace {
 
@@ -469,4 +469,6 @@ std::string HackCommand::help() const
 "<exp>\n"
 "  Gives the player free arbitrary exp. This is a cheat put in for testing\n"
                          );
+}
+
 }

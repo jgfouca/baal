@@ -16,7 +16,7 @@
 #include <readline/history.h>
 #include <boost/algorithm/string.hpp>
 
-using namespace baal;
+namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
 InterfaceText::InterfaceText(std::ostream& out,
@@ -124,4 +124,6 @@ void InterfaceText::ai_wins()
 ///////////////////////////////////////////////////////////////////////////////
 {
   m_ostream << BOLD_COLOR << RED << "YOU'RE LOZER!!" << std::endl;
+}
+
 }

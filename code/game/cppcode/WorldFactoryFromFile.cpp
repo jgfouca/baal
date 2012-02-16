@@ -6,7 +6,7 @@
 
 #include <string.h>
 
-using namespace baal;
+namespace baal {
 
 const std::string WorldFactoryFromFile::WORLD_FILE_EXT = ".baalmap";
 
@@ -250,7 +250,7 @@ Geology& WorldFactoryFromFile::get_Geology_from_parent()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool baal::is_baal_map_file(const std::string& filename)
+bool is_baal_map_file(const std::string& filename)
 ///////////////////////////////////////////////////////////////////////////////
 {
   const std::string file_ext = WorldFactoryFromFile::WORLD_FILE_EXT;
@@ -258,4 +258,6 @@ bool baal::is_baal_map_file(const std::string& filename)
   const unsigned expected_file_ext_pos = filename.length() - file_ext.length();
 
   return filename.rfind(file_ext) == expected_file_ext_pos;
+}
+
 }

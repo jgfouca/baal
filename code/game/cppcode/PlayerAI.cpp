@@ -3,7 +3,7 @@
 #include "World.hpp"
 #include "City.hpp"
 
-using namespace baal;
+namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
 PlayerAI::PlayerAI()
@@ -68,4 +68,6 @@ xmlNodePtr PlayerAI::to_xml()///////////////////////////////////////////////////
 {
   xmlNodePtr PlayerAI_node = xmlNewNode(NULL, BAD_CAST "PlayerAI - stub");
   return PlayerAI_node;
+}
+
 }

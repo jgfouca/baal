@@ -5,7 +5,7 @@
 #include <iostream>
 #include <iomanip>
 
-using namespace baal;
+namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
 World::World(unsigned width, unsigned height)
@@ -253,4 +253,6 @@ void World::clear_anomalies()
     delete (*itr);
   }
   m_recent_anomalies.clear();
+}
+
 }

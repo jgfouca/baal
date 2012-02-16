@@ -7,7 +7,7 @@
 
 #include <cstdlib>
 
-using namespace baal;
+namespace baal {
 
 const std::string WorldFactory::GENERATED_WORLD  = "g";
 const std::string WorldFactory::DEFAULT_WORLD = "1";
@@ -45,4 +45,6 @@ World& WorldFactory::create()
   else {
     RequireUser(false, "Invalid choice of world: " << world_config);
   }
+}
+
 }

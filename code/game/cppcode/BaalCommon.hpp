@@ -3,7 +3,7 @@
 
 #include <climits>
 #include <string>
-#include <iosfwd>
+#include <iostream>
 
 // Put simple, generic free functions in this file
 
@@ -34,8 +34,6 @@ struct Location
 
   Location(const std::string& str_location);
 
-  std::ostream& operator<<(std::ostream& out) const;
-
   bool operator==(const Location& location) const;
 
   bool operator!=(const Location& location) const;
@@ -44,14 +42,42 @@ struct Location
   unsigned col;
 };
 
+// Inlined methods
+
+///////////////////////////////////////////////////////////////////////////////
+inline
+bool Location::operator==(const Location& location) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  return (row == location.row && col == location.col);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+inline
+bool Location::operator!=(const Location& location) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  return !(*this == location);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+inline
+std::ostream& operator<<(std::ostream& out, const Location& location)
+///////////////////////////////////////////////////////////////////////////////
+{
+  return out << location.row << ',' << location.col;
+}
+
+//
+// Misc free functions
+//
+
 /**
  * Returns true if this file was compiled in optimized mode.
  *
  * Used for sanity-checking build system.
  */
 bool is_opt();
-
-std::ostream& operator<<(std::ostream& out, const Location& location);
 
 void clear_screen();
 

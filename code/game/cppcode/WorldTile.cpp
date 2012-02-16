@@ -9,7 +9,7 @@
 
 #include <iomanip>
 
-using namespace baal;
+namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
 Yield::Yield(float food, float prod)
@@ -422,4 +422,6 @@ void FoodTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
 
   Require(m_soil_moisture >= 0.0 && m_soil_moisture < 100,
           "Moisture " << m_soil_moisture << " not valid");
+}
+
 }

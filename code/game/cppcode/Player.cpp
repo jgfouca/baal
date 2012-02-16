@@ -3,9 +3,9 @@
 #include "Spell.hpp"
 #include "Configuration.hpp"
 
-using namespace baal;
-
 #include <iostream>
+
+namespace baal {
 
 const std::string Player::DEFAULT_PLAYER_NAME = "human";
 
@@ -148,4 +148,6 @@ xmlNodePtr Player::to_xml()
   xmlAddChild(Player_node, m_talents.to_xml());
 
   return Player_node;
+}
+
 }

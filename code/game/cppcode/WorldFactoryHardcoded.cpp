@@ -7,7 +7,7 @@
 
 #include <sstream>
 
-using namespace baal;
+namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
 World& WorldFactoryHardcoded::create(const std::string& world_config)
@@ -147,4 +147,6 @@ World& WorldFactoryHardcoded::generate_world_1()
                                       *new Inactive);
 
   return world;
+}
+
 }

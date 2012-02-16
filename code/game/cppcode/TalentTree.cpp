@@ -4,7 +4,7 @@
 #include "Player.hpp"
 #include "SpellFactory.hpp"
 
-using namespace baal;
+namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
 void TalentTree::add(const Spell& spell, const Player& player)
@@ -174,4 +174,6 @@ xmlNodePtr TalentTree::to_xml()
   }
 
    return TalentTree_node;
+}
+
 }

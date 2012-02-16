@@ -11,8 +11,9 @@
 #include <limits>
 
 using std::ostream;
-using namespace baal;
 namespace mpl = boost::mpl;
+
+namespace baal {
 
 const std::string Hot::NAME       = "hot";
 const std::string Cold::NAME      = "cold";
@@ -239,7 +240,7 @@ ostream& Spell::operator<<(ostream& out) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-ostream& baal::operator<<(ostream& out, const Spell& spell)
+ostream& operator<<(ostream& out, const Spell& spell)
 ///////////////////////////////////////////////////////////////////////////////
 {
   return spell.operator<<(out);
@@ -723,4 +724,6 @@ unsigned Tstorm::apply() const
   }
 
   return exp;
+}
+
 }

@@ -5,7 +5,7 @@
 #include <sstream>
 #include <vector>
 
-using namespace baal;
+namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
 const CommandFactory& CommandFactory::instance()
@@ -117,4 +117,6 @@ void CommandFactory::aliases(const std::string& name,
       alias_rv.push_back(itr->first);
     }
   }
+}
+
 }

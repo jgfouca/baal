@@ -2,7 +2,7 @@
 #include "BaalExceptions.hpp"
 #include "BaalCommon.hpp"
 
-using namespace baal;
+namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
 Time::Time()
@@ -57,7 +57,7 @@ std::pair<std::string, const char*> Time::season_info(Season season)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void baal::operator++(Season& season)
+void operator++(Season& season)
 ///////////////////////////////////////////////////////////////////////////////
 {
   Require(season != Time::LAST_SEASON_OF_YEAR, "Cannot increment: " << season);
@@ -85,4 +85,6 @@ xmlNodePtr Time::to_xml()
   xmlNewChild(Time_node, NULL, BAD_CAST "m_curr_season", BAD_CAST m_curr_season_oss.str().c_str());
 
   return Time_node;
+}
+
 }

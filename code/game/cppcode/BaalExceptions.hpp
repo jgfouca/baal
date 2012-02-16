@@ -11,6 +11,14 @@
 
 namespace baal {
 
+// Note: using boost exceptions here is an option, but they don't seem to
+// add a lot of value.
+
+//
+// ProgramErrors indicate programming errors. In general, these should be
+// allowed to escape so that the program can crash. With certain macros,
+// you can set things up to attach a debugger when these are thrown.
+//
 class ProgramError : public std::exception
 {
  public:
@@ -33,6 +41,10 @@ class ProgramError : public std::exception
   std::string m_message;
 };
 
+//
+// UserErrors indicate user errors. In general, these should always be caught and
+// handled. Please do not raise these directly, use the macros instead.
+//
 class UserError : public std::exception
 {
  public:
@@ -40,11 +52,14 @@ class UserError : public std::exception
             const std::string& file,
             unsigned line,
             const std::string& message,
-            bool attach);
+            bool attach) : m_message(message) {}
 
   virtual ~UserError() throw() {}
 
-  virtual const char* what() const throw();
+  virtual const char* what() const throw()
+  {
+    return m_message.c_str();
+  }
 
  private:
   std::string m_message;

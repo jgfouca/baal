@@ -1,7 +1,7 @@
 #include "WorldFactoryGenerated.hpp"
 #include "World.hpp"
 
-using namespace baal;
+namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
 World& WorldFactoryGenerated::create()
@@ -9,4 +9,6 @@ World& WorldFactoryGenerated::create()
 {
   // TODO
   return *(new World(1, 1));
+}
+
 }

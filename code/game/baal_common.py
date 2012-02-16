@@ -17,7 +17,7 @@ class UserError(Exception):
     """
     Doesn't do anything different from any other exception type, just used to
     indentify user error. In general, these should always be caught and
-    handled. Please do not raise these directly, use the
+    handled.
     """
     pass
 

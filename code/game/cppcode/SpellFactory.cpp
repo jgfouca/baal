@@ -3,7 +3,7 @@
 #include "BaalExceptions.hpp"
 #include "Spell.hpp"
 
-using namespace baal;
+namespace baal {
 
 std::string SpellFactory::HOT    = "hot";
 std::string SpellFactory::COLD   = "cold";
@@ -153,4 +153,6 @@ unsigned SpellFactory::num_spells()
 ///////////////////////////////////////////////////////////////////////////////
 {
   return sizeof(ALL_SPELLS)/sizeof(std::string);
+}
+
 }

@@ -1,7 +1,7 @@
 #include "Drawable.hpp"
 #include "BaalExceptions.hpp"
 
-using namespace baal;
+namespace baal {
 
 DrawMode Drawable::s_draw_mode = CIV;
 
@@ -85,7 +85,7 @@ std::string Drawable::draw_mode_to_str(DrawMode draw_mode)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-DrawMode& baal::operator++(DrawMode& draw_mode)
+DrawMode& operator++(DrawMode& draw_mode)
 ///////////////////////////////////////////////////////////////////////////////
 {
   Require(draw_mode != Drawable::LAST, "Iterating off end of draw modes");
@@ -93,4 +93,6 @@ DrawMode& baal::operator++(DrawMode& draw_mode)
   int i = static_cast<int>(draw_mode);
   ++i;
   return draw_mode = static_cast<DrawMode>(i);
+}
+
 }

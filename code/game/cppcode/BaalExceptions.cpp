@@ -6,7 +6,7 @@
 
 #include "BaalExceptions.hpp"
 
-using namespace baal;
+namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
 ProgramError::ProgramError(const std::string& expr,
@@ -41,21 +41,4 @@ const char* ProgramError::what() const throw()
   return out.str().c_str();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-UserError::UserError(const std::string& expr,
-                     const std::string& file,
-                     unsigned line,
-                     const std::string& message,
-                     bool attach)
-///////////////////////////////////////////////////////////////////////////////
-  : m_message(message)
-{
-  Require(!attach, "UserErrors should not be attachable");
-}
-
-///////////////////////////////////////////////////////////////////////////////
-const char* UserError::what() const throw()
-///////////////////////////////////////////////////////////////////////////////
-{
-  return m_message.c_str();
 }

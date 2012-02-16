@@ -6,9 +6,9 @@
 namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
-float exp_growth(float value,
+float exp_growth(float base,
+                 float value,
                  float threshold,
-                 float base,
                  float diminishing_returns)
 ///////////////////////////////////////////////////////////////////////////////
 {
@@ -50,7 +50,7 @@ float exp_growth(float value,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-float poly_growth(float value, float threshold, float exp, float divisor)
+float poly_growth(float value, float exp, float divisor, float threshold)
 ///////////////////////////////////////////////////////////////////////////////
 {
   float x = value - threshold;
@@ -61,7 +61,7 @@ float poly_growth(float value, float threshold, float exp, float divisor)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-float linear_growth(float value, float threshold, float multiplier)
+float linear_growth(float value, float multiplier, float threshold)
 ///////////////////////////////////////////////////////////////////////////////
 {
   return (value - threshold) * multiplier;
@@ -75,6 +75,21 @@ float sqrt(float value, float threshold)
   Require(x >= 0.0,
           "poly_growth not intended to be called for values below zero");
   return std::sqrt(x);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+float fibonacci_div(float total, float base)
+///////////////////////////////////////////////////////////////////////////////
+{
+  for (unsigned rv = 0; ; ++rv) {
+    float cost = (rv+1) * base;
+    if (cost > total) {
+      return rv;
+    }
+    else {
+      total -= cost;
+    }
+  }
 }
 
 } // namespace baal

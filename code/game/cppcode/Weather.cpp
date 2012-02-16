@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <iomanip>
 
-using namespace baal;
+namespace baal {
 
 namespace {
 
@@ -419,7 +419,7 @@ std::string Anomaly::category_to_str(AnomalyCategory category)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-Anomaly::AnomalyCategory& baal::operator++(Anomaly::AnomalyCategory& category)
+Anomaly::AnomalyCategory& operator++(Anomaly::AnomalyCategory& category)
 ///////////////////////////////////////////////////////////////////////////////
 {
   Require(category != Anomaly::LAST, "Iterating off end of anomalies");
@@ -461,4 +461,6 @@ xmlNodePtr Anomaly::to_xml() const
   xmlNewChild(Anomaly_node, NULL, BAD_CAST "m_world_area", BAD_CAST m_world_area_oss.str().c_str());
 
   return Anomaly_node;
+}
+
 }
