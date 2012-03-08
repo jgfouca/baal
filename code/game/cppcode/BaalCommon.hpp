@@ -4,6 +4,10 @@
 #include <climits>
 #include <string>
 #include <iostream>
+#include <iterator>
+#include <cstdlib>
+
+#include <boost/range.hpp>
 
 // Put simple, generic free functions in this file
 
@@ -77,9 +81,110 @@ std::ostream& operator<<(std::ostream& out, const Location& location)
  *
  * Used for sanity-checking build system.
  */
-bool is_opt();
+///////////////////////////////////////////////////////////////////////////////
+inline
+bool is_opt()
+///////////////////////////////////////////////////////////////////////////////
+{
+#ifndef NDEBUG
+  return false;
+#else
+  return true;
+#endif
+}
 
-void clear_screen();
+///////////////////////////////////////////////////////////////////////////////
+inline
+void clear_screen()
+///////////////////////////////////////////////////////////////////////////////
+{
+#ifndef WINDOWS
+  std::system("clear");
+#endif
+}
+
+///////////////////////////////////////////////////////////////////////////////
+inline
+bool is_valid(Location location)
+///////////////////////////////////////////////////////////////////////////////
+{
+  return location != Location();
+}
+
+//
+// AdjacentLocationIterator and associated free functions
+//
+
+class AdjacentLocationIterator :
+    public std::iterator<std::forward_iterator_tag,
+                         Location,
+                         std::ptrdiff_t,
+                         Location*,
+                         Location>
+{
+ public:
+  AdjacentLocationIterator(Location center) :
+    m_center(center),
+    m_current()
+  {
+    advance();
+  }
+
+  // Construct end iterator
+  AdjacentLocationIterator() :
+    m_center(),
+    m_current()
+  {}
+
+  AdjacentLocationIterator& operator++()
+  {
+    advance();
+    return *this;
+  }
+
+  AdjacentLocationIterator operator++(int)
+  {
+    AdjacentLocationIterator temp = *this;
+    ++*this;;
+    return temp;
+  }
+
+  bool operator==(const AdjacentLocationIterator& rhs) const
+  {
+    return m_center == rhs.m_center && m_current == rhs.m_current;
+  }
+
+  bool operator!=(const AdjacentLocationIterator& rhs) const
+  {
+    return !(*this == rhs);
+  }
+
+  Location operator*() const
+  {
+    return m_current;
+  }
+
+  Location* operator->()
+  {
+    return &this->m_current;
+  }
+
+ private:
+  void advance();
+
+  Location m_center;
+  Location m_current;
+};
+
+
+typedef boost::iterator_range<AdjacentLocationIterator> AdjacentLocationRange;
+
+inline
+AdjacentLocationRange get_adjacent_location_range(Location center)
+{
+  return boost::make_iterator_range(AdjacentLocationIterator(center),
+                                    AdjacentLocationIterator());
+}
 
 }
 

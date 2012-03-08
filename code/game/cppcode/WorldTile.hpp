@@ -62,9 +62,14 @@ struct Yield
 class WorldTile : public Drawable
 {
  public:
-  WorldTile(Yield yield, Climate& climate, Geology& geology);
+  WorldTile(Location location, Yield yield, Climate& climate, Geology& geology);
 
   virtual ~WorldTile();
+
+  // forbidden methods
+  WorldTile() = delete;
+  WorldTile(const WorldTile&) = delete;
+  WorldTile& operator=(const WorldTile&) = delete;
 
   // Basic tile interface
 
@@ -77,8 +82,6 @@ class WorldTile : public Drawable
   virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
                           const Location& location,
                           Season season);
-
-  bool worked() const { return m_worked; }
 
   void work();
 
@@ -104,6 +107,10 @@ class WorldTile : public Drawable
 
   // Getters
 
+  bool worked() const { return m_worked; }
+
+  Location location() const { return m_location; }
+
   const Atmosphere& atmosphere() const { return m_atmosphere; }
 
   Atmosphere& atmosphere() { return m_atmosphere; }
@@ -127,17 +134,12 @@ class WorldTile : public Drawable
 
   // Members
 
+  Location   m_location;
   Yield      m_base_yield;
   Climate&   m_climate;
   Geology&   m_geology;
   Atmosphere m_atmosphere;
   bool       m_worked;
-
- private:
-  // forbidden methods
-  WorldTile();
-  WorldTile(const WorldTile&);
-  WorldTile& operator=(const WorldTile&);
 };
 
 /**
@@ -148,7 +150,7 @@ class WorldTile : public Drawable
 class OceanTile : public WorldTile
 {
  public:
-  OceanTile(unsigned depth, Climate& climate, Geology& geology);
+  OceanTile(Location location, unsigned depth, Climate& climate, Geology& geology);
 
   virtual Yield yield() const;
 
@@ -187,7 +189,7 @@ class OceanTile : public WorldTile
 class LandTile: public WorldTile
 {
  public:
-  LandTile(Yield yield, Climate& climate, Geology& geology);
+  LandTile(Location location, Yield yield, Climate& climate, Geology& geology);
 
   ~LandTile();
 
@@ -242,8 +244,8 @@ class LandTile: public WorldTile
 class MountainTile : public LandTile
 {
  public:
-  MountainTile(unsigned elevation, Climate& climate, Geology& geology)
-    : LandTile(Yield(0, 2), climate, geology),
+  MountainTile(Location location, unsigned elevation, Climate& climate, Geology& geology)
+    : LandTile(location, Yield(0, 2), climate, geology),
       m_elevation(elevation)
   {}
 
@@ -284,8 +286,8 @@ class MountainTile : public LandTile
 class DesertTile : public LandTile
 {
  public:
-  DesertTile(Climate& climate, Geology& geology)
-    : LandTile(Yield(0, 0.5), climate, geology)
+  DesertTile(Location location, Climate& climate, Geology& geology)
+    : LandTile(location, Yield(0, 0.5), climate, geology)
   {}
 
   virtual const char* color() const { return YELLOW; }
@@ -299,8 +301,8 @@ class DesertTile : public LandTile
 class TundraTile : public LandTile
 {
  public:
-  TundraTile(Climate& climate, Geology& geology)
-    : LandTile(Yield(0, 0.5), climate, geology)
+  TundraTile(Location location, Climate& climate, Geology& geology)
+    : LandTile(location, Yield(0, 0.5), climate, geology)
   {}
 
   virtual const char* color() const { return WHITE; }
@@ -315,8 +317,8 @@ class TundraTile : public LandTile
 class HillsTile : public LandTile
 {
  public:
-  HillsTile(Climate& climate, Geology& geology)
-    : LandTile(Yield(0, 1), climate, geology)
+  HillsTile(Location location, Climate& climate, Geology& geology)
+    : LandTile(location, Yield(0, 1), climate, geology)
   {}
 
   virtual const char* color() const { return GREEN; }
@@ -330,8 +332,8 @@ class HillsTile : public LandTile
 class FoodTile : public LandTile
 {
  public:
-  FoodTile(Yield yield, Climate& climate, Geology& geology)
-    : LandTile(yield, climate, geology),
+  FoodTile(Location location, Yield yield, Climate& climate, Geology& geology)
+    : LandTile(location, yield, climate, geology),
       m_soil_moisture(1.0)
   {}
 
@@ -356,8 +358,8 @@ class FoodTile : public LandTile
 class PlainsTile : public FoodTile
 {
  public:
-  PlainsTile(Climate& climate, Geology& geology)
-    : FoodTile(Yield(1, 0), climate, geology)
+  PlainsTile(Location location, Climate& climate, Geology& geology)
+    : FoodTile(location, Yield(1, 0), climate, geology)
   {}
 
   virtual const char* color() const { return GREEN; }
@@ -371,8 +373,8 @@ class PlainsTile : public FoodTile
 class LushTile : public FoodTile
 {
  public:
-  LushTile(Climate& climate, Geology& geology)
-    : FoodTile(Yield(2, 0), climate, geology)
+  LushTile(Location location, Climate& climate, Geology& geology)
+    : FoodTile(location, Yield(2, 0), climate, geology)
   {}
 
   virtual const char* color() const { return GREEN; }

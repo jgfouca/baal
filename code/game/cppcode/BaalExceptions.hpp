@@ -42,8 +42,8 @@ class ProgramError : public std::exception
 };
 
 //
-// UserErrors indicate user errors. In general, these should always be caught and
-// handled. Please do not raise these directly, use the macros instead.
+// UserErrors indicate user errors. In general, these should always be caught
+// and handled. Please do not raise these directly, use the macros instead.
 //
 class UserError : public std::exception
 {
@@ -82,9 +82,6 @@ class UserError : public std::exception
 // Requires will always be checked, Asserts will only be checked in debug.
 // Use the attach versions of the macros for checks in complex contexts where
 // viewing the failing stackframe in GDB would be helpful.
-//
-// Use the UserErrorIf macro to catch user error. These will always be
-// checked.
 #define Require(expr, msg)       ThrowGeneric(expr, msg, ProgramError, false)
 #define RequireAttach(expr, msg) ThrowGeneric(expr, msg, ProgramError, true)
 #define RequireUser(expr, msg)   ThrowGeneric(expr, msg, UserError, false)

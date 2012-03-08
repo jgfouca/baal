@@ -46,7 +46,7 @@ World& WorldFactoryFromFile::load()
     if (!xmlStrcmp(m_curr_node->name, (const xmlChar *)"tile")) {
       int row = get_int_from_parent("row");
       int col = get_int_from_parent("col");
-      world.m_tiles[row][col] = &parse_Tile();
+      world.m_tiles[row][col] = &parse_Tile(row, col);
     }
     else if (!xmlStrcmp(m_curr_node->name, (const xmlChar *)"city")) {
       int row = get_int_from_parent("row");
@@ -111,37 +111,38 @@ float WorldFactoryFromFile::get_float_from_parent(const char *elemname)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-WorldTile& WorldFactoryFromFile::parse_Tile()
+WorldTile& WorldFactoryFromFile::parse_Tile(int row, int col)
 ///////////////////////////////////////////////////////////////////////////////
 {
   // m_curr_node is tile
   // Climate(int temperature, unsigned rainfall, Wind wind)
 
+  Location location(row, col);
   char *type = get_element("type");
   Climate& climate = get_Climate_from_parent();
   Geology& geology = get_Geology_from_parent();
   if (!strcmp(type, "OceanTile")) {
     unsigned depth = get_unsigned_from_parent("depth");
-    return *new OceanTile(depth, climate, geology);
+    return *new OceanTile(location, depth, climate, geology);
   }
   else if (!strcmp(type, "DesertTile")) {
-    return *new DesertTile(climate, geology);
+    return *new DesertTile(location, climate, geology);
   }
   else if (!strcmp(type, "LushTile")) {
-    return *new LushTile(climate, geology);
+    return *new LushTile(location, climate, geology);
   }
   else if (!strcmp(type, "MountainTile")) {
     unsigned elevation = get_unsigned_from_parent("elevation");
-    return *new MountainTile(elevation, climate, geology);
+    return *new MountainTile(location, elevation, climate, geology);
   }
   else if (!strcmp(type, "TundraTile")) {
-    return *new TundraTile(climate, geology);
+    return *new TundraTile(location, climate, geology);
   }
   else if (!strcmp(type, "PlainsTile")) {
-    return *new PlainsTile(climate, geology);
+    return *new PlainsTile(location, climate, geology);
   }
   else if (!strcmp(type, "HillsTile")) {
-    return *new HillsTile(climate, geology);
+    return *new HillsTile(location, climate, geology);
   }
   else {
     Require(false, "Unknown tile type \"" << type << "\".");

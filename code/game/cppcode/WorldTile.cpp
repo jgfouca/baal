@@ -39,9 +39,10 @@ xmlNodePtr Yield::to_xml()
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-WorldTile::WorldTile(Yield yield, Climate& climate, Geology& geology)
+WorldTile::WorldTile(Location location, Yield yield, Climate& climate, Geology& geology)
 ///////////////////////////////////////////////////////////////////////////////
-  : m_base_yield(yield),
+  : m_location(location),
+    m_base_yield(yield),
     m_climate(climate),
     m_geology(geology),
     m_atmosphere(climate),
@@ -179,9 +180,9 @@ xmlNodePtr WorldTile::to_xml()
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-OceanTile::OceanTile(unsigned depth, Climate& climate, Geology& geology)
+OceanTile::OceanTile(Location location, unsigned depth, Climate& climate, Geology& geology)
 ///////////////////////////////////////////////////////////////////////////////
-  : WorldTile(Yield(3,0), climate, geology),
+  : WorldTile(location, Yield(3,0), climate, geology),
     m_depth(depth),
     m_surface_temp(m_atmosphere.temperature())
 {}
@@ -210,9 +211,9 @@ Yield OceanTile::yield() const
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-LandTile::LandTile(Yield yield, Climate& climate, Geology& geology)
+LandTile::LandTile(Location location, Yield yield, Climate& climate, Geology& geology)
 ///////////////////////////////////////////////////////////////////////////////
-  : WorldTile(yield, climate, geology),
+  : WorldTile(location, yield, climate, geology),
     m_hp(1.0),
     m_infra_level(0),
     m_city(NULL)

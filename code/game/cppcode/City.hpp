@@ -40,7 +40,7 @@ class City
 
   unsigned rank() const { return m_rank; }
 
-  const Location& location() const { return m_location; }
+  Location location() const { return m_location; }
 
   bool famine() const { return m_famine; }
 

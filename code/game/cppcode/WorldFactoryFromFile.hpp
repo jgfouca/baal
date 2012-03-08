@@ -32,7 +32,7 @@ class WorldFactoryFromFile
 
   float get_float_from_parent(const char *elemname);
 
-  WorldTile& parse_Tile();
+  WorldTile& parse_Tile(int row, int col);
 
   Climate& get_Climate_from_parent();
 

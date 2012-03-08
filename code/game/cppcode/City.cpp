@@ -55,39 +55,58 @@ struct ReverseOrd
   }
 };
 
+struct AcceptAll
+{
+  bool operator()(const WorldTile* tile) const
+  {
+    return true;
+  }
+};
+
+struct FilterTooCloseToOtherCities
+{
+  FilterTooCloseToOtherCities(int distance) : m_distance(distance) {}
+
+  bool operator()(const WorldTile& tile) const
+  {
+    return !is_within_distance_of_any_city(tile.location(), m_distance);
+  }
+
+  int m_distance;
+};
+
+struct FilterAlreadyWorked
+{
+  bool operator()(const WorldTile& tile) const
+  {
+    return !tile.worked();
+  }
+};
+
 ///////////////////////////////////////////////////////////////////////////////
+template <typename Range, class Filter>
 std::pair<std::vector<WorldTile*>, std::vector<WorldTile*> >
-compute_nearby_food_and_prod_tiles(const Location& location,
-                                   bool filter_tiles_near_other_cities=false)
+compute_nearby_food_and_prod_tiles(Range location_range,
+                                   Filter filter = AcceptAll())
 ///////////////////////////////////////////////////////////////////////////////
 {
   // Returns a 2-ple of (food-tiles, production-tiles); both lists are sorted
-  // from highest to lowest based on yield. Only unworked tiles are added.
+  // from highest to lowest based on yield.
 
   World& world = Engine::instance().world();
-  const unsigned row_loc = location.row;
-  const unsigned col_loc = location.col;
   std::vector<WorldTile*> food_tiles, prod_tiles;
   static const unsigned NUM_TILES_SURROUNDING_CITY = 8;
   food_tiles.reserve(NUM_TILES_SURROUNDING_CITY);
   prod_tiles.reserve(NUM_TILES_SURROUNDING_CITY);
 
-  for (int row_delta = -1; row_delta <= 1; ++row_delta) {
-    for (int col_delta = -1; col_delta <= 1; ++col_delta) {
-      // Cannot work tile that has city
-      if (row_delta != 0 || col_delta != 0) {
-        Location loc_delta(row_loc + row_delta, col_loc + col_delta);
-        if (world.in_bounds(loc_delta) &&
-            !(filter_tiles_near_other_cities &&
-              is_within_distance_of_any_city(loc_delta, 1))) {
-          WorldTile& tile = world.get_tile(loc_delta);
-          if (tile.yield().m_food > 0) {
-            food_tiles.push_back(&tile);
-          }
-          else {
-            prod_tiles.push_back(&tile);
-          }
-        }
+  for (Location location : location_range) {
+    WorldTile& tile = world.get_tile(location);
+    if (filter(tile)) {
+      if (tile.yield().m_food > 0) {
+        food_tiles.push_back(&tile);
+      }
+      else {
+        prod_tiles.push_back(&tile);
       }
     }
   }
@@ -104,8 +123,9 @@ compute_nearby_food_and_prod_tiles(const Location& location,
 float compute_city_loc_heuristic(const Location& location)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  auto tile_pair = compute_nearby_food_and_prod_tiles(location,
-                                                      true /*filter*/);
+  const int min_distance = 1;
+  auto tile_pair = compute_nearby_food_and_prod_tiles(get_adjacent_location_range(location),
+                                                      FilterTooCloseToOtherCities(min_distance));
   float available_food = 0.0, available_prod = 0.0;
 
   for (WorldTile* tile : tile_pair.first) {
@@ -150,7 +170,8 @@ void City::cycle_turn()
 
   // Evaluate nearby tiles, put in to sorted lists (best-to-worst) for each
   // of the two yield types
-  auto tile_pair = compute_nearby_food_and_prod_tiles(m_location);
+  auto tile_pair = compute_nearby_food_and_prod_tiles(get_adjacent_location_range(m_location),
+                                                      FilterAlreadyWorked());
   std::vector<WorldTile*>& food_tiles = tile_pair.first;
   std::vector<WorldTile*>& prod_tiles = tile_pair.second;
 
