@@ -8,6 +8,11 @@ namespace baal {
  */
 void initialize_readline();
 
+/**
+ * Mostly for unit-testing
+ */
+void setup_singletons();
+
 }
 
 #endif

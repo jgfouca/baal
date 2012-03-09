@@ -1,5 +1,7 @@
 #include "Util.hpp"
 #include "CommandFactory.hpp"
+#include "Configuration.hpp"
+#include "Engine.hpp"
 
 #include <cstring>
 #include <cstdlib>
@@ -72,6 +74,16 @@ void initialize_readline ()
 
   // readline binding defines autocomplete behavior
   rl_attempted_completion_function = baal_completion;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void setup_singletons()
+///////////////////////////////////////////////////////////////////////////////
+{
+  Configuration& config = Configuration::instance();
+  config.m_initialized = true;
+
+  Engine::instance();
 }
 
 } // namespace baal

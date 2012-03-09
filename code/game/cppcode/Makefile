@@ -1,18 +1,6 @@
 include ../../common.mk
 
-BOOSTCXXFLAGS := -I ~/manually-installed-packages/boost_1_48_0
-BOOSTLDFLAGS := -lboost_thread
-
-XMLCXXFLAGS := -I /usr/include/libxml2
-XMLLDFLAGS := -lxml2
-
-READLINECXXFLAGS :=
-READLINELDFLAGS := -lreadline
-
-GAMECXXFLAGS := $(CXXFLAGS) $(BOOSTCXXFLAGS) $(XMLCXXFLAGS) $(READLINECXXFLAGS)
-GAMELDFLAGS  := $(GAME_LIB_FLAGS) $(BOOSTLDFLAGS) $(XMLLDFLAGS) $(READLINELDFLAGS)
-
-.PHONY: clean
+.PHONY: clean test
 
 OBJECTS = $(patsubst %.$(SOURCE_FILE_EXT), $(BIN_DIR)/%.$(OBJ_FILE_EXT),$(wildcard *.$(SOURCE_FILE_EXT)))
 
@@ -31,6 +19,9 @@ $(OBJECTS) : $(BIN_DIR)/%.$(OBJ_FILE_EXT): %.$(SOURCE_FILE_EXT) *.$(HEADER_FILE_
 
 $(GAME_LIB_PATH) : $(OBJECTS)
 	ar -rsc $@ $(OBJECTS)
+
+test: $(GAME_LIB_PATH)
+	cd $(TEST_PATH) && make $(MAKE_ARG) test
 
 clean:
 	rm -f $(BIN_DIR)/*.$(ALL_EXE_FILE_EXT) $(BIN_DIR)/*.$(ALL_OBJ_FILE_EXT) $(BIN_DIR)/*.$(ALL_LIB_FILE_EXT)

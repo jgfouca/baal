@@ -62,6 +62,7 @@ class Configuration
 
   // Any modifier/setter of Configuration has to be a friend
   friend bool parse_args(int argc, char** argv);
+  friend void setup_singletons();
 };
 
 }
