@@ -2,15 +2,13 @@
 #define City_hpp
 
 #include "BaalCommon.hpp"
+#include "CityImpl.hpp"
 
 #include <string>
 #include <list>
 #include <libxml/parser.h>
 
 namespace baal {
-
-class WorldTile;
-class LandTile;
 
 /**
  * Represents human-built cities.
@@ -24,7 +22,9 @@ class City
   // ==== Public API ====
   //
 
-  City(const std::string& name, const Location& location);
+  City(const std::string& name, const Location& location) :
+    m_impl(name, location)
+  {}
 
   City & operator=(const City&) = delete;
   City(const City&)             = delete;
@@ -34,19 +34,19 @@ class City
   // Query / Getter API
   //
 
-  const std::string& name() const { return m_name; }
+  const std::string& name() const { return m_impl.name(); }
 
-  unsigned population() const { return m_population; }
+  unsigned population() const { return m_impl.population(); }
 
-  unsigned rank() const { return m_rank; }
+  unsigned rank() const { return m_impl.rank(); }
 
-  Location location() const { return m_location; }
+  Location location() const { return m_impl.location(); }
 
-  bool famine() const { return m_famine; }
+  bool famine() const { return m_impl.famine(); }
 
-  unsigned defense() const { return m_defense_level; }
+  unsigned defense() const { return m_impl.defense(); }
 
-  xmlNodePtr to_xml() const;
+  xmlNodePtr to_xml() const { return m_impl.to_xml(); }
 
   //
   // Modification API
@@ -55,67 +55,31 @@ class City
   /**
    * Tell this city that the turn is cycling
    */
-  void cycle_turn();
+  void cycle_turn() { m_impl.cycle_turn(); }
 
   /**
    * Kill off some of this city's citizens
    */
-  void kill(unsigned killed);
+  void kill(unsigned killed) { m_impl.kill(killed); }
 
   /**
    * Destroy city defenses, lowering them by an amount equal to the
    * 'levels' parameter.
    */
-  void destroy_defense(unsigned levels);
+  void destroy_defense(unsigned levels) { m_impl.destroy_defense(levels); }
 
- private:
-
-  //
-  // ==== Internal methods ====
-  //
-
-  /**
-   * Add a level of infrastructure to a tile.
-   */
-  bool build_infra(LandTile& land_tile);
-
-  //
-  // ==== Members ====
-  //
-
-  std::string m_name;
-  unsigned    m_rank;
-  unsigned    m_population;
-  unsigned    m_next_rank_pop;
-  float       m_production;
-  Location    m_location;
-  unsigned    m_defense_level;
-  bool        m_famine;
-
- public:
   //
   // ==== Class constants ====
   //
 
-  // City growth/food/production contants
-  static constexpr float CITY_BASE_GROWTH_RATE = 0.01; // 1% per turn
-  static constexpr float MAX_GROWTH_MODIFIER   = 4.0;
-  static constexpr unsigned CITY_RANK_UP_MULTIPLIER = 2;
-  static constexpr unsigned CITY_STARTING_POP = 1000;
-  static constexpr unsigned MIN_CITY_SIZE = CITY_STARTING_POP / 5;
-  static constexpr unsigned POP_THAT_EATS_ONE_FOOD = 1000;
-  static constexpr float FOOD_FROM_CITY_CENTER = 1.0;
-  static constexpr float PROD_FROM_CITY_CENTER = 1.0;
-  static constexpr float PROD_FROM_SPECIALIST  = 1.0;
+  static constexpr unsigned MIN_CITY_SIZE =
+    details::CityImpl::CITY_STARTING_POP / 5;
 
-  // Constants for production costs of various buildable items
-  static constexpr unsigned SETTLER_PROD_COST  = 200;
-  static constexpr unsigned INFRA_PROD_COST    = 50;
-  static constexpr unsigned CITY_DEF_PROD_COST = 400;
-
-  // AI constants
-  static constexpr float TOO_MANY_FOOD_WORKERS = 0.66;
-  static constexpr float PROD_BEFORE_SETTLER   = 7.0;
+  //
+  // ==== Private members ====
+  //
+ private:
+  details::CityImpl m_impl;
 };
 
 }

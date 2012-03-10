@@ -1,3 +1,4 @@
+#include "CityImpl.hpp"
 #include "City.hpp"
 #include "BaalExceptions.hpp"
 #include "World.hpp"
@@ -12,22 +13,7 @@
 #include <iostream>
 
 namespace baal {
-
-namespace {
-
-///////////////////////////////////////////////////////////////////////////////
-bool is_within_distance_of_any_city(const Location& location, int distance)
-///////////////////////////////////////////////////////////////////////////////
-{
-  for (City* city : Engine::instance().world().cities()) {
-    const Location& city_loc = city->location();
-    if (std::abs(location.row - city_loc.row) <= distance &&
-        std::abs(location.col - city_loc.col) <= distance) {
-      return true;
-    }
-  }
-  return false;
-}
+namespace details {
 
 struct FoodGetter
 {
@@ -82,6 +68,20 @@ struct FilterAlreadyWorked
     return !tile.worked();
   }
 };
+
+///////////////////////////////////////////////////////////////////////////////
+bool is_within_distance_of_any_city(const Location& location, int distance)
+///////////////////////////////////////////////////////////////////////////////
+{
+  for (City* city : Engine::instance().world().cities()) {
+    const Location& city_loc = city->location();
+    if (std::abs(location.row - city_loc.row) <= distance &&
+        std::abs(location.col - city_loc.col) <= distance) {
+      return true;
+    }
+  }
+  return false;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 template <typename Range, class Filter>
@@ -140,10 +140,8 @@ float compute_city_loc_heuristic(const Location& location)
   return available_food * available_prod;
 }
 
-} // empty namespace
-
 ///////////////////////////////////////////////////////////////////////////////
-City::City(const std::string& name, const Location& location)
+CityImpl::CityImpl(const std::string& name, const Location& location)
 ///////////////////////////////////////////////////////////////////////////////
   : m_name(name),
     m_rank(1),
@@ -156,22 +154,29 @@ City::City(const std::string& name, const Location& location)
 {}
 
 ///////////////////////////////////////////////////////////////////////////////
-void City::cycle_turn()
+CityImpl::tile_vec_pair CityImpl::examine_workable_tiles() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  return compute_nearby_food_and_prod_tiles(get_adjacent_location_range(m_location),
+                                            FilterAlreadyWorked());
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void CityImpl::cycle_turn()
 ///////////////////////////////////////////////////////////////////////////////
 {
   Require(m_population > 0,
           "This city has no people and should have been deleted");
 
   Engine& engine = Engine::instance();
-  World& world = engine.world();
+  World& world   = engine.world();
 
   // Gather resources based on nearby worked tiles. At this time, cities will
   // only be able to harvest adjacent tiles.
 
   // Evaluate nearby tiles, put in to sorted lists (best-to-worst) for each
   // of the two yield types
-  auto tile_pair = compute_nearby_food_and_prod_tiles(get_adjacent_location_range(m_location),
-                                                      FilterAlreadyWorked());
+  tile_vec_pair tile_pair = examine_workable_tiles();
   std::vector<WorldTile*>& food_tiles = tile_pair.first;
   std::vector<WorldTile*>& prod_tiles = tile_pair.second;
 
@@ -378,7 +383,7 @@ void City::cycle_turn()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void City::kill(unsigned killed)
+void CityImpl::kill(unsigned killed)
 ///////////////////////////////////////////////////////////////////////////////
 {
   Require(m_population >= killed, "Invalid killed: " << killed);
@@ -394,7 +399,7 @@ void City::kill(unsigned killed)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool City::build_infra(LandTile& land_tile)
+bool CityImpl::build_infra(LandTile& land_tile)
 ///////////////////////////////////////////////////////////////////////////////
 {
   unsigned infra_level = land_tile.infra_level();
@@ -410,7 +415,7 @@ bool City::build_infra(LandTile& land_tile)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-xmlNodePtr City::to_xml() const
+xmlNodePtr CityImpl::to_xml() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   xmlNodePtr City_node = xmlNewNode(NULL, BAD_CAST "City");
@@ -446,4 +451,5 @@ xmlNodePtr City::to_xml() const
   return City_node;
 }
 
+}
 }
