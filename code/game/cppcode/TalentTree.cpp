@@ -152,7 +152,7 @@ void TalentTree::check_prereqs(const Spell& spell, const Player& player) const
 xmlNodePtr TalentTree::to_xml()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  xmlNodePtr TalentTree_node = xmlNewNode(NULL, BAD_CAST "TalentTree");
+  xmlNodePtr TalentTree_node = xmlNewNode(nullptr, BAD_CAST "TalentTree");
 
   std::vector<std::pair<std::string, unsigned> > castable_spells;
   query_all_castable_spells(castable_spells);
@@ -166,9 +166,9 @@ xmlNodePtr TalentTree::to_xml()
     spell_name_oss << spell_name;
     spell_lvl_oss << spell_lvl;
 
-    xmlNodePtr spell_node = xmlNewNode(NULL, BAD_CAST "spell");
-    xmlNewChild(spell_node, NULL, BAD_CAST "spell_name", BAD_CAST spell_name_oss.str().c_str());
-    xmlNewChild(spell_node, NULL, BAD_CAST "spell_lvl", BAD_CAST spell_lvl_oss.str().c_str());
+    xmlNodePtr spell_node = xmlNewNode(nullptr, BAD_CAST "spell");
+    xmlNewChild(spell_node, nullptr, BAD_CAST "spell_name", BAD_CAST spell_name_oss.str().c_str());
+    xmlNewChild(spell_node, nullptr, BAD_CAST "spell_lvl", BAD_CAST spell_lvl_oss.str().c_str());
 
     xmlAddChild(TalentTree_node, spell_node);
   }

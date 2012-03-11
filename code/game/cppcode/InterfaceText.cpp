@@ -80,13 +80,13 @@ void InterfaceText::interact()
   const CommandFactory& cmd_factory = CommandFactory::instance();
 
   // readline library is in C - here comes the diarrhea
-  char *line = NULL;
+  char *line = nullptr;
 
   // Enter loop for this turn
   while(m_end_turns == 0) {
     // Grab a line of text
     line = readline("% ");
-    if (line == NULL){
+    if (line == nullptr){
       // User ctrl-d
       engine.quit();
       break;

@@ -37,7 +37,7 @@ class World : public Drawable
    */
   const WorldTile& get_tile(const Location& location) const {
     Assert(in_bounds(location), "Out of bounds");
-    Assert(m_tiles[location.row][location.col] != NULL, "Null");
+    Assert(m_tiles[location.row][location.col] != nullptr, "Null");
     return *(m_tiles[location.row][location.col]);
   }
 
@@ -46,7 +46,7 @@ class World : public Drawable
    */
   WorldTile& get_tile(const Location& location) {
     Assert(in_bounds(location), "Out of bounds");
-    Assert(m_tiles[location.row][location.col] != NULL, "Null");
+    Assert(m_tiles[location.row][location.col] != nullptr, "Null");
     return *(m_tiles[location.row][location.col]);
   }
 

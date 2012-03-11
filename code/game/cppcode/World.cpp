@@ -15,7 +15,7 @@ World::World(unsigned width, unsigned height)
     m_time()
 {
   for (unsigned i = 0; i < height; ++i) {
-    std::vector<WorldTile*> row(width, NULL);
+    std::vector<WorldTile*> row(width, nullptr);
     m_tiles.push_back(row);
   }
 }
@@ -193,7 +193,7 @@ void World::remove_city(City& city)
 xmlNodePtr World::to_xml()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  xmlNodePtr World_node = xmlNewNode(NULL, BAD_CAST "World");
+  xmlNodePtr World_node = xmlNewNode(nullptr, BAD_CAST "World");
 
   /*unsigned m_width;
   unsigned m_height;
@@ -204,11 +204,11 @@ xmlNodePtr World::to_xml()
 
   std::ostringstream width_oss;
   width_oss << m_width;
-  xmlNewChild(World_node, NULL, BAD_CAST "m_width", BAD_CAST width_oss.str().c_str());
+  xmlNewChild(World_node, nullptr, BAD_CAST "m_width", BAD_CAST width_oss.str().c_str());
 
   std::ostringstream height_oss;
   height_oss << m_height;
-  xmlNewChild(World_node, NULL, BAD_CAST "m_height", BAD_CAST height_oss.str().c_str());
+  xmlNewChild(World_node, nullptr, BAD_CAST "m_height", BAD_CAST height_oss.str().c_str());
 
   // I figure there's an easier Iterator here; not sure how to use it.
   for (unsigned int row = 0; row < m_height; row++) {
@@ -217,8 +217,8 @@ xmlNodePtr World::to_xml()
       std::ostringstream row_oss, col_oss;
       row_oss << row;
       col_oss << col;
-      xmlNewChild(Tile_node, NULL, BAD_CAST "row", BAD_CAST row_oss.str().c_str());
-      xmlNewChild(Tile_node, NULL, BAD_CAST "col", BAD_CAST col_oss.str().c_str());
+      xmlNewChild(Tile_node, nullptr, BAD_CAST "row", BAD_CAST row_oss.str().c_str());
+      xmlNewChild(Tile_node, nullptr, BAD_CAST "col", BAD_CAST col_oss.str().c_str());
       xmlAddChild(World_node, Tile_node);
     }
   }

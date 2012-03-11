@@ -22,7 +22,7 @@ class City
   // ==== Public API ====
   //
 
-  City(const std::string& name, const Location& location) :
+  City(const std::string& name, Location location) :
     m_impl(name, location)
   {}
 

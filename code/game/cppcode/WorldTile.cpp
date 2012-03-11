@@ -27,12 +27,12 @@ Yield::Yield(float food, float prod)
 xmlNodePtr Yield::to_xml()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  xmlNodePtr Yield_node = xmlNewNode(NULL, BAD_CAST "Yield");
+  xmlNodePtr Yield_node = xmlNewNode(nullptr, BAD_CAST "Yield");
   std::ostringstream m_food_oss, m_prod_oss;
   m_food_oss << m_food;
   m_prod_oss << m_prod;
-  xmlNewChild(Yield_node, NULL, BAD_CAST "m_food", BAD_CAST m_food_oss.str().c_str());
-  xmlNewChild(Yield_node, NULL, BAD_CAST "m_prod", BAD_CAST m_prod_oss.str().c_str());
+  xmlNewChild(Yield_node, nullptr, BAD_CAST "m_food", BAD_CAST m_food_oss.str().c_str());
+  xmlNewChild(Yield_node, nullptr, BAD_CAST "m_prod", BAD_CAST m_prod_oss.str().c_str());
 
   return Yield_node;
 }
@@ -76,7 +76,7 @@ void WorldTile::draw_text(std::ostream& out) const
     draw_land(out);
   }
   else if (s_draw_mode == CIV) {
-    if (city() != NULL) {
+    if (city() != nullptr) {
       out << BOLD_COLOR << RED
           << " C:" << std::setw(TILE_TEXT_WIDTH - 3) << city()->rank()
           << CLEAR_ALL;
@@ -93,7 +93,7 @@ void WorldTile::draw_text(std::ostream& out) const
   else if (s_draw_mode == MOISTURE) {
     const FoodTile* tile_ptr =
       dynamic_cast<const FoodTile*>(this);
-    if (tile_ptr != NULL) {
+    if (tile_ptr != nullptr) {
       float moisture = tile_ptr->soil_moisture();
       out << BOLD_COLOR;
       if (moisture < 1.0) {
@@ -163,7 +163,7 @@ void WorldTile::work()
 xmlNodePtr WorldTile::to_xml()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  xmlNodePtr WorldTile_node = xmlNewNode(NULL, BAD_CAST "Tile");
+  xmlNodePtr WorldTile_node = xmlNewNode(nullptr, BAD_CAST "Tile");
 
   xmlAddChild(WorldTile_node, m_base_yield.to_xml());
   xmlAddChild(WorldTile_node, m_climate.to_xml());
@@ -172,7 +172,7 @@ xmlNodePtr WorldTile::to_xml()
 
   std::ostringstream worked_oss;
   worked_oss << m_worked;
-  xmlNewChild(WorldTile_node, NULL, BAD_CAST "m_worked", BAD_CAST worked_oss.str().c_str());
+  xmlNewChild(WorldTile_node, nullptr, BAD_CAST "m_worked", BAD_CAST worked_oss.str().c_str());
 
   return WorldTile_node;
 }
@@ -205,7 +205,7 @@ void OceanTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
 Yield OceanTile::yield() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  return m_base_yield * Engine::instance().ai_player().tech_yield_multiplier();
+  return m_base_yield;
 }
 
 /*****************************************************************************/
@@ -216,7 +216,7 @@ LandTile::LandTile(Location location, Yield yield, Climate& climate, Geology& ge
   : WorldTile(location, yield, climate, geology),
     m_hp(1.0),
     m_infra_level(0),
-    m_city(NULL)
+    m_city(nullptr)
 {}
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -266,7 +266,7 @@ void LandTile::build_infra()
 ///////////////////////////////////////////////////////////////////////////////
 {
   Require(m_infra_level < LAND_TILE_MAX_INFRA, "Infra is maxed");
-  Require(city() == NULL, "Cannot build infra if there is city here");
+  Require(city() == nullptr, "Cannot build infra if there is city here");
 
   m_infra_level++;
 }
@@ -289,7 +289,6 @@ Yield LandTile::yield() const
   return
     m_base_yield * // base
     (1 + m_infra_level) * // infra multiplier
-    Engine::instance().ai_player().tech_yield_multiplier() * // tech multiplier
     m_hp; // damaged tiles yield less
 }
 
@@ -299,7 +298,7 @@ void LandTile::place_city(City& city)
 {
   Require(infra_level() == 0, "Cannot put city on tile with infra");
   Require(supports_city(), "Tile does not support cities");
-  Require(m_city == NULL, "Tile already had city: " << city.name());
+  Require(m_city == nullptr, "Tile already had city: " << city.name());
   m_city = &city;
 }
 
@@ -307,8 +306,8 @@ void LandTile::place_city(City& city)
 void LandTile::remove_city()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Require(m_city != NULL, "Erroneous call to remove_city");
-  m_city = NULL;
+  Require(m_city != nullptr, "Erroneous call to remove_city");
+  m_city = nullptr;
 }
 
 /*****************************************************************************/

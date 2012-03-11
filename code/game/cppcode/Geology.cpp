@@ -92,12 +92,12 @@ bool Geology::is_geological(DrawMode mode)
 xmlNodePtr Geology::to_xml()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  xmlNodePtr Geology_node = xmlNewNode(NULL, BAD_CAST "Geology");
+  xmlNodePtr Geology_node = xmlNewNode(nullptr, BAD_CAST "Geology");
 
   std::ostringstream m_plate_movement_oss;
   m_plate_movement_oss << m_plate_movement;
-  xmlNewChild(Geology_node, NULL, BAD_CAST "m_plate_movement", BAD_CAST m_plate_movement_oss.str().c_str());
-  xmlNewChild(Geology_node, NULL, BAD_CAST "type", BAD_CAST this->geology_type());
+  xmlNewChild(Geology_node, nullptr, BAD_CAST "m_plate_movement", BAD_CAST m_plate_movement_oss.str().c_str());
+  xmlNewChild(Geology_node, nullptr, BAD_CAST "type", BAD_CAST this->geology_type());
 
   return Geology_node;
 }

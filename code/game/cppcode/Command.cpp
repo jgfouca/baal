@@ -189,7 +189,7 @@ void SaveCommand::init(const std::vector<std::string>& args)
     std::ostringstream out;
 
     // Get current time and convert to tm struct
-    time_t curr_time_out = time(NULL);
+    time_t curr_time_out = time(nullptr);
     struct tm* UTC_time_out = localtime(&curr_time_out);
 
     // Create save name
@@ -216,10 +216,10 @@ void SaveCommand::apply() const
   Player& player = engine.player();
   //PlayerAI& ai_player = engine.ai_player();
 
-  xmlDocPtr doc = NULL;
-  xmlNodePtr root_node = NULL;
+  xmlDocPtr doc = nullptr;
+  xmlNodePtr root_node = nullptr;
   doc = xmlNewDoc(BAD_CAST "1.0");
-  root_node = xmlNewNode(NULL, BAD_CAST "baal_root");
+  root_node = xmlNewNode(nullptr, BAD_CAST "baal_root");
   xmlDocSetRootElement(doc, root_node);
 
   xmlAddChild(root_node, world.to_xml());
@@ -280,7 +280,7 @@ void SpellCommand::apply() const
               ", max col is: " << world.width() - 1);
 
   // Create the spell. Use an auto_ptr to ensure deletion even if a throw
-  // happens. I'd rather use a reference here since spell cannot be NULL, but
+  // happens. I'd rather use a reference here since spell cannot be nullptr, but
   // we need to auto_ptr since verify_cast can throw exceptions.
   std::auto_ptr<const Spell> spell(
     &(SpellFactory::create_spell(m_spell_name,

@@ -168,7 +168,7 @@ class Anomaly : public Drawable
   };
 
   /**
-   * Generates an anomaly. Returns NULL if the dice roll did not
+   * Generates an anomaly. Returns nullptr if the dice roll did not
    * merit the creation of an anomaly.
    */
   static const Anomaly* generate_anomaly(AnomalyCategory category,

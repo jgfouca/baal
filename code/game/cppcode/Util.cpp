@@ -50,7 +50,7 @@ char* command_generator (const char* text, int state)
     }
   }
 
-  return NULL;
+  return nullptr;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -61,7 +61,7 @@ char** baal_completion(const char* text, int start, int end)
     return rl_completion_matches(text, command_generator);
   }
 
-  return NULL;
+  return nullptr;
 }
 
 } // empty namespace

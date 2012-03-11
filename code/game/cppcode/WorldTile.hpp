@@ -53,7 +53,7 @@ struct Yield
  * operations on certain tiles are invalid, such as asking for the
  * sea surface temperature of a land tile. In that case, the type of the
  * tile checked via dynamic_cast? In other cases, the operation may not
- * make sense, but is a harmless query; in that case, a "NULL-like" value
+ * make sense, but is a harmless query; in that case, a "nullptr-like" value
  * is returned.
  *
  * TODO: There is probably a better way to design this... consider not
@@ -91,7 +91,7 @@ class WorldTile : public Drawable
 
   virtual unsigned infra_level() const { return 0; }
 
-  virtual City* city() const { return NULL; }
+  virtual City* city() const { return nullptr; }
 
   virtual void damage(float dmg) {}
 
@@ -222,7 +222,7 @@ class LandTile: public WorldTile
 
   float m_hp; // 0..1
   unsigned m_infra_level; // 0..MAX
-  City* m_city; // valid to have no (NULL) city, so use ptr
+  City* m_city; // valid to have no (nullptr) city, so use ptr
 
   // Friends interface
 

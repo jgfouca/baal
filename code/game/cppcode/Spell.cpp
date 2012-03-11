@@ -280,7 +280,7 @@ unsigned Hot::apply() const
   atmos.set_temperature(new_temp);
   SPELL_REPORT("raised temperature from " << prior_temp << " to " << new_temp);
 
-  if (ocean_tile != NULL) {
+  if (ocean_tile != nullptr) {
     // Heat ocean surface up
     int prior_ocean_temp = ocean_tile->surface_temp();
     int new_ocean_temp = prior_ocean_temp + warmup * OCEAN_SURFACE_CHG_RATIO;
@@ -288,7 +288,7 @@ unsigned Hot::apply() const
     SPELL_REPORT("raised ocean surface temperature from " <<
                  prior_ocean_temp << " to " << new_ocean_temp);
   }
-  else if (mtn_tile != NULL) {
+  else if (mtn_tile != nullptr) {
     // Check snowpack. A sudden meltoff of snowpack could cause a flood.
     //unsigned snowpack = mtn_tile->snowpack();
 
@@ -300,7 +300,7 @@ unsigned Hot::apply() const
 
   // This spell can kill if cast on a city and temps get high enough.
   City* city = tile.city();
-  if (city != NULL) {
+  if (city != nullptr) {
     if (new_temp > KILL_THRESHOLD) {
       float base_kill_pct = m_base_kill_func(new_temp);
       float tech_penalty  = m_tech_penalty_func(ai_player.tech_level());
@@ -353,7 +353,7 @@ unsigned Cold::apply() const
   atmos.set_temperature(new_temp);
   SPELL_REPORT("reduced temperature from " << prior_temp << " to " << new_temp);
 
-  if (ocean_tile != NULL) {
+  if (ocean_tile != nullptr) {
     // Cool ocean surface down
     int prior_ocean_temp = ocean_tile->surface_temp();
     int new_ocean_temp = prior_ocean_temp - cooldown * OCEAN_SURFACE_CHG_RATIO;
@@ -370,7 +370,7 @@ unsigned Cold::apply() const
 
   // This spell can kill if cast on a city and temps get low enough.
   City* city = tile.city();
-  if (city != NULL) {
+  if (city != nullptr) {
     if (new_temp < KILL_THRESHOLD) {
       float base_kill_pct = m_base_kill_func(-new_temp);
       float wind_bonus    = m_wind_bonus_func(atmos.wind().m_speed);
@@ -409,7 +409,7 @@ void Infect::verify_apply() const
 
   // Check for city
   City* city = tile.city();
-  RequireUser(city != NULL, "Must cast " << m_name << " on a city.");
+  RequireUser(city != nullptr, "Must cast " << m_name << " on a city.");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -426,7 +426,7 @@ unsigned Infect::apply() const
 
   // This verification should only have passed if we have a city
   City* city = tile.city();
-  Require(city != NULL, "Verification did not catch NULL city");
+  Require(city != nullptr, "Verification did not catch nullptr city");
 
   // Calculate extreme temperature bonus
   int degrees_extreme = 0;
@@ -517,7 +517,7 @@ unsigned WindSpell::apply() const
   // Check for the existence of a city
   // This spell can kill if cast on a city and winds get high enough
   City* city = tile.city();
-  if (city != NULL) {
+  if (city != nullptr) {
     if (new_wind_speed > KILL_THRESHOLD) {
       float base_kill_pct   = m_base_kill_func(new_wind_speed);
       float tech_penalty    = m_tech_penalty_func(ai_player.tech_level());
@@ -553,7 +553,7 @@ void Fire::verify_apply() const
 
   WorldTile& tile = Engine::instance().world().get_tile(m_location);
   FoodTile* food_tile = dynamic_cast<FoodTile*>(&tile);
-  RequireUser(food_tile != NULL,
+  RequireUser(food_tile != nullptr,
               "Fire can only be cast on tiles with plant growth");
 }
 
@@ -611,7 +611,7 @@ unsigned Fire::apply() const
 
   // This spell will kill if cast on a city
   City* city = tile.city();
-  if (city != NULL) {
+  if (city != nullptr) {
     float base_kill_pct   = m_base_kill_func(destructiveness);
     float tech_penalty    = m_tech_penalty_func(ai_player.tech_level());
     float defense_penalty = m_defense_penalty_func(city->defense());
@@ -642,7 +642,7 @@ void Tstorm::verify_apply() const
 
   WorldTile& tile = Engine::instance().world().get_tile(m_location);
   FoodTile* food_tile = dynamic_cast<FoodTile*>(&tile);
-  RequireUser(food_tile != NULL,
+  RequireUser(food_tile != nullptr,
               "Tstorm can only be cast on tiles with plant growth");
 }
 
@@ -708,7 +708,7 @@ unsigned Tstorm::apply() const
   // Check for the existence of a city
   // This spell can kill via lightning on a city
   City* city = tile.city();
-  if (city != NULL) {
+  if (city != nullptr) {
     float base_kill_pct = destructiveness * LIGHTING_PCT_KILL_PER_DESTRUCTIVENESS;
     float tech_penalty = std::sqrt(ai_player.tech_level());
     float defense_penalty = std::sqrt(city->defense());

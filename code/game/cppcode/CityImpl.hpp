@@ -27,7 +27,7 @@ class CityImpl
   // ==== Public API ====
   //
 
-  CityImpl(const std::string& name, const Location& location);
+  CityImpl(const std::string& name, Location location);
 
   CityImpl & operator=(const CityImpl&) = delete;
   CityImpl(const CityImpl&)             = delete;
@@ -75,18 +75,107 @@ class CityImpl
   // ==== Internal methods ====
   //
 
+  typedef std::pair<std::vector<WorldTile*>, std::vector<WorldTile*> > tile_vec_pair;
+  typedef std::pair<float, float> resource_pair;
+
+  enum ActionId {
+    BUILD_INFRA,
+    BUILD_SETTLER,
+    BUILD_DEFENSE,
+    NO_ACTION
+  };
+
+  struct Action {
+    Action(ActionId action_id, LandTile* tile = nullptr) :
+      m_action_id(action_id),
+      m_affected_tile(tile),
+      m_location()
+    {}
+
+    Action(ActionId action_id, Location location) :
+      m_action_id(action_id),
+      m_affected_tile(nullptr),
+      m_location(location)
+    {}
+
+    Action() :
+      m_action_id(NO_ACTION),
+      m_affected_tile(nullptr),
+      m_location()
+    {}
+
+    ActionId   m_action_id;
+    LandTile*  m_affected_tile;
+    Location   m_location;
+  };
+
+  //
+  // Methods with side-effects (try to limit the number of these).
+  //
+
   /**
    * Add a level of infrastructure to a tile.
    */
   bool build_infra(LandTile& land_tile);
 
-  typedef std::pair<std::vector<WorldTile*>, std::vector<WorldTile*> > tile_vec_pair;
+  /**
+   * Assign citizens based on recommendations.
+   *
+   * Return resources gathered.
+   */
+  resource_pair assign_citizens(const std::vector<WorldTile*>& work_food_tiles,
+                                const std::vector<WorldTile*>& work_prod_tiles);
+
+  /**
+   * Give the people food. The population will change based on how much food
+   * was provided.
+   */
+  void feed_people(float food);
+
+  /**
+   * Try to build something.
+   *
+   * Returns true if the item was built.
+   */
+  bool produce_item(Action action);
+
+  //
+  // Side-effect free methods (maximize use of these, they are easier
+  // to unit-test)
+  //
 
   /**
    * Examine harvestable nearby tiles, returning two sorted (best->worst)
    * vectors of tiles. The first for food, second for production.
    */
   tile_vec_pair examine_workable_tiles() const;
+
+  /**
+   * Compute recommended allocation of available citizens to various
+   * roles like working tiles and serving as specialist.
+   *
+   * Returns a pair of vectors, first representing food_tiles that should
+   * be worked, second representing production tiles that should be worked.
+   * All remaining workers are assumed to be specialists.
+   */
+  tile_vec_pair get_citizen_recommendation(const std::vector<WorldTile*>& food_tiles,
+                                           const std::vector<WorldTile*>& prod_tiles) const;
+
+  Action get_recommended_production(const std::vector<WorldTile*>& food_tiles,
+                                    const std::vector<WorldTile*>& prod_tiles,
+                                    const std::vector<WorldTile*>& worked_food_tiles,
+                                    const std::vector<WorldTile*>& worked_prod_tiles,
+                                    float food_gathered,
+                                    float prod_gathered);
+
+  /**
+   * How much food is required to avoid starvation.
+   */
+  float get_required_food() const
+  {
+    return static_cast<float>(m_population) / POP_THAT_EATS_ONE_FOOD;
+  }
+
 
   //
   // ==== Members ====
@@ -130,9 +219,9 @@ class CityImpl
 // the .cpp, but again, we publicize these for unit-testing.
 //
 
-bool is_within_distance_of_any_city(const Location& location, int distance);
+bool is_within_distance_of_any_city(Location location, int distance);
 
-float compute_city_loc_heuristic(const Location& location);
+float compute_city_loc_heuristic(Location location);
 
 }
 }

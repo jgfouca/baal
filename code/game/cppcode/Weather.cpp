@@ -150,20 +150,20 @@ void draw_rainfall(std::ostream& out, float rainfall)
 xmlNodePtr Climate::to_xml()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  xmlNodePtr Climate_node = xmlNewNode(NULL, BAD_CAST "Climate");
+  xmlNodePtr Climate_node = xmlNewNode(nullptr, BAD_CAST "Climate");
 
   std::ostringstream m_temperature_oss, m_rainfall_oss;
   m_temperature_oss << m_temperature;
   m_rainfall_oss << m_rainfall;
-  xmlNewChild(Climate_node, NULL, BAD_CAST "m_temperature", BAD_CAST m_temperature_oss.str().c_str());
-  xmlNewChild(Climate_node, NULL, BAD_CAST "m_rainfall", BAD_CAST m_rainfall_oss.str().c_str());
+  xmlNewChild(Climate_node, nullptr, BAD_CAST "m_temperature", BAD_CAST m_temperature_oss.str().c_str());
+  xmlNewChild(Climate_node, nullptr, BAD_CAST "m_rainfall", BAD_CAST m_rainfall_oss.str().c_str());
 
   xmlNodePtr Wind_node;
-  Wind_node = xmlNewNode(NULL, BAD_CAST "Wind");
+  Wind_node = xmlNewNode(nullptr, BAD_CAST "Wind");
   std::ostringstream m_speed_oss;
   m_speed_oss << m_wind.m_speed;
-  xmlNewChild(Wind_node, NULL, BAD_CAST "m_speed", BAD_CAST m_speed_oss.str().c_str());
-  xmlNewChild(Wind_node, NULL, BAD_CAST "m_direction", BAD_CAST direction_str(m_wind.m_direction).c_str());
+  xmlNewChild(Wind_node, nullptr, BAD_CAST "m_speed", BAD_CAST m_speed_oss.str().c_str());
+  xmlNewChild(Wind_node, nullptr, BAD_CAST "m_direction", BAD_CAST direction_str(m_wind.m_direction).c_str());
 
   xmlAddChild(Climate_node, Wind_node);
 
@@ -261,24 +261,24 @@ void Atmosphere::cycle_turn(const std::vector<const Anomaly*>& anomalies,
 xmlNodePtr Atmosphere::to_xml()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  xmlNodePtr Atmosphere_node = xmlNewNode(NULL, BAD_CAST "Atmosphere");
+  xmlNodePtr Atmosphere_node = xmlNewNode(nullptr, BAD_CAST "Atmosphere");
 
   std::ostringstream m_temperature_oss, m_dewpoint_oss, m_rainfall_oss, m_pressure_oss;
   m_temperature_oss << m_temperature;
   m_dewpoint_oss << m_dewpoint;
   m_rainfall_oss << m_rainfall;
   m_pressure_oss << m_pressure;
-  xmlNewChild(Atmosphere_node, NULL, BAD_CAST "m_temperature", BAD_CAST m_temperature_oss.str().c_str());
-  xmlNewChild(Atmosphere_node, NULL, BAD_CAST "m_dewpoint", BAD_CAST m_dewpoint_oss.str().c_str());
-  xmlNewChild(Atmosphere_node, NULL, BAD_CAST "m_rainfall", BAD_CAST m_rainfall_oss.str().c_str());
-  xmlNewChild(Atmosphere_node, NULL, BAD_CAST "m_pressure", BAD_CAST m_pressure_oss.str().c_str());
+  xmlNewChild(Atmosphere_node, nullptr, BAD_CAST "m_temperature", BAD_CAST m_temperature_oss.str().c_str());
+  xmlNewChild(Atmosphere_node, nullptr, BAD_CAST "m_dewpoint", BAD_CAST m_dewpoint_oss.str().c_str());
+  xmlNewChild(Atmosphere_node, nullptr, BAD_CAST "m_rainfall", BAD_CAST m_rainfall_oss.str().c_str());
+  xmlNewChild(Atmosphere_node, nullptr, BAD_CAST "m_pressure", BAD_CAST m_pressure_oss.str().c_str());
 
   xmlNodePtr Wind_node;
-  Wind_node = xmlNewNode(NULL, BAD_CAST "Wind");
+  Wind_node = xmlNewNode(nullptr, BAD_CAST "Wind");
   std::ostringstream m_speed_oss;
   m_speed_oss << m_wind.m_speed;
-  xmlNewChild(Wind_node, NULL, BAD_CAST "m_speed", BAD_CAST m_speed_oss.str().c_str());
-  xmlNewChild(Wind_node, NULL, BAD_CAST "m_direction", BAD_CAST direction_str(m_wind.m_direction).c_str());
+  xmlNewChild(Wind_node, nullptr, BAD_CAST "m_speed", BAD_CAST m_speed_oss.str().c_str());
+  xmlNewChild(Wind_node, nullptr, BAD_CAST "m_direction", BAD_CAST direction_str(m_wind.m_direction).c_str());
 
   xmlAddChild(Atmosphere_node, Wind_node);
 
@@ -333,7 +333,7 @@ const Anomaly* Anomaly::generate_anomaly(AnomalyCategory category,
     return new Anomaly(category, ABOVE, 1, location, area);
   }
   else {
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -433,7 +433,7 @@ Anomaly::AnomalyCategory& operator++(Anomaly::AnomalyCategory& category)
 xmlNodePtr Anomaly::to_xml() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  xmlNodePtr Anomaly_node = xmlNewNode(NULL, BAD_CAST "Anomaly");
+  xmlNodePtr Anomaly_node = xmlNewNode(nullptr, BAD_CAST "Anomaly");
 
   // AnomalyCategory m_category;
   // Type            m_type;
@@ -441,24 +441,24 @@ xmlNodePtr Anomaly::to_xml() const
   // Location        m_location;
   // unsigned        m_world_area;
 
-  xmlNewChild(Anomaly_node, NULL, BAD_CAST "m_category", BAD_CAST category_to_str(m_category).c_str());
+  xmlNewChild(Anomaly_node, nullptr, BAD_CAST "m_category", BAD_CAST category_to_str(m_category).c_str());
 
-  xmlNewChild(Anomaly_node, NULL, BAD_CAST "m_type", BAD_CAST type_to_str(m_type).c_str());
+  xmlNewChild(Anomaly_node, nullptr, BAD_CAST "m_type", BAD_CAST type_to_str(m_type).c_str());
 
   std::ostringstream m_intensity_oss;
   m_intensity_oss << m_intensity;
-  xmlNewChild(Anomaly_node, NULL, BAD_CAST "m_intensity", BAD_CAST m_intensity_oss.str().c_str());
+  xmlNewChild(Anomaly_node, nullptr, BAD_CAST "m_intensity", BAD_CAST m_intensity_oss.str().c_str());
 
-  xmlNodePtr Location_node = xmlNewNode(NULL, BAD_CAST "Location");
+  xmlNodePtr Location_node = xmlNewNode(nullptr, BAD_CAST "Location");
   std::ostringstream row_oss, col_oss;
   row_oss << m_location.row;
   col_oss << m_location.col;
-  xmlNewChild(Location_node, NULL, BAD_CAST "row", BAD_CAST row_oss.str().c_str());
-  xmlNewChild(Location_node, NULL, BAD_CAST "col", BAD_CAST col_oss.str().c_str());
+  xmlNewChild(Location_node, nullptr, BAD_CAST "row", BAD_CAST row_oss.str().c_str());
+  xmlNewChild(Location_node, nullptr, BAD_CAST "col", BAD_CAST col_oss.str().c_str());
 
   std::ostringstream m_world_area_oss;
   m_world_area_oss << m_world_area;
-  xmlNewChild(Anomaly_node, NULL, BAD_CAST "m_world_area", BAD_CAST m_world_area_oss.str().c_str());
+  xmlNewChild(Anomaly_node, nullptr, BAD_CAST "m_world_area", BAD_CAST m_world_area_oss.str().c_str());
 
   return Anomaly_node;
 }

@@ -66,7 +66,7 @@ void PlayerAI::draw_text(std::ostream& out) const
 ///////////////////////////////////////////////////////////////////////////////
 xmlNodePtr PlayerAI::to_xml()///////////////////////////////////////////////////////////////////////////////
 {
-  xmlNodePtr PlayerAI_node = xmlNewNode(NULL, BAD_CAST "PlayerAI - stub");
+  xmlNodePtr PlayerAI_node = xmlNewNode(nullptr, BAD_CAST "PlayerAI - stub");
   return PlayerAI_node;
 }
 

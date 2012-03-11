@@ -24,11 +24,11 @@ World& WorldFactoryFromFile::load()
 ///////////////////////////////////////////////////////////////////////////////
 {
   m_mapfile = xmlParseFile(m_mapfilename);
-  RequireUser(m_mapfile != NULL,
+  RequireUser(m_mapfile != nullptr,
               "Map file " << m_mapfilename << " not parsed successfully.");
 
   m_curr_node = xmlDocGetRootElement(m_mapfile);
-  if (m_curr_node == NULL) {
+  if (m_curr_node == nullptr) {
     xmlFreeDoc(m_mapfile);
     RequireUser(false, "Map file " << m_mapfilename << " is empty.");
   }
@@ -42,7 +42,7 @@ World& WorldFactoryFromFile::load()
 
   World& world = *(new World(map_width, map_height));
   m_curr_node = m_curr_node->xmlChildrenNode;
-  while (m_curr_node != NULL) {
+  while (m_curr_node != nullptr) {
     if (!xmlStrcmp(m_curr_node->name, (const xmlChar *)"tile")) {
       int row = get_int_from_parent("row");
       int col = get_int_from_parent("col");
@@ -53,7 +53,7 @@ World& WorldFactoryFromFile::load()
       int col = get_int_from_parent("col");
       char* name = get_element("name");
       LandTile* landtile = dynamic_cast<LandTile*>(world.m_tiles[row][col]);
-      RequireUser(landtile != NULL,
+      RequireUser(landtile != nullptr,
                   "Tried to place city at " << row << ", " << col <<
                   "; which is not a landtile");
       world.place_city(name, Location(row, col));
@@ -69,7 +69,7 @@ char* WorldFactoryFromFile::get_element(const char *elemname)
 ///////////////////////////////////////////////////////////////////////////////
 {
   xmlNodePtr curr_node = m_curr_node->xmlChildrenNode;
-  while (curr_node != NULL) {
+  while (curr_node != nullptr) {
     if (!xmlStrcmp(curr_node->name, (const xmlChar *)elemname)) {
       return (char *)xmlNodeListGetString(m_mapfile,
                                           curr_node->xmlChildrenNode,
@@ -156,7 +156,7 @@ Climate& WorldFactoryFromFile::get_Climate_from_parent()
   // m_curr_node is tile
   xmlNodePtr parent = m_curr_node;
   m_curr_node = m_curr_node->xmlChildrenNode;
-  while (m_curr_node != NULL) {
+  while (m_curr_node != nullptr) {
     if (!xmlStrcmp(m_curr_node->name, (const xmlChar *)"Climate")) {
       int temperature = get_int_from_parent("temperature");
       unsigned rainfall = get_unsigned_from_parent("rainfall");
@@ -178,7 +178,7 @@ Wind WorldFactoryFromFile::get_Wind_from_parent()
   xmlNodePtr parent = m_curr_node;
   m_curr_node = m_curr_node->xmlChildrenNode;
 
-  while (m_curr_node != NULL) {
+  while (m_curr_node != nullptr) {
     if (!xmlStrcmp(m_curr_node->name, (const xmlChar *)"Wind")) {
       unsigned speed = get_unsigned_from_parent("speed");
       Direction direction = get_Direction_from_parent();
@@ -223,7 +223,7 @@ Geology& WorldFactoryFromFile::get_Geology_from_parent()
   xmlNodePtr parent = m_curr_node;
   m_curr_node = m_curr_node->xmlChildrenNode;
 
-  while (m_curr_node != NULL) {
+  while (m_curr_node != nullptr) {
     if (!xmlStrcmp(m_curr_node->name, (const xmlChar *)"Geology")) {
       char *geotype = get_element("type");
       Geology* rv;
