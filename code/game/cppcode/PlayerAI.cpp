@@ -6,20 +6,20 @@
 namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
-PlayerAI::PlayerAI()
+PlayerAI::PlayerAI(const Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
   : m_tech_level(STARTING_TECH_LEVEL),
     m_tech_points(0),
     m_next_tech_level_cost(FIRST_TECH_LEVEL_COST),
-    m_population(0)
+    m_population(0),
+    m_engine(engine)
 {}
 
 ///////////////////////////////////////////////////////////////////////////////
 void PlayerAI::cycle_turn()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Engine& engine = Engine::instance();
-  const World& world = engine.world();
+  const World& world = m_engine.world();
   const std::vector<City*>& cities = world.cities();
 
   // Manage cities. Note that this may cause additional cities to be created,

@@ -279,6 +279,7 @@ Enhanced by high wind, low dewpoint, high temperature, and low soil moisture.
 * Singletons are fragile and do not lend themselves naturally to unit-testing,
   perhaps theres a way to remove these? Maybe with some kind of aggregate
   class?
+* Make Percent it's own type to avoid conversion errors.
 * Should elevation impact base production?
 * draw_pygame is a mess
 * Continue to fill in more Spell implementations

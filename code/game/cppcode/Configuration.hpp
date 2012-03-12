@@ -6,24 +6,25 @@
 namespace baal {
 
 /**
- * A singleton class, the global object will contain the user's configuration
- * choices for this execution of the game.
+ * A class that aggregates all configuration information.
  *
  * Note, no knowledge of configuration semantics should be exposed here.
+ * All we're doing here is storing strings; interpretation of the strings
+ * is left to the users of the configuration.
  */
 class Configuration
 {
  public:
 
-  /**
-   * Retrieve global singleton instance.
-   *
-   * It's OK to return a non-const since there are no non-const methods in the
-   * public interface.
-   */
-  static Configuration& instance();
+  static const std::string UNSET;
 
-  bool initialized() const { return m_initialized; }
+  /**
+   * Unspecied configuration items will be left as '' so that it may be handled
+   * by the knowledgable party.
+   */
+  Configuration(const std::string& interface_config = UNSET,
+                const std::string& world_config     = UNSET,
+                const std::string& player_name      = UNSET);
 
   // Getters
 
@@ -36,33 +37,12 @@ class Configuration
   const std::string& get_player_name() const
   { return m_player_name; }
 
-  static const std::string UNSET;
-
  private:
-
-  /**
-   * Private constructor. Use public instance method to get the Configuration.
-   *
-   * Unspecied configuration items will be left as '' so that it may be handled
-   * by the knowledgable party.
-   */
-  Configuration();
-
-  // Disallowed methods
-  Configuration(const Configuration&);
-  Configuration& operator=(const Configuration&);
 
   // Configuration items are all instance variables
   std::string m_interface_config;
   std::string m_world_config;
   std::string m_player_name;
-
-  // Member to denote that configuration object has been initialized
-  bool m_initialized;
-
-  // Any modifier/setter of Configuration has to be a friend
-  friend bool parse_args(int argc, char** argv);
-  friend void setup_singletons();
 };
 
 }

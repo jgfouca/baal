@@ -22,19 +22,17 @@ char* dupstr(char *s)
   return r;
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
 char* command_generator (const char* text, int state)
 ///////////////////////////////////////////////////////////////////////////////
 {
   static int len;
-  static std::map<std::string, Command*>::const_iterator list_index;
+  static std::vector<std::string>::const_iterator list_index;
   char *name;
 
   // Get handle to command factory, and pointer to command map
   const CommandFactory& cmd_factory = CommandFactory::instance();
-  const std::map<std::string, Command*>& cmd_map =
-    cmd_factory.get_command_map();
+  const std::vector<std::string>& cmd_map = cmd_factory.get_command_map();
 
   if (!state) {
     list_index = cmd_map.begin();
@@ -42,7 +40,7 @@ char* command_generator (const char* text, int state)
   }
 
   while ( list_index != cmd_map.end() ) {
-    name = (char *)(list_index->first.c_str());
+    name = (char *)(list_index->c_str());
     ++list_index;
 
     if (std::strncmp(name, text, len) == 0){
@@ -74,16 +72,6 @@ void initialize_readline ()
 
   // readline binding defines autocomplete behavior
   rl_attempted_completion_function = baal_completion;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void setup_singletons()
-///////////////////////////////////////////////////////////////////////////////
-{
-  Configuration& config = Configuration::instance();
-  config.m_initialized = true;
-
-  Engine::instance();
 }
 
 } // namespace baal

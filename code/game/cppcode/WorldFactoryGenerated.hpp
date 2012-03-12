@@ -4,11 +4,12 @@
 namespace baal {
 
 class World;
+class Engine;
 
 class WorldFactoryGenerated
 {
  public:
-  static World& create();
+  static World& create(Engine& engine);
 };
 
 }

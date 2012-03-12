@@ -53,14 +53,20 @@ struct AcceptAll
 
 struct FilterTooCloseToOtherCities
 {
-  FilterTooCloseToOtherCities(int distance) : m_distance(distance) {}
+  FilterTooCloseToOtherCities(int distance, const Engine& engine)
+    : m_distance(distance),
+      m_engine(engine)
+  {}
 
   bool operator()(const WorldTile& tile) const
   {
-    return !is_within_distance_of_any_city(tile.location(), m_distance);
+    return !is_within_distance_of_any_city(tile.location(),
+                                           m_distance,
+                                           m_engine);
   }
 
   int m_distance;
+  const Engine& m_engine;
 };
 
 struct FilterAlreadyWorked
@@ -107,10 +113,12 @@ std::ostream& operator<<(std::ostream& out, CityImpl::Action action)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool is_within_distance_of_any_city(Location location, int distance)
+bool is_within_distance_of_any_city(Location location,
+                                    int distance,
+                                    const Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  for (City* city : Engine::instance().world().cities()) {
+  for (const City* city : engine.world().cities()) {
     Location city_loc = city->location();
     if (std::abs(static_cast<int>(location.row - city_loc.row)) <= distance &&
         std::abs(static_cast<int>(location.col - city_loc.col)) <= distance) {
@@ -124,20 +132,21 @@ bool is_within_distance_of_any_city(Location location, int distance)
 template <typename Range, class Filter>
 std::pair<std::vector<WorldTile*>, std::vector<WorldTile*> >
 compute_nearby_food_and_prod_tiles(Range location_range,
+                                   const Engine& engine,
                                    Filter filter = AcceptAll())
 ///////////////////////////////////////////////////////////////////////////////
 {
   // Returns a 2-ple of (food-tiles, production-tiles); both lists are sorted
   // from highest to lowest based on yield.
 
-  World& world = Engine::instance().world();
+  const World& world = engine.world();
   std::vector<WorldTile*> food_tiles, prod_tiles;
   const unsigned num_tiles_surrounding_city = boost::distance(location_range);
   food_tiles.reserve(num_tiles_surrounding_city);
   prod_tiles.reserve(num_tiles_surrounding_city);
 
   for (Location location : location_range) {
-    WorldTile& tile = world.get_tile(location);
+    WorldTile& tile = const_cast<WorldTile&>(world.get_tile(location));
     if (filter(tile)) {
       if (tile.yield().m_food > 0) {
         food_tiles.push_back(&tile);
@@ -157,12 +166,14 @@ compute_nearby_food_and_prod_tiles(Range location_range,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-float compute_city_loc_heuristic(Location location)
+float compute_city_loc_heuristic(Location location, const Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
   const int min_distance = 1;
-  auto tile_pair = compute_nearby_food_and_prod_tiles(get_adjacent_location_range(location),
-                                                      FilterTooCloseToOtherCities(min_distance));
+  auto tile_pair = compute_nearby_food_and_prod_tiles(
+    get_adjacent_location_range(location, engine),
+    engine,
+    FilterTooCloseToOtherCities(min_distance, engine));
   float available_food = 0.0, available_prod = 0.0;
 
   for (WorldTile* tile : tile_pair.first) {
@@ -178,7 +189,7 @@ float compute_city_loc_heuristic(Location location)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-CityImpl::CityImpl(const std::string& name, Location location)
+CityImpl::CityImpl(const std::string& name, Location location, Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
   : m_name(name),
     m_rank(1),
@@ -186,8 +197,9 @@ CityImpl::CityImpl(const std::string& name, Location location)
     m_next_rank_pop(CITY_STARTING_POP * CITY_RANK_UP_MULTIPLIER),
     m_production(0.0),
     m_location(location),
-    m_defense_level(1),
-    m_famine(false)
+    m_defense_level(CITY_STARTING_DEFENSE),
+    m_famine(false),
+    m_engine(engine)
 {}
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -195,8 +207,10 @@ CityImpl::tile_vec_pair
 CityImpl::examine_workable_tiles() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  return compute_nearby_food_and_prod_tiles(get_adjacent_location_range(m_location),
-                                            FilterAlreadyWorked());
+  return compute_nearby_food_and_prod_tiles(
+    get_adjacent_location_range(m_location, m_engine),
+    m_engine,
+    FilterAlreadyWorked());
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -215,7 +229,7 @@ CityImpl::get_citizen_recommendation(const std::vector<WorldTile*>& food_tiles,
 
   float req_food = get_required_food();
   float food_gathered = FOOD_FROM_CITY_CENTER;
-  const float tech_multiplier = Engine::instance().ai_player().tech_yield_multiplier();
+  const float tech_multiplier = m_engine.ai_player().tech_yield_multiplier();
   unsigned num_citizens_left = m_rank;
 
   // Determine how many workers should be allocated to gathering food. This
@@ -292,7 +306,7 @@ CityImpl::assign_citizens(const std::vector<WorldTile*>& work_food_tiles,
   prod_gathered += num_specialists * PROD_FROM_SPECIALIST;
 
   // AI get's a resource collection bonus from tech
-  const float tech_multiplier = Engine::instance().ai_player().tech_yield_multiplier();
+  const float tech_multiplier = m_engine.ai_player().tech_yield_multiplier();
   food_gathered *= tech_multiplier;
   prod_gathered *= tech_multiplier;
   m_production  += prod_gathered; // prod is accumulated, all food is eaten
@@ -388,7 +402,7 @@ CityImpl::get_recommended_production(const std::vector<WorldTile*>& food_tiles,
   // each evaluate whether an item should be built; the order in which the
   // blocks appear defines the priority.
 
-  World& world = Engine::instance().world();
+  World& world = m_engine.world();
 
   // 1)
   // We want some of our workers doing something other than just
@@ -441,9 +455,9 @@ CityImpl::get_recommended_production(const std::vector<WorldTile*>& food_tiles,
         // Check if this is a valid city loc
         if (world.in_bounds(loc_delta) &&
             world.get_tile(loc_delta).supports_city() &&
-            !is_within_distance_of_any_city(loc_delta, min_distance - 1)) {
+            !is_within_distance_of_any_city(loc_delta, min_distance - 1, m_engine)) {
 
-          float heuristic = compute_city_loc_heuristic(loc_delta);
+          float heuristic = compute_city_loc_heuristic(loc_delta, m_engine);
           if (heuristic > heuristic_of_best_loc_so_far) {
             settler_loc = loc_delta;
             heuristic_of_best_loc_so_far = heuristic;
@@ -482,7 +496,7 @@ bool CityImpl::produce_item(Action action)
   std::cout << "  produce_item(" << action << ")" << std::endl;
   std::cout << "    production accumulated: " << m_production << std::endl;
 #endif
-  World& world = Engine::instance().world();
+  World& world = m_engine.world();
   bool was_produced = false;
   float orig_production = m_production;
 

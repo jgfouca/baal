@@ -10,6 +10,7 @@
 namespace baal {
 
 class Spell;
+class Engine;
 
 /**
  * Encapsulates player state.
@@ -17,7 +18,7 @@ class Spell;
 class Player : public Drawable
 {
  public:
-  Player();
+  Player(const Engine& engine);
 
   void learn(const Spell& spell);
 
@@ -43,6 +44,8 @@ class Player : public Drawable
 
   xmlNodePtr to_xml();
 
+  const Engine& engine() const { return m_engine; }
+
 private:
   // Forbidden
   Player(const Player&);
@@ -57,6 +60,7 @@ private:
   unsigned    m_level;
   unsigned    m_next_level_cost;
   TalentTree  m_talents;
+  const Engine& m_engine;
 
   // Class members
   static constexpr unsigned STARTING_MANA            = 100;

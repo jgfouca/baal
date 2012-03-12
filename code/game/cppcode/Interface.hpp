@@ -43,7 +43,7 @@ class Interface
 do {                                                                    \
   std::ostringstream spell_report_oss;                                  \
   spell_report_oss << m_name << ": " << msg;                            \
-  Engine::instance().interface().spell_report(spell_report_oss.str());  \
+  m_engine.interface().spell_report(spell_report_oss.str());            \
 } while (false)
 
 } // namespace baal

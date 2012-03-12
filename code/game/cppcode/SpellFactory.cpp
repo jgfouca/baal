@@ -5,134 +5,107 @@
 
 namespace baal {
 
-std::string SpellFactory::HOT    = "hot";
-std::string SpellFactory::COLD   = "cold";
-std::string SpellFactory::WIND   = "wind";
-std::string SpellFactory::INFECT = "infect";
-
-std::string SpellFactory::FIRE   = "fire";
-std::string SpellFactory::TSTORM = "tstorm";
-std::string SpellFactory::SNOW   = "snow";
-
-std::string SpellFactory::AVALANCHE = "avalanche";
-std::string SpellFactory::FLOOD     = "flood";
-std::string SpellFactory::DRY       = "dry";
-std::string SpellFactory::BLIZZARD  = "blizzard";
-std::string SpellFactory::TORNADO   = "tornado";
-
-std::string SpellFactory::HEATWAVE = "heatwave";
-std::string SpellFactory::COLDWAVE = "coldwave";
-std::string SpellFactory::DROUGHT  = "drought";
-std::string SpellFactory::MONSOON  = "monsoon";
-
-std::string SpellFactory::DISEASE    = "disease";
-std::string SpellFactory::EARTHQUAKE = "earthquake";
-std::string SpellFactory::HURRICANE  = "hurricane";
-
-std::string SpellFactory::PLAGUE  = "plague";
-std::string SpellFactory::VOLCANO = "volcano";
-
-std::string SpellFactory::ASTEROID = "asteroid";
-
 std::string SpellFactory::ALL_SPELLS[] = {
-  SpellFactory::HOT,
-  SpellFactory::COLD,
-  SpellFactory::WIND,
-  SpellFactory::INFECT,
-  SpellFactory::FIRE,
-  SpellFactory::TSTORM,
-  SpellFactory::SNOW,
-  SpellFactory::AVALANCHE,
-  SpellFactory::FLOOD,
-  SpellFactory::DRY,
-  SpellFactory::BLIZZARD,
-  SpellFactory::TORNADO,
-  SpellFactory::HEATWAVE,
-  SpellFactory::COLDWAVE,
-  SpellFactory::DROUGHT,
-  SpellFactory::MONSOON,
-  SpellFactory::DISEASE,
-  SpellFactory::EARTHQUAKE,
-  SpellFactory::HURRICANE,
-  SpellFactory::PLAGUE,
-  SpellFactory::VOLCANO,
-  SpellFactory::ASTEROID
+  Hot::NAME,
+  Cold::NAME,
+  WindSpell::NAME,
+  Infect::NAME,
+  Fire::NAME,
+  Tstorm::NAME,
+  Snow::NAME,
+  Avalanche::NAME,
+  Flood::NAME,
+  Dry::NAME,
+  Blizzard::NAME,
+  Tornado::NAME,
+  Heatwave::NAME,
+  Coldwave::NAME,
+  Drought::NAME,
+  Monsoon::NAME,
+  Disease::NAME,
+  Earthquake::NAME,
+  Hurricane::NAME,
+  Plague::NAME,
+  Volcano::NAME,
+  Asteroid::NAME
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 const Spell& SpellFactory::create_spell(const std::string& spell_name,
                                         unsigned           spell_level,
-                                        const Location&    location)
+                                        const Location&    location,
+                                        Engine&            engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  if (spell_name == HOT) {
-    return *(new Hot(spell_level, location));
+  if (spell_name == Hot::NAME) {
+    return *(new Hot(spell_level, location, engine));
   }
-  else if (spell_name == COLD) {
-    return *(new Cold(spell_level, location));
+  else if (spell_name == Cold::NAME) {
+    return *(new Cold(spell_level, location, engine));
   }
-  else if (spell_name == WIND) {
-    return *(new WindSpell(spell_level, location));
+  else if (spell_name == WindSpell::NAME) {
+    return *(new WindSpell(spell_level, location, engine));
   }
-  else if (spell_name == INFECT) {
-    return *(new Infect(spell_level, location));
+  else if (spell_name == Infect::NAME) {
+    return *(new Infect(spell_level, location, engine));
   }
-  else if (spell_name == FIRE) {
-    return *(new Fire(spell_level, location));
+  else if (spell_name == Fire::NAME) {
+    return *(new Fire(spell_level, location, engine));
   }
-  else if (spell_name == TSTORM) {
-    return *(new Tstorm(spell_level, location));
+  else if (spell_name == Tstorm::NAME) {
+    return *(new Tstorm(spell_level, location, engine));
   }
-  else if (spell_name == SNOW) {
-    return *(new Snow(spell_level, location));
+  else if (spell_name == Snow::NAME) {
+    return *(new Snow(spell_level, location, engine));
   }
-  else if (spell_name == AVALANCHE) {
-    return *(new Avalanche(spell_level, location));
+  else if (spell_name == Avalanche::NAME) {
+    return *(new Avalanche(spell_level, location, engine));
   }
-  else if (spell_name == FLOOD) {
-    return *(new Flood(spell_level, location));
+  else if (spell_name == Flood::NAME) {
+    return *(new Flood(spell_level, location, engine));
   }
-  else if (spell_name == DRY) {
-    return *(new Dry(spell_level, location));
+  else if (spell_name == Dry::NAME) {
+    return *(new Dry(spell_level, location, engine));
   }
-  else if (spell_name == BLIZZARD) {
-    return *(new Blizzard(spell_level, location));
+  else if (spell_name == Blizzard::NAME) {
+    return *(new Blizzard(spell_level, location, engine));
   }
-  else if (spell_name == TORNADO) {
-    return *(new Tornado(spell_level, location));
+  else if (spell_name == Tornado::NAME) {
+    return *(new Tornado(spell_level, location, engine));
   }
-  else if (spell_name == HEATWAVE) {
-    return *(new Heatwave(spell_level, location));
+  else if (spell_name == Heatwave::NAME) {
+    return *(new Heatwave(spell_level, location, engine));
   }
-  else if (spell_name == COLDWAVE) {
-    return *(new Coldwave(spell_level, location));
+  else if (spell_name == Coldwave::NAME) {
+    return *(new Coldwave(spell_level, location, engine));
   }
-  else if (spell_name == DROUGHT) {
-    return *(new Drought(spell_level, location));
+  else if (spell_name == Drought::NAME) {
+    return *(new Drought(spell_level, location, engine));
   }
-  else if (spell_name == MONSOON) {
-    return *(new Monsoon(spell_level, location));
+  else if (spell_name == Monsoon::NAME) {
+    return *(new Monsoon(spell_level, location, engine));
   }
-  else if (spell_name == DISEASE) {
-    return *(new Disease(spell_level, location));
+  else if (spell_name == Disease::NAME) {
+    return *(new Disease(spell_level, location, engine));
   }
-  else if (spell_name == EARTHQUAKE) {
-    return *(new Earthquake(spell_level, location));
+  else if (spell_name == Earthquake::NAME) {
+    return *(new Earthquake(spell_level, location, engine));
   }
-  else if (spell_name == HURRICANE) {
-    return *(new Hurricane(spell_level, location));
+  else if (spell_name == Hurricane::NAME) {
+    return *(new Hurricane(spell_level, location, engine));
   }
-  else if (spell_name == PLAGUE) {
-    return *(new Plague(spell_level, location));
+  else if (spell_name == Plague::NAME) {
+    return *(new Plague(spell_level, location, engine));
   }
-  else if (spell_name == VOLCANO) {
-    return *(new Volcano(spell_level, location));
+  else if (spell_name == Volcano::NAME) {
+    return *(new Volcano(spell_level, location, engine));
   }
-  else if (spell_name == ASTEROID) {
-    return *(new Asteroid(spell_level, location));
+  else if (spell_name == Asteroid::NAME) {
+    return *(new Asteroid(spell_level, location, engine));
   }
   else {
     RequireUser(false, "Unknown spell: " << spell_name);
+    return *static_cast<Spell*>(nullptr);
   }
 }
 

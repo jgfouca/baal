@@ -46,7 +46,7 @@ Location::Location(const std::string& str_location)
 void AdjacentLocationIterator::advance()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  World& world = Engine::instance().world();
+  const World& world = m_engine.world();
   int row_delta = -1, col_delta = -1;
   unsigned center_row = m_center.row, center_col = m_center.col;
 

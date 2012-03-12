@@ -24,6 +24,7 @@ namespace baal {
 
 class WorldTile;
 class City;
+class Engine;
 
 /**
  * Defines the prerequisits for a spell. The previous level of any
@@ -102,7 +103,8 @@ class Spell
         const Location&     location,
         unsigned            base_cost,
         unsigned            cost_increment,
-        const SpellPrereq&  prereq);
+        const SpellPrereq&  prereq,
+        Engine&             engine);
 
   virtual ~Spell() {}
 
@@ -134,6 +136,7 @@ class Spell
   unsigned           m_base_cost;
   unsigned           m_cost_increment;
   const SpellPrereq& m_prereq;
+  Engine&            m_engine;
 
   // Constants
 
@@ -180,13 +183,15 @@ class Hot : public Spell
 {
  public:
   Hot(unsigned        spell_level,
-      const Location& location)
-    : Spell(SpellFactory::HOT,
+      const Location& location,
+      Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {
     // base_kill(temp) = (temp - KILL_THRESHOLD)^1.5 / 8;
     m_base_kill_func = std::tr1::bind(baal::poly_growth,
@@ -231,13 +236,15 @@ class Cold : public Spell
 {
  public:
   Cold(unsigned        spell_level,
-       const Location& location)
-    : Spell(SpellFactory::COLD,
+       const Location& location,
+       Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {
     // base_kill(temp) = (KILL_THRESHOLD - temp)^1.5 / 8;
     m_base_kill_func = std::tr1::bind(baal::poly_growth,
@@ -292,13 +299,15 @@ class Infect : public Spell
 {
  public:
   Infect(unsigned        spell_level,
-         const Location& location)
-    : Spell(SpellFactory::INFECT,
+         const Location& location,
+         Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {
     // base_kill(spell_level) = spell_level^1.3
     m_base_kill_func = std::tr1::bind(baal::poly_growth,
@@ -361,13 +370,15 @@ class WindSpell : public Spell
 {
  public:
   WindSpell(unsigned        spell_level,
-            const Location& location)
-    : Spell(SpellFactory::WIND,
+            const Location& location,
+            Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {
     // base_kill(speed) = 1.03^(speed - KILL_THRESHOLD)
     m_base_kill_func = std::tr1::bind(baal::exp_growth,
@@ -426,13 +437,15 @@ class Fire : public Spell
 {
  public:
   Fire(unsigned        spell_level,
-       const Location& location)
-    : Spell(SpellFactory::FIRE,
+       const Location& location,
+       Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {
     // base_destructiveness(spell_level) = spell_level^1.3
     m_base_destructiveness_func = std::tr1::bind(baal::poly_growth,
@@ -531,13 +544,15 @@ class Tstorm : public Spell
 {
  public:
   Tstorm(unsigned        spell_level,
-         const Location& location)
-    : Spell(SpellFactory::TSTORM,
+         const Location& location,
+         Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const;
@@ -573,13 +588,15 @@ class Snow : public Spell
 {
  public:
   Snow(unsigned        spell_level,
-       const Location& location)
-    : Spell(SpellFactory::SNOW,
+       const Location& location,
+       Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
@@ -603,13 +620,15 @@ class Avalanche : public Spell
 {
  public:
   Avalanche(unsigned        spell_level,
-            const Location& location)
-    : Spell(SpellFactory::AVALANCHE,
+            const Location& location,
+            Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
@@ -633,13 +652,15 @@ class Flood : public Spell
 {
  public:
   Flood(unsigned        spell_level,
-        const Location& location)
-    : Spell(SpellFactory::FLOOD,
+        const Location& location,
+        Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
@@ -663,13 +684,15 @@ class Dry : public Spell
 {
  public:
   Dry(unsigned        spell_level,
-      const Location& location)
-    : Spell(SpellFactory::DRY,
+      const Location& location,
+      Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
@@ -693,13 +716,15 @@ class Blizzard : public Spell
 {
  public:
   Blizzard(unsigned        spell_level,
-           const Location& location)
-    : Spell(SpellFactory::BLIZZARD,
+           const Location& location,
+           Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
@@ -724,13 +749,15 @@ class Tornado : public Spell
 {
  public:
   Tornado(unsigned        spell_level,
-          const Location& location)
-    : Spell(SpellFactory::TORNADO,
+          const Location& location,
+          Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
@@ -754,13 +781,15 @@ class Heatwave : public Spell
 {
  public:
   Heatwave(unsigned        spell_level,
-           const Location& location)
-    : Spell(SpellFactory::HEATWAVE,
+           const Location& location,
+           Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
@@ -784,13 +813,15 @@ class Coldwave : public Spell
 {
  public:
   Coldwave(unsigned        spell_level,
-           const Location& location)
-    : Spell(SpellFactory::COLDWAVE,
+           const Location& location,
+           Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
@@ -814,13 +845,15 @@ class Drought : public Spell
 {
  public:
   Drought(unsigned        spell_level,
-          const Location& location)
-    : Spell(SpellFactory::DROUGHT,
+          const Location& location,
+          Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
@@ -844,13 +877,15 @@ class Monsoon : public Spell
 {
  public:
   Monsoon(unsigned        spell_level,
-          const Location& location)
-    : Spell(SpellFactory::MONSOON,
+          const Location& location,
+          Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
@@ -873,13 +908,15 @@ class Disease : public Spell
 {
  public:
   Disease(unsigned        spell_level,
-          const Location& location)
-    : Spell(SpellFactory::DISEASE,
+          const Location& location,
+          Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
@@ -903,13 +940,15 @@ class Earthquake : public Spell
 {
  public:
   Earthquake(unsigned        spell_level,
-             const Location& location)
-    : Spell(SpellFactory::EARTHQUAKE,
+             const Location& location,
+             Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
@@ -935,13 +974,15 @@ class Hurricane : public Spell
 {
  public:
   Hurricane(unsigned        spell_level,
-            const Location& location)
-    : Spell(SpellFactory::HURRICANE,
+            const Location& location,
+            Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
@@ -964,13 +1005,15 @@ class Plague : public Spell
 {
  public:
   Plague(unsigned        spell_level,
-         const Location& location)
-    : Spell(SpellFactory::PLAGUE,
+         const Location& location,
+         Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
@@ -994,13 +1037,15 @@ class Volcano : public Spell
 {
  public:
   Volcano(unsigned        spell_level,
-          const Location& location)
-    : Spell(SpellFactory::VOLCANO,
+          const Location& location,
+          Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
@@ -1023,13 +1068,15 @@ class Asteroid : public Spell
 {
  public:
   Asteroid(unsigned        spell_level,
-           const Location& location)
-    : Spell(SpellFactory::ASTEROID,
+           const Location& location,
+           Engine&         engine)
+    : Spell(NAME,
             spell_level,
             location,
             BASE_COST,
             COST_INC,
-            PREREQ)
+            PREREQ,
+            engine)
   {}
 
   virtual void verify_apply() const { /*TODO*/ }

@@ -8,16 +8,19 @@
 
 namespace baal {
 
+class Engine;
+
 class WorldFactoryFromFile
 {
  public:
-  static World& create(const std::string& mapfilename);
+  static World& create(const std::string& mapfilename, Engine& engine);
 
   static const std::string WORLD_FILE_EXT;
 
  private:
-  WorldFactoryFromFile(const char* mapfilename)
-    : m_mapfilename(mapfilename)
+  WorldFactoryFromFile(const char* mapfilename, Engine& engine)
+    : m_mapfilename(mapfilename),
+      m_engine(engine)
   {}
 
   // Internal methods
@@ -47,6 +50,7 @@ class WorldFactoryFromFile
   const char* m_mapfilename;
   xmlDocPtr m_mapfile;
   xmlNodePtr m_curr_node;
+  Engine& m_engine;
 };
 
 bool is_baal_map_file(const std::string& filename);

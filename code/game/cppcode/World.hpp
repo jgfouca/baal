@@ -15,6 +15,7 @@
 namespace baal {
 
 class Anomaly;
+class Engine;
 
 /**
  * Represents the world.
@@ -22,7 +23,7 @@ class Anomaly;
 class World : public Drawable
 {
  public:
-  World(unsigned width, unsigned height);
+  World(unsigned width, unsigned height, Engine& engine);
 
   ~World();
 
@@ -89,6 +90,7 @@ class World : public Drawable
   Time m_time;
   std::vector<const Anomaly*> m_recent_anomalies;
   std::vector<City*> m_cities;
+  Engine& m_engine;
 
   // Friend factories
   friend class WorldFactoryGenerated;

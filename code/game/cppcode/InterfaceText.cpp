@@ -20,11 +20,13 @@ namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
 InterfaceText::InterfaceText(std::ostream& out,
-                             std::istream& in)
+                             std::istream& in,
+                             Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
  : Interface(),
    m_ostream(out),
-   m_istream(in)
+   m_istream(in),
+   m_engine(engine)
 {
   initialize_readline();
 }
@@ -33,25 +35,23 @@ InterfaceText::InterfaceText(std::ostream& out,
 void InterfaceText::draw()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Engine& engine = Engine::instance();
-
   // DESIGN: Should "drawable" items know how to draw themselves? That might
   // reduce coupling between those classes and the interface classes.
 
   clear_screen();
 
   // Draw world
-  engine.world().draw_text(m_ostream);
+  m_engine.world().draw_text(m_ostream);
 
   m_ostream << "\n";
 
   // Draw Player
-  engine.player().draw_text(m_ostream);
+  m_engine.player().draw_text(m_ostream);
 
   m_ostream << "\n";
 
   // Draw AI Player
-  engine.ai_player().draw_text(m_ostream);
+  m_engine.ai_player().draw_text(m_ostream);
 
   m_ostream.flush();
 }
@@ -74,8 +74,6 @@ void InterfaceText::spell_report(const std::string& report)
 void InterfaceText::interact()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Engine& engine = Engine::instance();
-
   // Get handle to command factory
   const CommandFactory& cmd_factory = CommandFactory::instance();
 
@@ -88,7 +86,7 @@ void InterfaceText::interact()
     line = readline("% ");
     if (line == nullptr){
       // User ctrl-d
-      engine.quit();
+      m_engine.quit();
       break;
     }
 
@@ -98,8 +96,9 @@ void InterfaceText::interact()
       std::string command_str(line);
       boost::trim(command_str);
       try {
-        const Command& command = cmd_factory.parse_command(command_str);
-        command.apply();
+        std::shared_ptr<const Command> command =
+          cmd_factory.parse_command(command_str, m_engine);
+        command->apply();
       }
       catch (UserError& error) {
         m_ostream << "ERROR: " << error.what() << std::endl;

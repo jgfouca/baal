@@ -13,45 +13,160 @@
 #include <sstream>
 #include <memory>
 
+#include <boost/mpl/for_each.hpp>
+
 namespace baal {
+
+const std::string HelpCommand::NAME    = "help";
+const std::string SaveCommand::NAME    = "save";
+const std::string EndTurnCommand::NAME = "end";
+const std::string QuitCommand::NAME    = "quit";
+const std::string SpellCommand::NAME   = "cast";
+const std::string LearnCommand::NAME   = "learn";
+const std::string DrawCommand::NAME    = "draw";
+const std::string HackCommand::NAME    = "hack";
+
+const std::vector<std::string> HelpCommand::ALIASES    = {"h"};
+const std::vector<std::string> SaveCommand::ALIASES    = {"s"};
+const std::vector<std::string> EndTurnCommand::ALIASES = {"n"};
+const std::vector<std::string> QuitCommand::ALIASES    = {"q"};
+const std::vector<std::string> SpellCommand::ALIASES   = {"c"};
+const std::vector<std::string> LearnCommand::ALIASES   = {"l"};
+const std::vector<std::string> DrawCommand::ALIASES    = {"d"};
+const std::vector<std::string> HackCommand::ALIASES    = {"x"};
+
+const std::string HelpCommand::HELP =
+  "[command]\n"
+  "  Returns info/syntax help for a command or all commands if no argument";
+const std::string SaveCommand::HELP =
+  "[filename]\n"
+  "  Saves the game; if no name provided, a name based on data/time will be used";
+const std::string EndTurnCommand::HELP =
+  "[num-turns]\n"
+  "  Ends the current turn. Optional arg to skip ahead many turns";
+const std::string QuitCommand::HELP =
+  "\n"
+  "  Ends the game\n";
+const std::string SpellCommand::HELP =
+  "<spell-name> <level> <row>,<col>\n"
+  "  Casts spell of type <spell-name> and level <level> at location <row>,<col>";
+const std::string LearnCommand::HELP =
+  "<spell-name> <level>\n"
+  "  Player learns spell of type <spell-name> and level <level>";
+const std::string DrawCommand::HELP =
+  "<draw-mode>\n"
+  "  Changes how the world is drawn.";
+const std::string HackCommand::HELP =
+  "<exp>\n"
+  "  Gives the player free arbitrary exp. This is a cheat put in for testing";
 
 namespace {
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string create_help_str(const Command* command,
-                            const std::string& usage)
+template <class CommandClass>
+std::string create_help_str()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  const CommandFactory& factory = CommandFactory::instance();
-
-  // Get command name
-  std::string command_name = factory.name(command);
-
-  // Get command aliases
-  std::vector<std::string> aliases;
-  factory.aliases(command_name, aliases);
-
   // Transform aliases into string
   std::string alias_str;
-  if (!aliases.empty()) {
-    for (std::vector<std::string>::const_iterator
-         itr = aliases.begin(); itr != aliases.end(); ++itr) {
-      alias_str += *itr + " ";
-    }
+  for (const std::string& alias : CommandClass::ALIASES) {
+    alias_str += alias + " ";
   }
 
   // Formulate and return full help string
-  std::string help_str = command_name + " " + usage;
-  if (!aliases.empty()) {
+  std::string help_str = CommandClass::NAME + " " + CommandClass::HELP;
+  if (alias_str !=  "") {
     help_str += "  Aliases: " + alias_str;
   }
   return help_str;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+struct CreateHelpDump
+///////////////////////////////////////////////////////////////////////////////
+{
+  CreateHelpDump(const std::string& name,
+                 std::ostringstream& out,
+                 Engine& engine) :
+    m_name(name),
+    m_return_val(out),
+    m_engine(engine)
+  {}
+
+  template <class CommandClass>
+  void operator()(CommandClass)
+  {
+    if (m_name == "" || m_name == CommandClass::NAME) {
+      m_return_val << create_help_str<CommandClass>() << "\n";
+    }
+  }
+
+  void operator()(SpellCommand)
+  {
+    if (m_name == "" || m_name == SpellCommand::NAME) {
+      m_return_val << create_help_str<SpellCommand>() << "\n";
+
+      const TalentTree& talents = m_engine.player().talents();
+
+      std::vector<std::pair<std::string, unsigned> > castable_spells;
+      talents.query_all_castable_spells(castable_spells);
+
+      m_return_val << "  Castable spells:\n";
+      for (const std::pair<std::string, unsigned>& spell_spec : castable_spells) {
+        std::string spell_name = spell_spec.first;
+        unsigned spell_lvl     = spell_spec.second;
+        m_return_val << "    " << spell_name << " : " << spell_lvl << "\n";
+      }
+    }
+  }
+
+  void operator()(LearnCommand)
+  {
+    if (m_name == "" || m_name == LearnCommand::NAME) {
+      m_return_val << create_help_str<LearnCommand>() << "\n";
+
+      Player& player = m_engine.player();
+      const TalentTree& talents = player.talents();
+
+      std::vector<std::pair<std::string, unsigned> > learnable_spells;
+      talents.query_all_learnable_spells(learnable_spells, player);
+
+      m_return_val << "  Learnable spells:\n";
+      for (const std::pair<std::string, unsigned>& spell_spec : learnable_spells) {
+        std::string spell_name = spell_spec.first;
+        unsigned spell_lvl     = spell_spec.second;
+        m_return_val << "    " << spell_name << " : " << spell_lvl << "\n";
+      }
+
+    }
+  }
+
+  void operator()(DrawCommand)
+  {
+    if (m_name == "" || m_name == DrawCommand::NAME) {
+      m_return_val << create_help_str<DrawCommand>() << "\n";
+
+      m_return_val << "  Available draw modes:\n";
+      for (DrawMode mode_itr = Drawable::FIRST; ; ++mode_itr) {
+        m_return_val << "    " << Drawable::draw_mode_to_str(mode_itr) << "\n";
+        if (mode_itr == Drawable::LAST) {
+          break;
+        }
+      }
+    }
+  }
+
+  const std::string& m_name;
+  std::ostringstream& m_return_val;
+  Engine& m_engine;
+};
+
 } // empty namespace
 
 ///////////////////////////////////////////////////////////////////////////////
-void HelpCommand::init(const std::vector<std::string>& args)
+HelpCommand::HelpCommand(const std::vector<std::string>& args, Engine& engine) :
+  Command(engine),
+  m_arg("")
 ///////////////////////////////////////////////////////////////////////////////
 {
   RequireUser(args.size() <= 1, "The help command takes at most one argument");
@@ -61,11 +176,9 @@ void HelpCommand::init(const std::vector<std::string>& args)
 
     // Verify m_arg is a valid command name
     const CommandFactory& factory = CommandFactory::instance();
-    RequireUser(factory.m_cmd_map.find(m_arg) != factory.m_cmd_map.end(),
+    const std::vector<std::string>& cmd_map = factory.get_command_map();
+    RequireUser(std::find(cmd_map.begin(), cmd_map.end(), m_arg) != cmd_map.end(),
                 "Cannot get help for unknown command " << m_arg);
-  }
-  else {
-    m_arg = "";
   }
 }
 
@@ -73,42 +186,23 @@ void HelpCommand::init(const std::vector<std::string>& args)
 void HelpCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Engine& engine = Engine::instance();
-  const std::map<std::string, Command*>& cmd_map =
-    CommandFactory::instance().m_cmd_map;
-
-  if (m_arg.empty()) {
-    std::string help_msg = "List of available commands:\n\n";
-    for (std::map<std::string, Command*>::const_iterator
-         itr = cmd_map.begin();
-         itr != cmd_map.end();
-         ++itr) {
-      help_msg += itr->second->help() + "\n\n";
-    }
-    engine.interface().help(help_msg);
+  std::ostringstream out;
+  CreateHelpDump help_dump_functor(m_arg, out, m_engine);
+  if (m_arg == "") {
+    std::string help_msg = "List of available commands:\n\n" + out.str();
+    m_engine.interface().help(help_msg);
   }
   else {
-    std::map<std::string, Command*>::const_iterator
-      itr = cmd_map.find(m_arg);
-    Require(itr != cmd_map.end(), "Command " << m_arg << " missing from map");
-    engine.interface().help(itr->second->help());
+    m_engine.interface().help(out.str());
   }
-}
-
-///////////////////////////////////////////////////////////////////////////////
-std::string HelpCommand::help() const
-///////////////////////////////////////////////////////////////////////////////
-{
-  return create_help_str(this,
-"[command]\n"
-"  Returns info/syntax help for a command or all commands if no argument\n"
-                         );
 }
 
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void EndTurnCommand::init(const std::vector<std::string>& args)
+EndTurnCommand::EndTurnCommand(const std::vector<std::string>& args, Engine& engine) :
+  Command(engine),
+  m_num_turns(1)
 ///////////////////////////////////////////////////////////////////////////////
 {
   RequireUser(args.size() <= 1, "The end command takes at most one argument");
@@ -122,32 +216,20 @@ void EndTurnCommand::init(const std::vector<std::string>& args)
     RequireUser(m_num_turns > 0 && m_num_turns <= MAX_SKIP_TURNS,
                 "num-turns must be between 0 and " << MAX_SKIP_TURNS);
   }
-  else {
-    m_num_turns = 1;
-  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void EndTurnCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Engine::instance().interface().end_turn(m_num_turns);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-std::string EndTurnCommand::help() const
-///////////////////////////////////////////////////////////////////////////////
-{
-  return create_help_str(this,
-"[num-turns]\n"
-"  Ends the current turn. Optional arg to skip ahead many turns\n"
-                         );
+  m_engine.interface().end_turn(m_num_turns);
 }
 
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void QuitCommand::init(const std::vector<std::string>& args)
+QuitCommand::QuitCommand(const std::vector<std::string>& args, Engine& engine) :
+  Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
   RequireUser(args.empty(), "The quit command takes no arguments");
@@ -157,25 +239,15 @@ void QuitCommand::init(const std::vector<std::string>& args)
 void QuitCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Engine& engine = Engine::instance();
-  engine.interface().end_turn();
-  engine.quit();
-}
-
-///////////////////////////////////////////////////////////////////////////////
-std::string QuitCommand::help() const
-///////////////////////////////////////////////////////////////////////////////
-{
-  return create_help_str(this,
-"\n"
-"  Ends the game\n"
-                         );
+  m_engine.interface().end_turn();
+  m_engine.quit();
 }
 
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void SaveCommand::init(const std::vector<std::string>& args)
+SaveCommand::SaveCommand(const std::vector<std::string>& args, Engine& engine)
+  : Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
   RequireUser(args.size() <= 1, "The save command takes at most one argument");
@@ -211,10 +283,9 @@ void SaveCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   // IN PROGRESS
-  Engine& engine = Engine::instance();
-  World&  world  = engine.world();
-  Player& player = engine.player();
-  //PlayerAI& ai_player = engine.ai_player();
+  World&  world  = m_engine.world();
+  Player& player = m_engine.player();
+  //PlayerAI& ai_player = m_engine.ai_player();
 
   xmlDocPtr doc = nullptr;
   xmlNodePtr root_node = nullptr;
@@ -229,20 +300,11 @@ void SaveCommand::apply() const
   xmlSaveFormatFileEnc(m_arg.c_str(), doc, "UTF-8", 1);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-std::string SaveCommand::help() const
-///////////////////////////////////////////////////////////////////////////////
-{
-  return create_help_str(this,
-"[filename]\n"
-"  Saves the game; if no name provided, a name based on data/time will be used\n"
-                     );
-}
-
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void SpellCommand::init(const std::vector<std::string>& args)
+SpellCommand::SpellCommand(const std::vector<std::string>& args, Engine& engine) :
+  Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
   RequireUser(args.size() == 3, "The cast command takes 3 arguments");
@@ -269,9 +331,8 @@ void SpellCommand::init(const std::vector<std::string>& args)
 void SpellCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Engine& engine = Engine::instance();
-  World&  world  = engine.world();
-  Player& player = engine.player();
+  World&  world  = m_engine.world();
+  Player& player = m_engine.player();
 
   // Ensure location is in-bounds
   RequireUser(world.in_bounds(m_spell_location),
@@ -279,13 +340,14 @@ void SpellCommand::apply() const
               "Max row is: " << world.height() - 1 <<
               ", max col is: " << world.width() - 1);
 
-  // Create the spell. Use an auto_ptr to ensure deletion even if a throw
-  // happens. I'd rather use a reference here since spell cannot be nullptr, but
-  // we need to auto_ptr since verify_cast can throw exceptions.
-  std::auto_ptr<const Spell> spell(
+  // Create the spell. I'd rather use a reference here since spell
+  // cannot be nullptr, but we need to use a shared-ptr since verify_cast can
+  // throw exceptions.
+  std::shared_ptr<const Spell> spell(
     &(SpellFactory::create_spell(m_spell_name,
                                  m_spell_level,
-                                 m_spell_location))
+                                 m_spell_location,
+                                 m_engine))
                                    );
 
   // Verify that player can cast this spell (can throw)
@@ -313,36 +375,11 @@ void SpellCommand::apply() const
   }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-std::string SpellCommand::help() const
-///////////////////////////////////////////////////////////////////////////////
-{
-  Engine& engine = Engine::instance();
-  const TalentTree& talents = engine.player().talents();
-
-  std::vector<std::pair<std::string, unsigned> > castable_spells;
-  talents.query_all_castable_spells(castable_spells);
-
-  std::string help_str =
-"<spell-name> <level> <row>,<col>\n"
-"  Casts spell of type <spell-name> and level <level> at location <row>,<col>\n"
-"  Castable spells:\n";
-  for (std::vector<std::pair<std::string, unsigned> >::const_iterator
-       itr = castable_spells.begin(); itr != castable_spells.end(); ++itr) {
-    std::string spell_name = itr->first;
-    unsigned spell_lvl     = itr->second;
-    std::ostringstream out;
-    out << "    " << spell_name << " : " << spell_lvl << "\n";
-    help_str += out.str();
-  }
-
-  return create_help_str(this, help_str);
-}
-
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void LearnCommand::init(const std::vector<std::string>& args)
+LearnCommand::LearnCommand(const std::vector<std::string>& args, Engine& engine) :
+  Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
   RequireUser(args.size() == 2, "The learn command takes 2 arguments");
@@ -360,89 +397,48 @@ void LearnCommand::init(const std::vector<std::string>& args)
 void LearnCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Player& player = Engine::instance().player();
+  Player& player = m_engine.player();
   Location dummy;
 
   // We need to auto_ptr since learn can throw exceptions.
   std::auto_ptr<const Spell> spell(
     &(SpellFactory::create_spell(m_spell_name,
                                  m_spell_level,
-                                 dummy))
+                                 dummy,
+                                 m_engine))
                                    );
 
   // Try to have the player learn this spell, this can throw
   player.learn(*spell);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-std::string LearnCommand::help() const
-///////////////////////////////////////////////////////////////////////////////
-{
-  Player& player = Engine::instance().player();
-  const TalentTree& talents = player.talents();
-
-  std::vector<std::pair<std::string, unsigned> > learnable_spells;
-  talents.query_all_learnable_spells(learnable_spells, player);
-
-  std::string help_str =
-"<spell-name> <level>\n"
-"  Player learns spell of type <spell-name> and level <level>\n"
-"  Learnable spells:\n";
-  for (std::vector<std::pair<std::string, unsigned> >::const_iterator
-       itr = learnable_spells.begin(); itr != learnable_spells.end(); ++itr) {
-    std::string spell_name = itr->first;
-    unsigned spell_lvl     = itr->second;
-    std::ostringstream out;
-    out << "    " << spell_name << " : " << spell_lvl << "\n";
-    help_str += out.str();
-  }
-
-  return create_help_str(this, help_str);
-}
-
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void DrawCommand::init(const std::vector<std::string>& args)
+DrawCommand::DrawCommand(const std::vector<std::string>& args, Engine& engine) :
+  Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
   RequireUser(args.size() == 1, "The draw command takes 1 argument");
 
   // Parse draw mode
-  s_draw_mode = args[0];
+  m_draw_mode = args[0];
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void DrawCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  DrawMode new_draw_mode = Drawable::parse_draw_mode(s_draw_mode);
+  DrawMode new_draw_mode = Drawable::parse_draw_mode(m_draw_mode);
   Drawable::set_draw_mode(new_draw_mode);
-  Engine::instance().interface().draw(); // redraw
-}
-
-///////////////////////////////////////////////////////////////////////////////
-std::string DrawCommand::help() const
-///////////////////////////////////////////////////////////////////////////////
-{
-  std::string usage =
-"<draw-mode>\n"
-"  Changes how the world is drawn.\n"
-"  Available draw modes:\n";
-  for (DrawMode mode_itr = Drawable::FIRST; ; ++mode_itr) {
-    usage += "    " + Drawable::draw_mode_to_str(mode_itr)  + "\n";
-    if (mode_itr == Drawable::LAST) {
-      break;
-    }
-  }
-
-  return create_help_str(this, usage);
+  m_engine.interface().draw(); // redraw
 }
 
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void HackCommand::init(const std::vector<std::string>& args)
+HackCommand::HackCommand(const std::vector<std::string>& args, Engine& engine) :
+  Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
   RequireUser(args.size() == 1, "The hack command takes 1 argument");
@@ -457,18 +453,8 @@ void HackCommand::init(const std::vector<std::string>& args)
 void HackCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Player& player = Engine::instance().player();
+  Player& player = m_engine.player();
   player.gain_exp(m_exp);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-std::string HackCommand::help() const
-///////////////////////////////////////////////////////////////////////////////
-{
-  return create_help_str(this,
-"<exp>\n"
-"  Gives the player free arbitrary exp. This is a cheat put in for testing\n"
-                         );
 }
 
 }

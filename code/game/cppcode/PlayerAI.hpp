@@ -8,6 +8,7 @@
 namespace baal {
 
 class City;
+class Engine;
 
 /**
  * Manages the "global" (higher-than-city) affairs of the AI. Since most
@@ -17,7 +18,7 @@ class City;
 class PlayerAI : public Drawable
 {
  public:
-  PlayerAI();
+  PlayerAI(const Engine& engine);
 
   void cycle_turn();
 
@@ -39,6 +40,7 @@ class PlayerAI : public Drawable
   unsigned m_tech_points;
   unsigned m_next_tech_level_cost;
   unsigned m_population;
+  const Engine& m_engine;
 
   static constexpr unsigned STARTING_TECH_LEVEL   = 1;
   static constexpr unsigned FIRST_TECH_LEVEL_COST = 1000;

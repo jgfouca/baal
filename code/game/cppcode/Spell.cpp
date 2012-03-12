@@ -122,14 +122,16 @@ Spell::Spell(const std::string& name,
              const Location&    location,
              unsigned           base_cost,
              unsigned           cost_increment,
-             const SpellPrereq& prereq)
+             const SpellPrereq& prereq,
+             Engine&            engine)
 ///////////////////////////////////////////////////////////////////////////////
   : m_name(name),
     m_spell_level(spell_level),
     m_location(location),
     m_base_cost(base_cost),
     m_cost_increment(cost_increment),
-    m_prereq(prereq)
+    m_prereq(prereq),
+    m_engine(engine)
 {
   Assert(SpellFactory::is_in_all_names(name), name);
 }
@@ -141,8 +143,6 @@ unsigned Spell::kill(City& city,
 {
   Require(pct_killed > 0.0, "Do not call this if no one killed");
 
-  Engine& engine = Engine::instance();
-
   if (pct_killed > 100.0) {
     pct_killed = 100.0;
   }
@@ -153,7 +153,7 @@ unsigned Spell::kill(City& city,
 
   if (city.population() < City::MIN_CITY_SIZE) {
     SPELL_REPORT("obliterated city '" << city.name() << "'");
-    engine.world().remove_city(city);
+    m_engine.world().remove_city(city);
     city.kill(city.population());
     num_killed += city.population();
 
@@ -210,7 +210,8 @@ unsigned Spell::spawn(const std::string& spell_name, unsigned spell_level) const
 {
   const Spell& spell = SpellFactory::create_spell(spell_name,
                                                   spell_level,
-                                                  m_location);
+                                                  m_location,
+                                                  m_engine);
 
   // Check if this spell can be applied here
   bool verify_ok = true;
@@ -259,11 +260,10 @@ void Hot::verify_apply() const
 unsigned Hot::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Engine& engine       = Engine::instance();
-  World& world         = engine.world();
+  World& world         = m_engine.world();
   WorldTile& tile      = world.get_tile(m_location);
   Atmosphere& atmos    = tile.atmosphere();
-  PlayerAI& ai_player  = engine.ai_player();
+  PlayerAI& ai_player  = m_engine.ai_player();
 
   // TODO: Dewpoint should enhance spell kill count
 
@@ -335,11 +335,10 @@ void Cold::verify_apply() const
 unsigned Cold::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Engine& engine       = Engine::instance();
-  World& world         = engine.world();
+  World& world         = m_engine.world();
   WorldTile& tile      = world.get_tile(m_location);
   Atmosphere& atmos    = tile.atmosphere();
-  PlayerAI& ai_player  = engine.ai_player();
+  PlayerAI& ai_player  = m_engine.ai_player();
 
   unsigned exp = 0;
 
@@ -405,7 +404,7 @@ void Infect::verify_apply() const
 {
   // This spell can only be cast on cities
 
-  WorldTile& tile = Engine::instance().world().get_tile(m_location);
+  WorldTile& tile = m_engine.world().get_tile(m_location);
 
   // Check for city
   City* city = tile.city();
@@ -416,9 +415,8 @@ void Infect::verify_apply() const
 unsigned Infect::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Engine& engine       = Engine::instance();
-  World& world         = engine.world();
-  PlayerAI& ai_player  = engine.ai_player();
+  World& world         = m_engine.world();
+  PlayerAI& ai_player  = m_engine.ai_player();
   WorldTile& tile      = world.get_tile(m_location);
   Atmosphere& atmos    = tile.atmosphere();
 
@@ -477,11 +475,10 @@ void WindSpell::verify_apply() const
 unsigned WindSpell::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Engine& engine       = Engine::instance();
-  World& world         = engine.world();
+  World& world         = m_engine.world();
   WorldTile& tile      = world.get_tile(m_location);
   Atmosphere& atmos    = tile.atmosphere();
-  PlayerAI& ai_player  = engine.ai_player();
+  PlayerAI& ai_player  = m_engine.ai_player();
 
   unsigned exp = 0;
 
@@ -551,7 +548,7 @@ void Fire::verify_apply() const
 {
   // This spell can only be cast on tiles with plant growth
 
-  WorldTile& tile = Engine::instance().world().get_tile(m_location);
+  WorldTile& tile = m_engine.world().get_tile(m_location);
   FoodTile* food_tile = dynamic_cast<FoodTile*>(&tile);
   RequireUser(food_tile != nullptr,
               "Fire can only be cast on tiles with plant growth");
@@ -561,11 +558,10 @@ void Fire::verify_apply() const
 unsigned Fire::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Engine& engine       = Engine::instance();
-  World& world         = engine.world();
+  World& world         = m_engine.world();
   FoodTile& tile       = dynamic_cast<FoodTile&>(world.get_tile(m_location));
   Atmosphere& atmos    = tile.atmosphere();
-  PlayerAI& ai_player  = engine.ai_player();
+  PlayerAI& ai_player  = m_engine.ai_player();
 
   unsigned exp = 0;
 
@@ -640,7 +636,7 @@ void Tstorm::verify_apply() const
 {
   // This spell can only be cast on plains and lush tiles (food tiles).
 
-  WorldTile& tile = Engine::instance().world().get_tile(m_location);
+  WorldTile& tile = m_engine.world().get_tile(m_location);
   FoodTile* food_tile = dynamic_cast<FoodTile*>(&tile);
   RequireUser(food_tile != nullptr,
               "Tstorm can only be cast on tiles with plant growth");
@@ -650,11 +646,10 @@ void Tstorm::verify_apply() const
 unsigned Tstorm::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Engine& engine       = Engine::instance();
-  World& world         = engine.world();
+  World& world         = m_engine.world();
   FoodTile& tile       = dynamic_cast<FoodTile&>(world.get_tile(m_location));
   Atmosphere& atmos    = tile.atmosphere();
-  PlayerAI& ai_player  = engine.ai_player();
+  PlayerAI& ai_player  = m_engine.ai_player();
 
   unsigned exp = 0;
 
@@ -686,7 +681,7 @@ unsigned Tstorm::apply() const
       tstorm_spawn_helper(destructiveness, WIND_DESTRUCTIVENESS_THRESHOLD);
     Require(wind_level > 0, "Problem in helper");
 
-    exp += spawn(SpellFactory::WIND, wind_level);
+    exp += spawn(WindSpell::NAME, wind_level);
   }
 
   if (destructiveness > FLOOD_DESTRUCTIVENESS_THRESHOLD) {
@@ -694,7 +689,7 @@ unsigned Tstorm::apply() const
       tstorm_spawn_helper(destructiveness, FLOOD_DESTRUCTIVENESS_THRESHOLD);
     Require(flood_level > 0, "Problem in helper");
 
-    exp += spawn(SpellFactory::FLOOD, flood_level);
+    exp += spawn(Flood::NAME, flood_level);
   }
 
   if (destructiveness > TORNADO_DESTRUCTIVENESS_THRESHOLD) {
@@ -702,7 +697,7 @@ unsigned Tstorm::apply() const
       tstorm_spawn_helper(destructiveness, TORNADO_DESTRUCTIVENESS_THRESHOLD);
     Require(tornado_level > 0, "Problem in helper");
 
-    exp += spawn(SpellFactory::TORNADO, tornado_level);
+    exp += spawn(Tornado::NAME, tornado_level);
   }
 
   // Check for the existence of a city

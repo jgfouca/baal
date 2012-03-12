@@ -13,6 +13,8 @@
 
 namespace baal {
 
+class Engine;
+
 extern const unsigned INVALID;
 
 // Common ascii colors
@@ -123,17 +125,19 @@ class AdjacentLocationIterator :
                          Location>
 {
  public:
-  AdjacentLocationIterator(Location center) :
+  AdjacentLocationIterator(Location center, const Engine& engine) :
     m_center(center),
-    m_current()
+    m_current(),
+    m_engine(engine)
   {
     advance();
   }
 
   // Construct end iterator
-  AdjacentLocationIterator() :
+  AdjacentLocationIterator(const Engine& engine) :
     m_center(),
-    m_current()
+    m_current(),
+    m_engine(engine)
   {}
 
   AdjacentLocationIterator& operator++()
@@ -174,16 +178,18 @@ class AdjacentLocationIterator :
 
   Location m_center;
   Location m_current;
+  const Engine& m_engine;
 };
 
 
 typedef boost::iterator_range<AdjacentLocationIterator> AdjacentLocationRange;
 
 inline
-AdjacentLocationRange get_adjacent_location_range(Location center)
+AdjacentLocationRange get_adjacent_location_range(Location center,
+                                                  const Engine& engine)
 {
-  return boost::make_iterator_range(AdjacentLocationIterator(center),
-                                    AdjacentLocationIterator());
+  return boost::make_iterator_range(AdjacentLocationIterator(center, engine),
+                                    AdjacentLocationIterator(engine));
 }
 
 }

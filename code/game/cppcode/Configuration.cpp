@@ -5,19 +5,11 @@ using namespace baal;
 const std::string Configuration::UNSET = "";
 
 ///////////////////////////////////////////////////////////////////////////////
-Configuration& Configuration::instance()
+Configuration::Configuration(const std::string& interface_config,
+                             const std::string& world_config,
+                             const std::string& player_name)
 ///////////////////////////////////////////////////////////////////////////////
-{
-  static Configuration global_config;
-  return global_config;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-Configuration::Configuration()
-///////////////////////////////////////////////////////////////////////////////
-  : m_interface_config(UNSET),
-    m_world_config(UNSET),
-    m_player_name(UNSET),
-    m_initialized(false)
-{
-}
+  : m_interface_config(interface_config),
+    m_world_config(world_config),
+    m_player_name(player_name)
+{}

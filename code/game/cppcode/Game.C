@@ -9,6 +9,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <cstdlib>
 
 namespace baal {
 
@@ -57,11 +58,12 @@ std::string get_help()
  * Returns true if program should continue
  */
 ///////////////////////////////////////////////////////////////////////////////
-bool parse_args(int argc, char** argv)
+Configuration parse_args(int argc, char** argv)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // Get handle to config
-  Configuration& config = Configuration::instance();
+  std::string interface_config = Configuration::UNSET;
+  std::string world_config     = Configuration::UNSET;
+  std::string player_name      = Configuration::UNSET;
 
   // Parse args
   for (int i = 1; i < argc; ++i) {
@@ -69,7 +71,7 @@ bool parse_args(int argc, char** argv)
 
     if (arg == "-h" || arg == "-help" || arg == "help" || arg == "--help") {
       std::cout << get_help() << std::endl;
-      return false;
+      std::exit(0);
     }
     else if (arg == "-i" || arg == "-w" || arg == "-p") {
       // These options take an argument, try to get it
@@ -77,13 +79,13 @@ bool parse_args(int argc, char** argv)
       std::string opt_arg = argv[++i]; // note inc of i
 
       if (arg == "-i") {
-        config.m_interface_config = opt_arg;
+        interface_config = opt_arg;
       }
       else if (arg == "-w") {
-        config.m_world_config     = opt_arg;
+        world_config     = opt_arg;
       }
       else if (arg == "-p") {
-        config.m_player_name      = opt_arg;
+        player_name      = opt_arg;
       }
       else {
         Require(false, "Should never make it here");
@@ -94,9 +96,7 @@ bool parse_args(int argc, char** argv)
     }
   }
 
-  config.m_initialized = true;
-
-  return true;
+  return Configuration(interface_config, world_config, player_name);
 }
 
 } // namespace baal
@@ -123,11 +123,11 @@ int main(int argc, char** argv)
   }
 
   // Parse args
-  if (baal::parse_args(argc, argv)) {
-    // Begin game, errors during construction are probably user-errors
-    baal::Engine& engine = baal::Engine::instance();
-    engine.play();
-  }
+  baal::Configuration config = baal::parse_args(argc, argv);
+
+  // Begin game, errors during construction are probably user-errors
+  baal::Engine engine(config);
+  engine.play();
 
   return 0;
 }

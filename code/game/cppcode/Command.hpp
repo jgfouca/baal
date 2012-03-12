@@ -11,6 +11,8 @@
 
 namespace baal {
 
+class Engine;
+
 /**
  * A Command is the entity by which a player affects the game state.
  * Command apply themselves immediately upon creation.
@@ -18,11 +20,14 @@ namespace baal {
 class Command
 {
  public:
-  virtual void init(const std::vector<std::string>& args) = 0;
+  Command(Engine& engine) : m_engine(engine) {}
 
   virtual void apply() const = 0;
 
-  virtual std::string help() const = 0;
+ protected:
+  Command() : m_engine(*static_cast<Engine*>(nullptr)) {}
+
+  Engine& m_engine;
 };
 
 /**
@@ -33,12 +38,17 @@ class Command
 class HelpCommand : public Command
 {
  public:
-  virtual void init(const std::vector<std::string>& args);
+  HelpCommand(const std::vector<std::string>& args, Engine& engine);
 
   virtual void apply() const;
 
-  virtual std::string help() const;
+  static const std::string NAME;
 
+  static const std::string HELP;
+
+  static const std::vector<std::string> ALIASES;
+
+  HelpCommand() {} // do not use
  private:
   std::string m_arg;
 };
@@ -51,12 +61,17 @@ class HelpCommand : public Command
 class SaveCommand : public Command
 {
  public:
-  virtual void init(const std::vector<std::string>& args);
+  SaveCommand(const std::vector<std::string>& args, Engine& engine);
 
   virtual void apply() const;
 
-  virtual std::string help() const;
+  static const std::string NAME;
 
+  static const std::string HELP;
+
+  static const std::vector<std::string> ALIASES;
+
+  SaveCommand() {} // do not use
  private:
   std::string m_arg;
 };
@@ -69,12 +84,17 @@ class SaveCommand : public Command
 class EndTurnCommand : public Command
 {
  public:
-  virtual void init(const std::vector<std::string>& args);
+  EndTurnCommand(const std::vector<std::string>& args, Engine& engine);
 
   virtual void apply() const;
 
-  virtual std::string help() const;
+  static const std::string NAME;
 
+  static const std::string HELP;
+
+  static const std::vector<std::string> ALIASES;
+
+  EndTurnCommand() {} // do not use
  private:
   unsigned m_num_turns;
 
@@ -89,11 +109,17 @@ class EndTurnCommand : public Command
 class QuitCommand : public Command
 {
  public:
-  virtual void init(const std::vector<std::string>& args);
+  QuitCommand(const std::vector<std::string>& args, Engine& engine);
 
   virtual void apply() const;
 
-  virtual std::string help() const;
+  static const std::string NAME;
+
+  static const std::string HELP;
+
+  static const std::vector<std::string> ALIASES;
+
+  QuitCommand() {} // do not use
 };
 
 /**
@@ -104,12 +130,17 @@ class QuitCommand : public Command
 class SpellCommand : public Command
 {
  public:
-  virtual void init(const std::vector<std::string>& args);
+  SpellCommand(const std::vector<std::string>& args, Engine& engine);
 
   virtual void apply() const;
 
-  virtual std::string help() const;
+  static const std::string NAME;
 
+  static const std::string HELP;
+
+  static const std::vector<std::string> ALIASES;
+
+  SpellCommand() {} // do not use
  private:
   std::string m_spell_name;
   unsigned    m_spell_level;
@@ -124,12 +155,17 @@ class SpellCommand : public Command
 class LearnCommand : public Command
 {
  public:
-  virtual void init(const std::vector<std::string>& args);
+  LearnCommand(const std::vector<std::string>& args, Engine& engine);
 
   virtual void apply() const;
 
-  virtual std::string help() const;
+  static const std::string NAME;
 
+  static const std::string HELP;
+
+  static const std::vector<std::string> ALIASES;
+
+  LearnCommand() {} // do not use
  private:
   std::string m_spell_name;
   unsigned    m_spell_level;
@@ -143,14 +179,19 @@ class LearnCommand : public Command
 class DrawCommand : public Command
 {
  public:
-  virtual void init(const std::vector<std::string>& args);
+  DrawCommand(const std::vector<std::string>& args, Engine& engine);
 
   virtual void apply() const;
 
-  virtual std::string help() const;
+  static const std::string NAME;
 
+  static const std::string HELP;
+
+  static const std::vector<std::string> ALIASES;
+
+  DrawCommand() {} // do not use
  private:
-  std::string s_draw_mode;
+  std::string m_draw_mode;
 };
 
 /**
@@ -160,12 +201,17 @@ class DrawCommand : public Command
 class HackCommand : public Command
 {
  public:
-  virtual void init(const std::vector<std::string>& args);
+  HackCommand(const std::vector<std::string>& args, Engine& engine);
 
   virtual void apply() const;
 
-  virtual std::string help() const;
+  static const std::string NAME;
 
+  static const std::string HELP;
+
+  static const std::vector<std::string> ALIASES;
+
+  HackCommand() {} // do not use
  private:
   unsigned m_exp;
 };

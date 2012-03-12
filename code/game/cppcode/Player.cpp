@@ -2,6 +2,7 @@
 #include "BaalExceptions.hpp"
 #include "Spell.hpp"
 #include "Configuration.hpp"
+#include "Engine.hpp"
 
 #include <iostream>
 
@@ -10,16 +11,17 @@ namespace baal {
 const std::string Player::DEFAULT_PLAYER_NAME = "human";
 
 ///////////////////////////////////////////////////////////////////////////////
-Player::Player()
+Player::Player(const Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
-  : m_name(Configuration::instance().get_player_name()),
+  : m_name(engine.config().get_player_name()),
     m_mana(STARTING_MANA),
     m_max_mana(STARTING_MANA),
     m_mana_regen_rate(STARTING_MANA_REGEN_RATE),
     m_exp(0),
     m_level(1),
     m_next_level_cost(FIRST_LEVELUP_EXP_COST),
-    m_talents()
+    m_talents(),
+    m_engine(engine)
 {
   if (m_name == Configuration::UNSET) {
     m_name = DEFAULT_PLAYER_NAME;

@@ -7,13 +7,15 @@
 
 namespace baal {
 
+class Engine;
+
 /**
  * Text-based implementation of an interface
  */
 class InterfaceText : public Interface
 {
  public:
-  InterfaceText(std::ostream& out, std::istream& in);
+  InterfaceText(std::ostream& out, std::istream& in, Engine& engine);
 
   virtual void draw();
 
@@ -30,6 +32,7 @@ class InterfaceText : public Interface
  private:
   std::ostream& m_ostream;
   std::istream& m_istream;
+  Engine&       m_engine;
 };
 
 }

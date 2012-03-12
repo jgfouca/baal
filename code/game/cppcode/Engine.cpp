@@ -10,40 +10,15 @@
 using namespace baal;
 
 ///////////////////////////////////////////////////////////////////////////////
-Engine::Engine()
+Engine::Engine(const Configuration& config)
 ///////////////////////////////////////////////////////////////////////////////
-  : m_interface(InterfaceFactory::create()),
-    m_world(WorldFactory::create()),
-    m_player(*(new Player)), // might come from factory in the future
-    m_ai_player(*(new PlayerAI)), // might come from factory in the future
+  : m_config(config),
+    m_interface(InterfaceFactory::create(*this)),
+    m_world(WorldFactory::create(*this)),
+    m_player(*(new Player(*this))), // might come from factory in the future
+    m_ai_player(*(new PlayerAI(*this))), // might come from factory in the future
     m_quit(false)
-{
-  // Configuration object should be initialized before this constructor is
-  // called.
-  Require(Configuration::instance().initialized(),
-          "Out of order initialization");
-}
-
-///////////////////////////////////////////////////////////////////////////////
-Engine& Engine::instance()
-///////////////////////////////////////////////////////////////////////////////
-{
-#ifndef NDEBUG
-  static unsigned call_count = 0;
-  static bool init = false;
-  ++call_count;
-  Assert( !(call_count > 1 && !init),
-          "Broken call stack: Engine instantiation has re-entered itself");
-#endif
-
-  static Engine engine;
-
-#ifndef NDEBUG
-  init = true;
-#endif
-
-  return engine;
-}
+{}
 
 ///////////////////////////////////////////////////////////////////////////////
 Engine::~Engine()

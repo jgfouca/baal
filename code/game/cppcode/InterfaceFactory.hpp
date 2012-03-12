@@ -6,6 +6,7 @@
 namespace baal {
 
 class Interface;
+class Engine;
 
 /**
  * Creates Interface objects. This class encapsulates the knowledge
@@ -16,7 +17,7 @@ class InterfaceFactory
 {
  public:
   // Note, client is responsible for deletion
-  static Interface& create();
+  static Interface& create(Engine& engine);
 
   static const std::string TEXT_INTERFACE;
   static const std::string GRAPHICAL_INTERFACE;

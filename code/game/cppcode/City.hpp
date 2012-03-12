@@ -10,6 +10,8 @@
 
 namespace baal {
 
+class Engine;
+
 /**
  * Represents human-built cities.
  * TODO: describe conceptually how cities work.
@@ -22,8 +24,8 @@ class City
   // ==== Public API ====
   //
 
-  City(const std::string& name, Location location) :
-    m_impl(name, location)
+  City(const std::string& name, Location location, Engine& engine) :
+    m_impl(name, location, engine)
   {}
 
   City & operator=(const City&) = delete;

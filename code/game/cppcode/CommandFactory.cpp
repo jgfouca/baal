@@ -5,7 +5,41 @@
 #include <sstream>
 #include <vector>
 
+#include <boost/mpl/for_each.hpp>
+#include <boost/mpl/size.hpp>
+
 namespace baal {
+
+namespace {
+
+struct SearchAndCreate
+{
+  SearchAndCreate(const std::string& name,
+                  const std::vector<std::string>& args,
+                  Command*& return_val,
+                  Engine& engine) :
+    m_name(name),
+    m_args(args),
+    m_return_val(return_val),
+    m_engine(engine)
+  {}
+
+  template <class CommandClass>
+  void operator()(CommandClass)
+  {
+    if (m_name == CommandClass::NAME) {
+      Require(m_return_val == nullptr, "Found multiple matches");
+      m_return_val = new CommandClass(m_args, m_engine);
+    }
+  }
+
+  const std::string& m_name;
+  const std::vector<std::string>& m_args;
+  Command*& m_return_val;
+  Engine& m_engine;
+};
+
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 const CommandFactory& CommandFactory::instance()
@@ -19,44 +53,13 @@ const CommandFactory& CommandFactory::instance()
 CommandFactory::CommandFactory()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // Populate command map, this is the only place where the list of all
-  // commands is exposed
-
-  // TODO:
-  // This implementation (recycling/reinitializing heap objects) is
-  // error-prone and should probably be replace with a system similar to that
-  // of SpellFactory.
-  m_cmd_map["help" ] = new HelpCommand;
-  m_cmd_map["save" ] = new SaveCommand;
-  m_cmd_map["end"  ] = new EndTurnCommand;
-  m_cmd_map["quit" ] = new QuitCommand;
-  m_cmd_map["cast" ] = new SpellCommand;
-  m_cmd_map["learn"] = new LearnCommand;
-  m_cmd_map["draw" ] = new DrawCommand;
-  m_cmd_map["hack" ] = new HackCommand;
-
-  // Set up aliases
-  m_aliases["s"] = "save";
-  m_aliases["n"] = "end";
-  m_aliases["q"] = "quit";
-  m_aliases["c"] = "cast";
-  m_aliases["l"] = "learn";
-  m_aliases["d"] = "draw";
-  m_aliases["h"] = "hack";
+  m_cmd_map.reserve(boost::mpl::size<command_types>::value);
+  boost::mpl::for_each<command_types>(Initializer(*this));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-CommandFactory::~CommandFactory()
-///////////////////////////////////////////////////////////////////////////////
-{
-  for (std::map<std::string, Command*>::iterator
-       itr = m_cmd_map.begin(); itr != m_cmd_map.end(); ++itr) {
-    delete itr->second;
-  }
-}
-
-///////////////////////////////////////////////////////////////////////////////
-const Command& CommandFactory::parse_command(const std::string& text) const
+std::shared_ptr<const Command>
+CommandFactory::parse_command(const std::string& text, Engine& engine) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   std::istringstream iss(text);
@@ -76,34 +79,25 @@ const Command& CommandFactory::parse_command(const std::string& text) const
     args.push_back(token);
   }
 
-  // Init and return command object. Note that command objects are recycled.
-  // I would have much rather stored a map to Command classes, but that's not
-  // possible in C++. The command map is necessary for the HelpCommand.
-  std::map<std::string, Command*>::const_iterator itr = m_cmd_map.find(cmd_name);
-  if (itr == m_cmd_map.end()) {
-    std::map<std::string, std::string>::const_iterator alias_itr = m_aliases.find(cmd_name);
-    RequireUser(alias_itr != m_aliases.end(),
-                "Unknown command: " << cmd_name << ". Type 'help' for help.");
-    itr = m_cmd_map.find(alias_itr->second);
-    Require(itr != m_cmd_map.end(), "Broken alias: " << alias_itr->second);
-  }
-
-  Command& command = *(itr->second);
-  command.init(args);
-  return command;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-const std::string& CommandFactory::name(const Command* command) const
-///////////////////////////////////////////////////////////////////////////////
-{
-  for (std::map<std::string, Command*>::const_iterator
-       itr = m_cmd_map.begin(); itr != m_cmd_map.end(); ++itr) {
-    if (itr->second == command) {
-      return itr->first;
+  // If alias, translate to real name
+  {
+    std::map<std::string, std::string>::const_iterator itr = m_aliases.find(cmd_name);
+    if (itr != m_aliases.end()) {
+      cmd_name = itr->second;
     }
   }
-  Require(false, "Never found command");
+
+  // Search for type and create appropriate Command object
+  Command* new_cmd = nullptr;
+  SearchAndCreate search_and_create_functor(cmd_name,
+                                            args,
+                                            new_cmd,
+                                            engine);
+  boost::mpl::for_each<command_types>(search_and_create_functor);
+  RequireUser(new_cmd != nullptr,
+              "Unknown command: " << cmd_name << ". Type 'help' for help.");
+
+  return std::shared_ptr<const Command>(new_cmd);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

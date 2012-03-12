@@ -8,11 +8,11 @@
 namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
-World::World(unsigned width, unsigned height)
+World::World(unsigned width, unsigned height, Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
   : m_width(width),
     m_height(height),
-    m_time()
+    m_engine(engine)
 {
   for (unsigned i = 0; i < height; ++i) {
     std::vector<WorldTile*> row(width, nullptr);
@@ -158,7 +158,7 @@ void World::cycle_turn()
 void World::place_city(const std::string& name, const Location& location)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  City* new_city = new City(name, location);
+  City* new_city = new City(name, location, m_engine);
   WorldTile& tile = get_tile(location);
   dynamic_cast<LandTile&>(tile).place_city(*new_city);
   m_cities.push_back(new_city);

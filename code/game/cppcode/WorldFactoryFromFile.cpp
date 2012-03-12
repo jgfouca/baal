@@ -11,10 +11,11 @@ namespace baal {
 const std::string WorldFactoryFromFile::WORLD_FILE_EXT = ".baalmap";
 
 ///////////////////////////////////////////////////////////////////////////////
-World& WorldFactoryFromFile::create(const std::string& mapfilename)
+World& WorldFactoryFromFile::create(const std::string& mapfilename,
+                                    Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  WorldFactoryFromFile wfff(mapfilename.c_str());
+  WorldFactoryFromFile wfff(mapfilename.c_str(), engine);
 
   return wfff.load();
 }
@@ -40,7 +41,7 @@ World& WorldFactoryFromFile::load()
   int map_width = get_int_from_parent("map_width");
   int map_height = get_int_from_parent("map_height");
 
-  World& world = *(new World(map_width, map_height));
+  World& world = *(new World(map_width, map_height, m_engine));
   m_curr_node = m_curr_node->xmlChildrenNode;
   while (m_curr_node != nullptr) {
     if (!xmlStrcmp(m_curr_node->name, (const xmlChar *)"tile")) {

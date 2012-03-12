@@ -101,7 +101,8 @@ void TalentTree::query_all_learnable_spells(std::vector<std::pair<std::string, u
     else {
       const Spell& spell = SpellFactory::create_spell(spell_name,
                                                       1 /*level*/,
-                                                      Location());
+                                                      Location(),
+                                                      const_cast<Engine&>(player.engine()));
       bool prereqs_ok = true;
       try {
         check_prereqs(spell, player);

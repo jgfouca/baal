@@ -10,7 +10,8 @@
 namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
-World& WorldFactoryHardcoded::create(const std::string& world_config)
+World& WorldFactoryHardcoded::create(const std::string& world_config,
+                                     Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
   // Convert to int
@@ -23,7 +24,7 @@ World& WorldFactoryHardcoded::create(const std::string& world_config)
               " is out of bounds, choose 1-" << NUM_HARDCODED_WORLDS);
 
   if (world_id == 1) {
-    return generate_world_1();
+    return generate_world_1(engine);
   }
   else {
     Require(false, "Should never make it here");
@@ -31,7 +32,7 @@ World& WorldFactoryHardcoded::create(const std::string& world_config)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-World& WorldFactoryHardcoded::generate_world_1()
+World& WorldFactoryHardcoded::generate_world_1(Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
   /*
@@ -44,7 +45,7 @@ World& WorldFactoryHardcoded::generate_world_1()
     P L L O O O
     O O O O O O
    */
-  World& world = *(new World(6, 6));
+  World& world = *(new World(6, 6, engine));
 
   world.m_tiles[0][0] = new TundraTile(Location(0,0),
                                        *new Climate(30, 10, Wind(10, WSW)),

@@ -4,6 +4,7 @@
 #include "WorldFactoryFromFile.hpp"
 #include "Configuration.hpp"
 #include "BaalExceptions.hpp"
+#include "Engine.hpp"
 
 #include <cstdlib>
 
@@ -13,11 +14,11 @@ const std::string WorldFactory::GENERATED_WORLD  = "g";
 const std::string WorldFactory::DEFAULT_WORLD = "1";
 
 ///////////////////////////////////////////////////////////////////////////////
-World& WorldFactory::create()
+World& WorldFactory::create(Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
   // Get user's choice of world
-  Configuration& config = Configuration::instance();
+  const Configuration& config = engine.config();
   std::string world_config = config.get_world_config();
   if (world_config == Configuration::UNSET) {
     world_config = DEFAULT_WORLD;
@@ -34,13 +35,13 @@ World& WorldFactory::create()
 
   // Create and return the desired world
   if (numeric) {
-    return WorldFactoryHardcoded::create(world_config);
+    return WorldFactoryHardcoded::create(world_config, engine);
   }
   else if (world_config == GENERATED_WORLD) {
-    return WorldFactoryGenerated::create();
+    return WorldFactoryGenerated::create(engine);
   }
   else if (is_baal_map_file(world_config)) {
-    return WorldFactoryFromFile::create(world_config);
+    return WorldFactoryFromFile::create(world_config, engine);
   }
   else {
     RequireUser(false, "Invalid choice of world: " << world_config);

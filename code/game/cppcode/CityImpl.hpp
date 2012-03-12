@@ -7,11 +7,11 @@
 
 #include <libxml/parser.h>
 
-
 namespace baal {
 
 class LandTile;
 class WorldTile;
+class Engine;
 
 namespace details { // Clients, stay away!
 
@@ -27,7 +27,7 @@ class CityImpl
   // ==== Public API ====
   //
 
-  CityImpl(const std::string& name, Location location);
+  CityImpl(const std::string& name, Location location, Engine& engine);
 
   CityImpl & operator=(const CityImpl&) = delete;
   CityImpl(const CityImpl&)             = delete;
@@ -72,7 +72,7 @@ class CityImpl
   void destroy_defense(unsigned levels);
 
   //
-  // ==== Internal methods ====
+  // ==== Internal types and methods ====
   //
 
   typedef std::pair<std::vector<WorldTile*>, std::vector<WorldTile*> > tile_vec_pair;
@@ -189,20 +189,22 @@ class CityImpl
   Location    m_location;
   unsigned    m_defense_level;
   bool        m_famine;
+  Engine&     m_engine;
 
   //
   // ==== Class constants ====
   //
 
   // City growth/food/production contants
-  static constexpr float CITY_BASE_GROWTH_RATE = 0.01; // 1% per turn
-  static constexpr float MAX_GROWTH_MODIFIER   = 4.0;
+  static constexpr float CITY_BASE_GROWTH_RATE      = 0.01; // 1% per turn
+  static constexpr float MAX_GROWTH_MODIFIER        = 4.0;
   static constexpr unsigned CITY_RANK_UP_MULTIPLIER = 2;
-  static constexpr unsigned CITY_STARTING_POP = 1000;
-  static constexpr unsigned POP_THAT_EATS_ONE_FOOD = 1000;
-  static constexpr float FOOD_FROM_CITY_CENTER = 1.0;
-  static constexpr float PROD_FROM_CITY_CENTER = 1.0;
-  static constexpr float PROD_FROM_SPECIALIST  = 1.0;
+  static constexpr unsigned CITY_STARTING_POP       = 1000;
+  static constexpr unsigned POP_THAT_EATS_ONE_FOOD  = 1000;
+  static constexpr float FOOD_FROM_CITY_CENTER      = 1.0;
+  static constexpr float PROD_FROM_CITY_CENTER      = 1.0;
+  static constexpr float PROD_FROM_SPECIALIST       = 1.0;
+  static constexpr unsigned CITY_STARTING_DEFENSE   = 1;
 
   // Constants for production costs of various buildable items
   static constexpr unsigned SETTLER_PROD_COST  = 200;
@@ -219,9 +221,11 @@ class CityImpl
 // the .cpp, but again, we publicize these for unit-testing.
 //
 
-bool is_within_distance_of_any_city(Location location, int distance);
+bool is_within_distance_of_any_city(Location location,
+                                    int distance,
+                                    const Engine& engine);
 
-float compute_city_loc_heuristic(Location location);
+float compute_city_loc_heuristic(Location location, const Engine& engine);
 
 }
 }
