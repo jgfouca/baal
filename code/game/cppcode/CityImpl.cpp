@@ -385,7 +385,7 @@ CityImpl::get_recommended_production(const std::vector<WorldTile*>& food_tiles,
                                      const std::vector<WorldTile*>& worked_food_tiles,
                                      const std::vector<WorldTile*>& worked_prod_tiles,
                                      float food_gathered,
-                                     float prod_gathered)
+                                     float prod_gathered) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   // Decide on how to spend production. Options: City fortifications,
@@ -423,6 +423,7 @@ CityImpl::get_recommended_production(const std::vector<WorldTile*>& food_tiles,
     }
   }
 
+  // 2)
   // We want a healthy level of production from this city if possible. We
   // need to verify that there are nearby production tiles that we can
   // enhance. We don't want to start pumping settlers before this city
@@ -439,6 +440,7 @@ CityImpl::get_recommended_production(const std::vector<WorldTile*>& food_tiles,
     }
   }
 
+  // 3)
   // We want to expand with settlers once a city has become large enough
   {
     // Check if building a settler is appropriate. New cities must be
@@ -470,6 +472,7 @@ CityImpl::get_recommended_production(const std::vector<WorldTile*>& food_tiles,
     }
   }
 
+  // 4)
   // We want a high level of production from this city if possible. We
   // need to verify that there are nearby production tiles that we can
   // enhance.
@@ -483,6 +486,7 @@ CityImpl::get_recommended_production(const std::vector<WorldTile*>& food_tiles,
     }
   }
 
+  // 5)
   // Building defenses is always a decent option. Note that there is no upper
   // limit on the amount of defense a city can build.
   return Action(BUILD_DEFENSE);
@@ -622,12 +626,21 @@ bool CityImpl::build_infra(LandTile& land_tile)
   Require(infra_level < LandTile::LAND_TILE_MAX_INFRA, "Error in build eval");
   unsigned next_infra_level = infra_level + 1;
   float prod_cost = next_infra_level * INFRA_PROD_COST;
-  if (prod_cost < m_production) {
+  if (prod_cost <= m_production) {
     m_production -= prod_cost;
     land_tile.build_infra();
     return true;
   }
   return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void CityImpl::destroy_defense(unsigned levels)
+///////////////////////////////////////////////////////////////////////////////
+{
+  Require(defense() >= levels, "Invalid destroy levels: " << levels);
+
+  m_defense_level -= levels;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

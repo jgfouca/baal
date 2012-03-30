@@ -5,6 +5,7 @@ ALL_TEST_FLAGS := $(GAMECXXFLAGS) $(GAME_INC_FLAGS) $(GAME_LIB_FLAGS) $(GAMELDFL
 .PHONY: test
 .PHONY: clean
 .PHONY: lib
+.PHONY: valgrind
 
 EXES = $(patsubst %.$(MAIN_FILE_EXT), $(BIN_DIR)/%.$(EXE_FILE_EXT),$(wildcard *.$(MAIN_FILE_EXT)))
 
@@ -30,4 +31,9 @@ clean:
 test: $(EXES)
 	for exe in $(EXES); do \
           ./$$exe || exit 1; \
+        done
+
+valgrind: $(EXES)
+	for exe in $(EXES); do \
+          valgrind --tool=memcheck --leak-check=full ./$$exe || exit 1; \
         done

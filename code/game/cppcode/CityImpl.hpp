@@ -158,15 +158,20 @@ class CityImpl
    * be worked, second representing production tiles that should be worked.
    * All remaining workers are assumed to be specialists.
    */
-  tile_vec_pair get_citizen_recommendation(const std::vector<WorldTile*>& food_tiles,
-                                           const std::vector<WorldTile*>& prod_tiles) const;
+  tile_vec_pair
+  get_citizen_recommendation(const std::vector<WorldTile*>& food_tiles,
+                             const std::vector<WorldTile*>& prod_tiles) const;
 
+  /**
+   * Given current circumstances, compute the recommended production item
+   * for this city.
+   */
   Action get_recommended_production(const std::vector<WorldTile*>& food_tiles,
                                     const std::vector<WorldTile*>& prod_tiles,
                                     const std::vector<WorldTile*>& worked_food_tiles,
                                     const std::vector<WorldTile*>& worked_prod_tiles,
                                     float food_gathered,
-                                    float prod_gathered);
+                                    float prod_gathered) const;
 
   /**
    * How much food is required to avoid starvation.
@@ -175,7 +180,6 @@ class CityImpl
   {
     return static_cast<float>(m_population) / POP_THAT_EATS_ONE_FOOD;
   }
-
 
   //
   // ==== Members ====
