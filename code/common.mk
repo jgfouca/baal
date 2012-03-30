@@ -1,7 +1,7 @@
 #### Constants ####
 
 # Compiler constants
-CXX := g++
+CXX := colorgcc # Use g++ if colorgcc not installed
 
 # File binary type substrings
 OPT_BUILD_TAG  := opt

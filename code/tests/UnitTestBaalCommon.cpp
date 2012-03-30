@@ -1,5 +1,6 @@
 #include "BaalCommon.hpp"
 #include "BaalExceptions.hpp"
+#include "Engine.hpp"
 #include "Util.hpp"
 
 #include <gtest/gtest.h>
@@ -43,9 +44,10 @@ TEST(BaalCommon, LocationBasics)
 }
 
 bool check_adjacency(Location location,
-                     const std::vector<Location>& expected)
+                     const std::vector<Location>& expected,
+                     const baal::Engine& engine)
 {
-  auto adj_range = baal::get_adjacent_location_range(location);
+  auto adj_range = baal::get_adjacent_location_range(location, engine);
   if (static_cast<size_t>(boost::distance(adj_range)) != expected.size()) {
     return false;
   }
@@ -56,12 +58,12 @@ bool check_adjacency(Location location,
 
 TEST(BaalCommon, AdjacentLocationRange)
 {
-  baal::setup_singletons();
+  baal::Engine engine;
 
   {
     // Out-of-range location
     Location location(12, 12);
-    EXPECT_THROW(baal::get_adjacent_location_range(location),
+    EXPECT_THROW(baal::get_adjacent_location_range(location, engine),
                  baal::ProgramError);
   }
 
@@ -76,7 +78,7 @@ TEST(BaalCommon, AdjacentLocationRange)
 
         {4,2}, {4,3}, {4,4}
       };
-    EXPECT_TRUE(check_adjacency(location, expected));
+    EXPECT_TRUE(check_adjacency(location, expected, engine));
   }
 
   {
@@ -88,7 +90,7 @@ TEST(BaalCommon, AdjacentLocationRange)
 
         {1,0}, {1,1}
       };
-    EXPECT_TRUE(check_adjacency(location, expected));
+    EXPECT_TRUE(check_adjacency(location, expected, engine));
   }
 
   {
@@ -100,7 +102,7 @@ TEST(BaalCommon, AdjacentLocationRange)
 
         {1,4}, {1,5}
       };
-    EXPECT_TRUE(check_adjacency(location, expected));
+    EXPECT_TRUE(check_adjacency(location, expected, engine));
   }
 
   {
@@ -112,7 +114,7 @@ TEST(BaalCommon, AdjacentLocationRange)
 
                {5,1}
       };
-    EXPECT_TRUE(check_adjacency(location, expected));
+    EXPECT_TRUE(check_adjacency(location, expected, engine));
   }
 
   {
@@ -124,7 +126,7 @@ TEST(BaalCommon, AdjacentLocationRange)
 
         {5,4}
       };
-    EXPECT_TRUE(check_adjacency(location, expected));
+    EXPECT_TRUE(check_adjacency(location, expected, engine));
   }
 
 }

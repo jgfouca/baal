@@ -1,6 +1,6 @@
 include ../common.mk
 
-ALL_TEST_FLAGS := $(CXXFLAGS) $(GAME_INC_FLAGS) $(GAME_LIB_FLAGS) $(GAMELDFLAGS) -lgtest -lpthread
+ALL_TEST_FLAGS := $(GAMECXXFLAGS) $(GAME_INC_FLAGS) $(GAME_LIB_FLAGS) $(GAMELDFLAGS) -lgtest -lpthread
 
 .PHONY: test
 .PHONY: clean

@@ -1,6 +1,8 @@
 #ifndef Engine_hpp
 #define Engine_hpp
 
+#include "Configuration.hpp"
+
 namespace baal {
 
 class World;
@@ -18,7 +20,7 @@ class Configuration;
 class Engine
 {
  public:
-  Engine(const Configuration& config);
+  Engine(const Configuration& config = Configuration());
 
   ~Engine();
 
