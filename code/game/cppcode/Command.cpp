@@ -14,6 +14,8 @@
 #include <memory>
 
 #include <boost/mpl/for_each.hpp>
+#include <boost/mpl/contains.hpp>
+#include <boost/mpl/assert.hpp>
 
 namespace baal {
 
@@ -46,13 +48,14 @@ const std::string EndTurnCommand::HELP =
   "  Ends the current turn. Optional arg to skip ahead many turns";
 const std::string QuitCommand::HELP =
   "\n"
-  "  Ends the game\n";
+  "  Ends the game";
 const std::string SpellCommand::HELP =
-  "<spell-name> <level> <row>,<col>\n"
-  "  Casts spell of type <spell-name> and level <level> at location <row>,<col>";
+  "<spell-name> <row>,<col> [<level>]\n"
+  "  Casts spell of type <spell-name> and level <level> at location <row>,<col>\n"
+  "  If no level is provided, spell will be cast at player's max skill";
 const std::string LearnCommand::HELP =
-  "<spell-name> <level>\n"
-  "  Player learns spell of type <spell-name> and level <level>";
+  "<spell-name>\n"
+  "  Player learns spell of type <spell-name> or increases power in that spell";
 const std::string DrawCommand::HELP =
   "<draw-mode>\n"
   "  Changes how the world is drawn.";
@@ -76,7 +79,7 @@ std::string create_help_str()
   // Formulate and return full help string
   std::string help_str = CommandClass::NAME + " " + CommandClass::HELP;
   if (alias_str !=  "") {
-    help_str += "  Aliases: " + alias_str;
+    help_str += "\n  Aliases: " + alias_str;
   }
   return help_str;
 }
@@ -85,31 +88,36 @@ std::string create_help_str()
 struct CreateHelpDump
 ///////////////////////////////////////////////////////////////////////////////
 {
+  /////////////////////////////////////////////////////////////////////////////
   CreateHelpDump(const std::string& name,
                  std::ostringstream& out,
                  Engine& engine) :
+  /////////////////////////////////////////////////////////////////////////////
     m_name(name),
     m_return_val(out),
     m_engine(engine)
   {}
 
+  /////////////////////////////////////////////////////////////////////////////
   template <class CommandClass>
   void operator()(CommandClass)
+  /////////////////////////////////////////////////////////////////////////////
   {
     if (m_name == "" || m_name == CommandClass::NAME) {
       m_return_val << create_help_str<CommandClass>() << "\n";
     }
   }
 
+  /////////////////////////////////////////////////////////////////////////////
   void operator()(SpellCommand)
+  /////////////////////////////////////////////////////////////////////////////
   {
     if (m_name == "" || m_name == SpellCommand::NAME) {
       m_return_val << create_help_str<SpellCommand>() << "\n";
 
       const TalentTree& talents = m_engine.player().talents();
 
-      std::vector<std::pair<std::string, unsigned> > castable_spells;
-      talents.query_all_castable_spells(castable_spells);
+      auto castable_spells = talents.query_all_castable_spells();
 
       m_return_val << "  Castable spells:\n";
       for (const std::pair<std::string, unsigned>& spell_spec : castable_spells) {
@@ -120,7 +128,9 @@ struct CreateHelpDump
     }
   }
 
+  /////////////////////////////////////////////////////////////////////////////
   void operator()(LearnCommand)
+  /////////////////////////////////////////////////////////////////////////////
   {
     if (m_name == "" || m_name == LearnCommand::NAME) {
       m_return_val << create_help_str<LearnCommand>() << "\n";
@@ -128,20 +138,28 @@ struct CreateHelpDump
       Player& player = m_engine.player();
       const TalentTree& talents = player.talents();
 
-      std::vector<std::pair<std::string, unsigned> > learnable_spells;
-      talents.query_all_learnable_spells(learnable_spells, player);
+      auto learnable_spells= talents.query_all_learnable_spells();
 
       m_return_val << "  Learnable spells:\n";
       for (const std::pair<std::string, unsigned>& spell_spec : learnable_spells) {
         std::string spell_name = spell_spec.first;
         unsigned spell_lvl     = spell_spec.second;
-        m_return_val << "    " << spell_name << " : " << spell_lvl << "\n";
+        std::ostringstream out;
+        if (spell_lvl == 1) {
+          out << "(new)";
+        }
+        else {
+          out << spell_lvl - 1;
+        }
+        m_return_val << "    " << spell_name << " : " << out.str() << "\n";
       }
 
     }
   }
 
+  /////////////////////////////////////////////////////////////////////////////
   void operator()(DrawCommand)
+  /////////////////////////////////////////////////////////////////////////////
   {
     if (m_name == "" || m_name == DrawCommand::NAME) {
       m_return_val << create_help_str<DrawCommand>() << "\n";
@@ -161,6 +179,14 @@ struct CreateHelpDump
   Engine& m_engine;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+template <class T>
+struct is_in_command_factory :
+  boost::mpl::contains<CommandFactory::command_types, T>
+{};
+///////////////////////////////////////////////////////////////////////////////
+
+
 } // empty namespace
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -169,7 +195,9 @@ HelpCommand::HelpCommand(const std::vector<std::string>& args, Engine& engine) :
   m_arg("")
 ///////////////////////////////////////////////////////////////////////////////
 {
-  RequireUser(args.size() <= 1, "The help command takes at most one argument");
+  BOOST_MPL_ASSERT(( is_in_command_factory<HelpCommand> ));
+  RequireUser(args.size() <= 1,
+              "'" << HelpCommand::NAME << "' takes at most one argument");
 
   if (!args.empty()) {
     m_arg = args.front();
@@ -188,6 +216,7 @@ void HelpCommand::apply() const
 {
   std::ostringstream out;
   CreateHelpDump help_dump_functor(m_arg, out, m_engine);
+  boost::mpl::for_each<CommandFactory::command_types>(help_dump_functor);
   if (m_arg == "") {
     std::string help_msg = "List of available commands:\n\n" + out.str();
     m_engine.interface().help(help_msg);
@@ -205,7 +234,9 @@ EndTurnCommand::EndTurnCommand(const std::vector<std::string>& args, Engine& eng
   m_num_turns(1)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  RequireUser(args.size() <= 1, "The end command takes at most one argument");
+  BOOST_MPL_ASSERT(( is_in_command_factory<EndTurnCommand> ));
+  RequireUser(args.size() <= 1,
+              "'" << EndTurnCommand::NAME << "' takes at most one argument");
 
   if (!args.empty()) {
     // Parse num turns
@@ -232,7 +263,9 @@ QuitCommand::QuitCommand(const std::vector<std::string>& args, Engine& engine) :
   Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  RequireUser(args.empty(), "The quit command takes no arguments");
+  BOOST_MPL_ASSERT(( is_in_command_factory<QuitCommand> ));
+  RequireUser(args.empty(),
+              "'" << QuitCommand::NAME << "' takes no arguments");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -250,7 +283,9 @@ SaveCommand::SaveCommand(const std::vector<std::string>& args, Engine& engine)
   : Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  RequireUser(args.size() <= 1, "The save command takes at most one argument");
+  BOOST_MPL_ASSERT(( is_in_command_factory<SaveCommand> ));
+  RequireUser(args.size() <= 1,
+              "'" << SaveCommand::NAME << "' takes at most one argument");
 
   if (!args.empty()) {
     m_arg = args.front();
@@ -307,23 +342,30 @@ SpellCommand::SpellCommand(const std::vector<std::string>& args, Engine& engine)
   Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  RequireUser(args.size() == 3, "The cast command takes 3 arguments");
+  BOOST_MPL_ASSERT(( is_in_command_factory<SpellCommand> ));
+  RequireUser(args.size() >= 2 && args.size() <= 3,
+              "'" << SpellCommand::NAME << "' takes two or three arguments");
 
   // Parse spell name
   m_spell_name = args[0];
-
-  // Parse spell level
-  std::istringstream iss(args[1]);
-  iss >> m_spell_level;
-  RequireUser(!iss.fail(), "Second argument not a valid integer");
 
   // Parse location
   try {
     m_spell_location = Location(args[2]);
   }
   catch (ProgramError& e) {
-    RequireUser(false, "Third argument was not a valid location. " <<
+    RequireUser(false, "Second argument was not a valid location. " <<
                 "Expect <row>,<col> (no spaces)\nError was: " << e.what());
+  }
+
+  // Parse spell level
+  if (args.size() == 3) {
+    std::istringstream iss(args[1]);
+    iss >> m_spell_level;
+    RequireUser(!iss.fail(), "Third argument not a valid integer");
+  }
+  else {
+    m_engine.player().talents().spell_skill(m_spell_name);
   }
 }
 
@@ -345,10 +387,9 @@ void SpellCommand::apply() const
   // throw exceptions.
   std::shared_ptr<const Spell> spell(
     &(SpellFactory::create_spell(m_spell_name,
+                                 m_engine,
                                  m_spell_level,
-                                 m_spell_location,
-                                 m_engine))
-                                   );
+                                 m_spell_location)));
 
   // Verify that player can cast this spell (can throw)
   player.verify_cast(*spell);
@@ -382,34 +423,20 @@ LearnCommand::LearnCommand(const std::vector<std::string>& args, Engine& engine)
   Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  RequireUser(args.size() == 2, "The learn command takes 2 arguments");
+  BOOST_MPL_ASSERT(( is_in_command_factory<LearnCommand> ));
+  RequireUser(args.size() == 1,
+              "'" << LearnCommand::NAME << "' takes one argument");
 
   // Parse spell name
   m_spell_name = args[0];
-
-  // Parse spell level
-  std::istringstream iss(args[1]);
-  iss >> m_spell_level;
-  RequireUser(!iss.fail(), "Second argument not a valid integer");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void LearnCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Player& player = m_engine.player();
-  Location dummy;
-
-  // We need to auto_ptr since learn can throw exceptions.
-  std::auto_ptr<const Spell> spell(
-    &(SpellFactory::create_spell(m_spell_name,
-                                 m_spell_level,
-                                 dummy,
-                                 m_engine))
-                                   );
-
   // Try to have the player learn this spell, this can throw
-  player.learn(*spell);
+  m_engine.player().learn(m_spell_name);
 }
 
 /*****************************************************************************/
@@ -419,7 +446,9 @@ DrawCommand::DrawCommand(const std::vector<std::string>& args, Engine& engine) :
   Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  RequireUser(args.size() == 1, "The draw command takes 1 argument");
+  BOOST_MPL_ASSERT(( is_in_command_factory<DrawCommand> ));
+  RequireUser(args.size() == 1,
+              "'" << DrawCommand::NAME << "' takes one argument");
 
   // Parse draw mode
   m_draw_mode = args[0];
@@ -441,7 +470,9 @@ HackCommand::HackCommand(const std::vector<std::string>& args, Engine& engine) :
   Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  RequireUser(args.size() == 1, "The hack command takes 1 argument");
+  BOOST_MPL_ASSERT(( is_in_command_factory<HackCommand> ));
+  RequireUser(args.size() == 1,
+              "'" << HackCommand::NAME << "' takes one argument");
 
   // Parse exp
   std::istringstream iss(args[0]);

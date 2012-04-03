@@ -18,9 +18,15 @@ class Player;
 class TalentTree
 {
  public:
-  TalentTree() : m_num_learned(0) {}
+  typedef std::vector<std::pair<std::string, unsigned> > query_return_type;
+  typedef std::map<std::string, unsigned> map_type;
 
-  void add(const Spell& spell, const Player& player);
+  TalentTree(const Player& player) :
+    m_num_learned(0),
+    m_player(player)
+  {}
+
+  void add(const std::string& spell_name);
 
   bool has(const Spell& spell) const;
 
@@ -28,19 +34,23 @@ class TalentTree
 
   unsigned num_learned() const { return m_num_learned; }
 
-  void query_all_castable_spells(std::vector<std::pair<std::string, unsigned> >& rv) const;
+  query_return_type query_all_castable_spells() const;
 
-  void query_all_learnable_spells(std::vector<std::pair<std::string, unsigned> >& rv,
-                                  const Player& player) const;
+  query_return_type query_all_learnable_spells() const;
+
+  unsigned spell_skill(const std::string& spell_name) const;
 
   xmlNodePtr to_xml();
 
  private:
-  void check_prereqs(const Spell& spell, const Player& player) const;
+  void check_prereqs(const std::string& spell_name,
+                     unsigned spell_level,
+                     unsigned player_level) const;
   void validate_invariants() const;
 
-  std::map<std::string, unsigned> m_spell_level_map;
-  unsigned m_num_learned;
+  map_type      m_spell_level_map;
+  unsigned      m_num_learned;
+  const Player& m_player;
 
   static const unsigned MAX_SPELL_LEVEL = 5;
 };

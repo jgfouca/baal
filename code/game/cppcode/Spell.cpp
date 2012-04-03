@@ -209,9 +209,9 @@ unsigned Spell::spawn(const std::string& spell_name, unsigned spell_level) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   const Spell& spell = SpellFactory::create_spell(spell_name,
+                                                  m_engine,
                                                   spell_level,
-                                                  m_location,
-                                                  m_engine);
+                                                  m_location);
 
   // Check if this spell can be applied here
   bool verify_ok = true;

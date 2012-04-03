@@ -1,5 +1,4 @@
 #include "SpellFactory.hpp"
-#include "BaalCommon.hpp"
 #include "BaalExceptions.hpp"
 #include "Spell.hpp"
 
@@ -32,9 +31,9 @@ std::string SpellFactory::ALL_SPELLS[] = {
 
 ///////////////////////////////////////////////////////////////////////////////
 const Spell& SpellFactory::create_spell(const std::string& spell_name,
+                                        Engine&            engine,
                                         unsigned           spell_level,
-                                        const Location&    location,
-                                        Engine&            engine)
+                                        const Location&    location)
 ///////////////////////////////////////////////////////////////////////////////
 {
   if (spell_name == Hot::NAME) {

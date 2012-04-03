@@ -20,7 +20,7 @@ class Player : public Drawable
  public:
   Player(const Engine& engine);
 
-  void learn(const Spell& spell);
+  void learn(const std::string& spell_name);
 
   void verify_cast(const Spell& spell) const;
 

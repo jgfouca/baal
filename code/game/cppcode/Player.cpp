@@ -20,7 +20,7 @@ Player::Player(const Engine& engine)
     m_exp(0),
     m_level(1),
     m_next_level_cost(FIRST_LEVELUP_EXP_COST),
-    m_talents(),
+    m_talents(*this),
     m_engine(engine)
 {
   if (m_name == Configuration::UNSET) {
@@ -29,10 +29,10 @@ Player::Player(const Engine& engine)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void Player::learn(const Spell& spell)
+void Player::learn(const std::string& spell_name)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  m_talents.add(spell, *this);
+  m_talents.add(spell_name);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

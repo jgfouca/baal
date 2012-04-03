@@ -7,31 +7,28 @@
 namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
-void TalentTree::add(const Spell& spell, const Player& player)
+void TalentTree::add(const std::string& spell_name)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  RequireUser(player.level() > m_num_learned,
-              "You cannot learn any more spells until you level-up");
-  RequireUser(spell.level() <= MAX_SPELL_LEVEL,
-              "You've hit the maximum level for that spell");
+  map_type::iterator find_iter = m_spell_level_map.find(spell_name);
+  unsigned spell_level;
 
-  check_prereqs(spell, player);
+  // Compute implied spell-level
+  if (find_iter != m_spell_level_map.end()) {
+    spell_level = find_iter->second + 1;
+  }
+  else {
+    spell_level = 1;
+  }
 
-  std::string spell_name  = spell.name();
-  unsigned    spell_level = spell.level();
+  // Check if it is OK for them to learn this spell
+  check_prereqs(spell_name, spell_level, m_player.level());
 
-  std::map<std::string, unsigned>::iterator
-    find_iter = m_spell_level_map.find(spell_name);
-
+  // Add spell
   if (find_iter == m_spell_level_map.end()) {
-    // If learning for first time, it had better be level 1
-    RequireUser(spell_level == 1, "You must learn level 1 first.");
     m_spell_level_map[spell_name] = 1;
   }
   else {
-    RequireUser(!has(spell), "You already know " << spell);
-    RequireUser(find_iter->second == spell_level - 1,
-      "You must learn level " << spell_level - 1 << " of that spell first");
     m_spell_level_map[spell_name] += 1;
   }
 
@@ -51,8 +48,7 @@ bool TalentTree::has(const Spell& spell) const
 bool TalentTree::has(const std::string& spell_name, unsigned spell_level) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  std::map<std::string, unsigned>::const_iterator
-    find_iter = m_spell_level_map.find(spell_name);
+  map_type::const_iterator find_iter = m_spell_level_map.find(spell_name);
   if (find_iter == m_spell_level_map.end()) {
     return false;
   }
@@ -62,61 +58,58 @@ bool TalentTree::has(const std::string& spell_name, unsigned spell_level) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void TalentTree::query_all_castable_spells(std::vector<std::pair<std::string, unsigned> >& rv) const
+TalentTree::query_return_type TalentTree::query_all_castable_spells() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  rv.clear();
+  query_return_type rv;
   rv.reserve(m_num_learned);
 
-  for (std::map<std::string, unsigned>::const_iterator
+  for (map_type::const_iterator
        itr = m_spell_level_map.begin();
        itr != m_spell_level_map.end();
        ++itr) {
     std::string spell_name = itr->first;
     unsigned max_level = itr->second;
     for (unsigned l = 1; l <= max_level; ++l) {
-      rv.push_back(std::pair<std::string, unsigned>(spell_name, l));
+      rv.push_back(std::make_pair(spell_name, l));
     }
   }
+
+  return rv;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void TalentTree::query_all_learnable_spells(std::vector<std::pair<std::string, unsigned> >& rv,
-                                            const Player& player) const
+TalentTree::query_return_type TalentTree::query_all_learnable_spells() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   const unsigned num_spells = SpellFactory::num_spells();
 
-  rv.clear();
+  query_return_type rv;
   rv.reserve(num_spells);
 
   for (unsigned i = 0; i < num_spells; ++i) {
     std::string spell_name(SpellFactory::ALL_SPELLS[i]);
-    std::map<std::string, unsigned>::const_iterator
+    map_type::const_iterator
       fitr= m_spell_level_map.find(spell_name);
     if (fitr != m_spell_level_map.end()) {
-      rv.push_back(std::pair<std::string, unsigned>(spell_name,
-                                                    fitr->second + 1));
+      if (fitr->second != MAX_SPELL_LEVEL) {
+        rv.push_back(std::make_pair(spell_name, fitr->second + 1));
+      }
     }
     else {
-      const Spell& spell = SpellFactory::create_spell(spell_name,
-                                                      1 /*level*/,
-                                                      Location(),
-                                                      const_cast<Engine&>(player.engine()));
       bool prereqs_ok = true;
       try {
-        check_prereqs(spell, player);
+        check_prereqs(spell_name, 1 /*spell-level*/, m_player.level() + 1);
       }
       catch (...) {
         prereqs_ok = false;
       }
       if (prereqs_ok) {
-        rv.push_back(std::pair<std::string, unsigned>(spell_name,
-                                                      1 /*level*/));
+        rv.push_back(std::make_pair(spell_name, 1 /*level*/));
       }
-      delete &spell;
     }
   }
+  return rv;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -124,7 +117,7 @@ void TalentTree::validate_invariants() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   unsigned computed_num_learned = 0;
-  for (std::map<std::string, unsigned>::const_iterator
+  for (map_type::const_iterator
        itr = m_spell_level_map.begin();
        itr != m_spell_level_map.end();
        ++itr) {
@@ -136,12 +129,22 @@ void TalentTree::validate_invariants() const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void TalentTree::check_prereqs(const Spell& spell, const Player& player) const
+void TalentTree::check_prereqs(const std::string& spell_name,
+                               unsigned spell_level,
+                               unsigned player_level) const
 ///////////////////////////////////////////////////////////////////////////////
 {
+  const Spell& spell = SpellFactory::create_spell(spell_name,
+                                       const_cast<Engine&>(m_player.engine()));
   const SpellPrereq& prereq = spell.prereq();
 
-  RequireUser(player.level() >= prereq.min_player_level(),
+  RequireUser(player_level > m_num_learned,
+              "You cannot learn any more spells until you level-up");
+
+  RequireUser(spell_level <= MAX_SPELL_LEVEL,
+              "You've hit the maximum level for that spell");
+
+  RequireUser(player_level >= prereq.min_player_level(),
               "You are not high-enough level to learn that spell");
 
   for (const std::string& spell_name : prereq) {
@@ -155,13 +158,11 @@ xmlNodePtr TalentTree::to_xml()
 {
   xmlNodePtr TalentTree_node = xmlNewNode(nullptr, BAD_CAST "TalentTree");
 
-  std::vector<std::pair<std::string, unsigned> > castable_spells;
-  query_all_castable_spells(castable_spells);
+  auto castable_spells = query_all_castable_spells();
 
-  for (std::vector<std::pair<std::string, unsigned> >::const_iterator
-       itr = castable_spells.begin(); itr != castable_spells.end(); ++itr) {
-    std::string spell_name = itr->first;
-    unsigned spell_lvl     = itr->second;
+  for (const std::pair<std::string, unsigned>& spec : castable_spells) {
+    std::string spell_name = spec.first;
+    unsigned spell_lvl     = spec.second;
 
     std::ostringstream spell_name_oss, spell_lvl_oss;
     spell_name_oss << spell_name;
@@ -175,6 +176,19 @@ xmlNodePtr TalentTree::to_xml()
   }
 
    return TalentTree_node;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+unsigned TalentTree::spell_skill(const std::string& spell_name) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  map_type::const_iterator find_iter = m_spell_level_map.find(spell_name);
+  if (find_iter != m_spell_level_map.end()) {
+    return find_iter->second;
+  }
+  else {
+    return 0;
+  }
 }
 
 }

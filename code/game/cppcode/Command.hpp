@@ -143,8 +143,8 @@ class SpellCommand : public Command
   SpellCommand() {} // do not use
  private:
   std::string m_spell_name;
-  unsigned    m_spell_level;
   Location    m_spell_location;
+  unsigned    m_spell_level;
 };
 
 /**
@@ -168,7 +168,6 @@ class LearnCommand : public Command
   LearnCommand() {} // do not use
  private:
   std::string m_spell_name;
-  unsigned    m_spell_level;
 };
 
 /**
