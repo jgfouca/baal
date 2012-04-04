@@ -12,7 +12,9 @@ namespace baal {
 
 namespace {
 
+///////////////////////////////////////////////////////////////////////////////
 struct SearchAndCreate
+///////////////////////////////////////////////////////////////////////////////
 {
   SearchAndCreate(const std::string& name,
                   const std::vector<std::string>& args,
@@ -41,6 +43,41 @@ struct SearchAndCreate
 
 }
 
+namespace command_factory_only {
+
+///////////////////////////////////////////////////////////////////////////////
+struct Initializer
+///////////////////////////////////////////////////////////////////////////////
+{
+  Initializer(CommandFactory& factory) : m_factory(factory) {}
+
+  template <class CommandClass>
+  void operator()(CommandClass)
+  {
+    std::map<std::string, std::string>& aliases = m_factory.m_aliases;
+    std::vector<std::string>& commands = m_factory.m_cmd_map;
+
+    Require(std::find(commands.begin(), commands.end(), CommandClass::NAME) ==
+            commands.end(),
+            "Duplicate command name " << CommandClass::NAME);
+
+    m_factory.m_cmd_map.push_back(CommandClass::NAME);
+
+    for (std::string alias : CommandClass::ALIASES) {
+      Require(aliases.find(alias) == aliases.end(),
+              "Duplicate alias: " << alias);
+      Require(std::find(commands.begin(), commands.end(), alias) ==
+              commands.end(),
+              "Alias " << alias << " conflicts with command name");
+      aliases[alias] = CommandClass::NAME;
+    }
+  }
+
+  CommandFactory& m_factory;
+};
+
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 const CommandFactory& CommandFactory::instance()
 ///////////////////////////////////////////////////////////////////////////////
@@ -54,7 +91,7 @@ CommandFactory::CommandFactory()
 ///////////////////////////////////////////////////////////////////////////////
 {
   m_cmd_map.reserve(boost::mpl::size<command_types>::value);
-  boost::mpl::for_each<command_types>(Initializer(*this));
+  boost::mpl::for_each<command_types>(command_factory_only::Initializer(*this));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

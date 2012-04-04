@@ -121,6 +121,8 @@ class Spell
 
   const std::string& name() const { return m_name; }
 
+  const char* info() const { return "TODO"; }
+
   const SpellPrereq& prereq() const { return m_prereq; }
 
   unsigned level() const { return m_spell_level; }

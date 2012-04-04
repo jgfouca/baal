@@ -33,7 +33,7 @@ class Command
 /**
  * How the player asks for help.
  *
- * Syntax: help [command]
+ * Syntax: help [item]
  */
 class HelpCommand : public Command
 {

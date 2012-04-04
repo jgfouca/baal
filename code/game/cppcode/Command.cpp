@@ -38,8 +38,9 @@ const std::vector<std::string> DrawCommand::ALIASES    = {"d"};
 const std::vector<std::string> HackCommand::ALIASES    = {"x"};
 
 const std::string HelpCommand::HELP =
-  "[command]\n"
-  "  Returns info/syntax help for a command or all commands if no argument";
+  "[item]\n"
+  "  Returns info/syntax help for an item or all commands if no argument\n"
+  "  Examples of valid items: command-name, spell-name, mode-name";
 const std::string SaveCommand::HELP =
   "[filename]\n"
   "  Saves the game; if no name provided, a name based on data/time will be used";
@@ -205,7 +206,7 @@ HelpCommand::HelpCommand(const std::vector<std::string>& args, Engine& engine) :
     // Verify m_arg is a valid command name
     const CommandFactory& factory = CommandFactory::instance();
     const std::vector<std::string>& cmd_map = factory.get_command_map();
-    RequireUser(std::find(cmd_map.begin(), cmd_map.end(), m_arg) != cmd_map.end(),
+    RequireUser(contains(m_arg, cmd_map),
                 "Cannot get help for unknown command " << m_arg);
   }
 }
@@ -215,15 +216,41 @@ void HelpCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   std::ostringstream out;
-  CreateHelpDump help_dump_functor(m_arg, out, m_engine);
-  boost::mpl::for_each<CommandFactory::command_types>(help_dump_functor);
-  if (m_arg == "") {
-    std::string help_msg = "List of available commands:\n\n" + out.str();
-    m_engine.interface().help(help_msg);
+
+  // Case 1: argument is empty or refers to command
+  if (m_arg == "" ||
+      contains(m_arg, CommandFactory::instance().get_command_map())) {
+    if (m_arg == "") {
+      out << "List of available commands:\n\n";
+    }
+    CreateHelpDump help_dump_functor(m_arg, out, m_engine);
+    boost::mpl::for_each<CommandFactory::command_types>(help_dump_functor);
   }
+  // Case 2: argument is a spell name
+  else if (SpellFactory::is_in_all_names(m_arg)) {
+    const Spell& spell = SpellFactory::create_spell(m_arg, m_engine);
+
+    out << "Description of " << m_arg << " spell:\n"
+        << spell.info() << "\n"
+        << "Player has skill level "
+        << m_engine.player().talents().spell_skill(m_arg)
+        << " in this spell";
+    delete &spell;
+  }
+  // Case 3: argument is a draw mode
   else {
-    m_engine.interface().help(out.str());
+    try {
+      DrawMode mode = Drawable::parse_draw_mode(m_arg);
+      out << "Description of draw-mode: " << m_arg << "\n"
+          << explain_draw_mode(mode);
+    }
+    catch (const UserError& e) {
+      // Case 4: no match
+      RequireUser(false, "Unrecognized item: " << m_arg);
+    }
   }
+
+  m_engine.interface().help(out.str());
 }
 
 /*****************************************************************************/
@@ -467,17 +494,20 @@ void DrawCommand::apply() const
 
 ///////////////////////////////////////////////////////////////////////////////
 HackCommand::HackCommand(const std::vector<std::string>& args, Engine& engine) :
-  Command(engine)
+  Command(engine),
+  m_exp(0)
 ///////////////////////////////////////////////////////////////////////////////
 {
   BOOST_MPL_ASSERT(( is_in_command_factory<HackCommand> ));
-  RequireUser(args.size() == 1,
-              "'" << HackCommand::NAME << "' takes one argument");
+  RequireUser(args.size() <= 1,
+              "'" << HackCommand::NAME << "' takes at most one argument");
 
   // Parse exp
-  std::istringstream iss(args[0]);
-  iss >> m_exp;
-  RequireUser(!iss.fail(), "Argument not a valid integer");
+  if (args.size() == 1) {
+    std::istringstream iss(args[0]);
+    iss >> m_exp;
+    RequireUser(!iss.fail(), "Argument not a valid integer");
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -485,7 +515,12 @@ void HackCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   Player& player = m_engine.player();
-  player.gain_exp(m_exp);
+  if (m_exp) {
+    player.gain_exp(m_exp);
+  }
+  else {
+    player.gain_exp(player.next_level_cost() - player.exp());
+  }
 }
 
 }

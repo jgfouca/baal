@@ -23,7 +23,11 @@ enum DrawMode
   TEMPERATURE,
   PRESSURE,
   RAINFALL,
-  DEWPOINT // Coupled with Drawable::LAST
+  DEWPOINT,
+  ELEVATION,
+  SNOWPACK,
+  SEASURFACETEMP,
+  PRECIP   // Coupled with Drawable::LAST
 };
 
 class Drawable
@@ -40,7 +44,7 @@ class Drawable
   static std::string draw_mode_to_str(DrawMode draw_mode);
 
   static const DrawMode FIRST = CIV;
-  static const DrawMode LAST  = DEWPOINT;
+  static const DrawMode LAST  = PRECIP;
 
  protected:
   static DrawMode s_draw_mode;
@@ -53,6 +57,8 @@ class Drawable
 };
 
 DrawMode& operator++(DrawMode& draw_mode);
+
+std::string explain_draw_mode(DrawMode draw_mode);
 
 }
 

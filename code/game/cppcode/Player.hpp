@@ -46,6 +46,10 @@ class Player : public Drawable
 
   const Engine& engine() const { return m_engine; }
 
+  unsigned exp() const { return m_exp; }
+
+  unsigned next_level_cost() const { return m_next_level_cost; }
+
 private:
   // Forbidden
   Player(const Player&);

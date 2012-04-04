@@ -113,6 +113,25 @@ bool is_valid(Location location)
   return location != Location();
 }
 
+///////////////////////////////////////////////////////////////////////////////
+template <class T, class Container>
+inline
+bool contains(const T& t, const Container& container)
+///////////////////////////////////////////////////////////////////////////////
+{
+  return container.find(t) != container.end();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+template <class T>
+inline
+bool contains(const T& t, const std::vector<T>& container)
+///////////////////////////////////////////////////////////////////////////////
+{
+  return std::find(std::begin(container), std::end(container), t) !=
+         container.end();
+}
+
 //
 // AdjacentLocationIterator and associated free functions
 //
