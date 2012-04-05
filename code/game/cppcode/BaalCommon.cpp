@@ -91,4 +91,25 @@ void AdjacentLocationIterator::advance()
   m_current = Location();
 }
 
+///////////////////////////////////////////////////////////////////////////////
+std::vector<std::string> split(const std::string& str,
+                               const std::string& sep)
+///////////////////////////////////////////////////////////////////////////////
+{
+  std::vector<std::string> rv;
+  size_t pos = 0;
+  while (pos < str.size()) {
+    size_t next_colon = str.find(sep, pos);
+    if (next_colon == std::string::npos) {
+      rv.push_back(str.substr(pos));
+      break;
+    }
+    else {
+      rv.push_back(str.substr(pos, next_colon - pos));
+      pos = next_colon + 1;
+    }
+  }
+  return rv;
+}
+
 }

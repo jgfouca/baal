@@ -4,7 +4,7 @@
 
 #include <iomanip>
 
-using namespace baal;
+namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
 Geology::Geology(float base_tension_buildup,
@@ -100,4 +100,6 @@ xmlNodePtr Geology::to_xml()
   xmlNewChild(Geology_node, nullptr, BAD_CAST "type", BAD_CAST this->geology_type());
 
   return Geology_node;
+}
+
 }

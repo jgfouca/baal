@@ -3,6 +3,7 @@
 
 #include <climits>
 #include <string>
+#include <vector>
 #include <iostream>
 #include <iterator>
 #include <cstdlib>
@@ -131,6 +132,11 @@ bool contains(const T& t, const std::vector<T>& container)
   return std::find(std::begin(container), std::end(container), t) !=
          container.end();
 }
+
+///////////////////////////////////////////////////////////////////////////////
+std::vector<std::string> split(const std::string& str,
+                               const std::string& sep);
+///////////////////////////////////////////////////////////////////////////////
 
 //
 // AdjacentLocationIterator and associated free functions

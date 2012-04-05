@@ -17,6 +17,8 @@ class InterfaceText : public Interface
  public:
   InterfaceText(std::ostream& out, std::istream& in, Engine& engine);
 
+  ~InterfaceText();
+
   virtual void draw();
 
   virtual void interact();

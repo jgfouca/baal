@@ -7,7 +7,7 @@
 #include "World.hpp"
 #include "Configuration.hpp"
 
-using namespace baal;
+namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
 Engine::Engine(const Configuration& config)
@@ -60,4 +60,6 @@ void Engine::play()
       break;
     }
   }
+}
+
 }

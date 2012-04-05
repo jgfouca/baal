@@ -131,4 +131,49 @@ TEST(BaalCommon, AdjacentLocationRange)
 
 }
 
+TEST(BaalCommon, split)
+{
+  {
+    std::string input = "", sep = ":";
+    std::vector<std::string> expected;
+    EXPECT_EQ(expected, baal::split(input, sep));
+  }
+
+  {
+    std::string input = "a", sep = ":";
+    std::vector<std::string> expected = {"a"};
+    EXPECT_EQ(expected, baal::split(input, sep));
+  }
+
+  {
+    std::string input = "ab", sep = ":";
+    std::vector<std::string> expected = {"ab"};
+    EXPECT_EQ(expected, baal::split(input, sep));
+  }
+
+  {
+    std::string input = "a:bc", sep = ":";
+    std::vector<std::string> expected = {"a", "bc"};
+    EXPECT_EQ(expected, baal::split(input, sep));
+  }
+
+  {
+    std::string input = "a:bc:def", sep = ":";
+    std::vector<std::string> expected = {"a", "bc", "def"};
+    EXPECT_EQ(expected, baal::split(input, sep));
+  }
+
+  {
+    std::string input = ":ab", sep = ":";
+    std::vector<std::string> expected = {"", "ab"};
+    EXPECT_EQ(expected, baal::split(input, sep));
+  }
+
+  {
+    std::string input = "ab:", sep = ":";
+    std::vector<std::string> expected = {"ab"};
+    EXPECT_EQ(expected, baal::split(input, sep));
+  }
+}
+
 }

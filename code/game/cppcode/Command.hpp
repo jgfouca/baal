@@ -15,7 +15,6 @@ class Engine;
 
 /**
  * A Command is the entity by which a player affects the game state.
- * Command apply themselves immediately upon creation.
  */
 class Command
 {

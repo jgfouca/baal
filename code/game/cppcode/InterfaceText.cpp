@@ -12,6 +12,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <fstream>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <boost/algorithm/string.hpp>
@@ -29,6 +30,24 @@ InterfaceText::InterfaceText(std::ostream& out,
    m_engine(engine)
 {
   initialize_readline();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+InterfaceText::~InterfaceText()
+///////////////////////////////////////////////////////////////////////////////
+{
+  std::ofstream* outfile = dynamic_cast<std::ofstream*>(&m_ostream);
+  std::ifstream* infile  = dynamic_cast<std::ifstream*>(&m_istream);
+
+  if (outfile != nullptr) {
+    outfile->close();
+    delete &outfile;
+  }
+
+  if (infile != nullptr) {
+    infile->close();
+    delete &infile;
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////

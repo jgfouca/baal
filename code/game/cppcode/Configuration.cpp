@@ -1,6 +1,6 @@
 #include "Configuration.hpp"
 
-using namespace baal;
+namespace baal {
 
 const std::string Configuration::UNSET = "";
 
@@ -13,3 +13,5 @@ Configuration::Configuration(const std::string& interface_config,
     m_world_config(world_config),
     m_player_name(player_name)
 {}
+
+}

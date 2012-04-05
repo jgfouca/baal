@@ -22,6 +22,9 @@ class InterfaceFactory
   static const std::string TEXT_INTERFACE;
   static const std::string GRAPHICAL_INTERFACE;
   static const std::string DEFAULT_INTERFACE;
+  static const std::string SEPARATOR;
+  static const std::string TEXT_WITH_COUT;
+  static const std::string TEXT_WITH_CIN;
 };
 
 }
