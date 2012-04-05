@@ -15,7 +15,7 @@
 #include <boost/mpl/transform.hpp>
 #include <boost/mpl/placeholders.hpp>
 
-#include <boost/type_traits/add_pointer.hpp>
+#include <boost/type_traits/detail/wrap.hpp>
 
 namespace baal {
 
@@ -39,10 +39,10 @@ class SpellPrereq
   {
     add_to_list(spell_list& list) : m_list(list) {}
 
-    template <typename T>
-    void operator()(T*) const
+    template <typename Spell>
+    void operator()(boost::type_traits::wrap<Spell>) const
     {
-      m_list.push_back(T::NAME);
+      m_list.push_back(Spell::NAME);
     }
 
     spell_list& m_list;
@@ -74,9 +74,9 @@ class SpellPrereq
     // be instantiated with a default constructor and given to for_each.
     typedef typename boost::mpl::transform
       <SpellList,
-       boost::add_pointer<boost::mpl::placeholders::_1> >::type
-      spell_ptr_list;
-    boost::mpl::for_each<spell_ptr_list>(add_to_list(rv.m_min_spell_prereqs));
+       boost::type_traits::wrap<boost::mpl::placeholders::_1> >::type
+      wrapped_spell_list;
+    boost::mpl::for_each<wrapped_spell_list>(add_to_list(rv.m_min_spell_prereqs));
     return rv;
   }
 

@@ -22,6 +22,7 @@ $(BIN_DIR):
 	-mkdir $(BIN_DIR)
 
 $(EXES): $(BIN_DIR)/%.$(EXE_FILE_EXT): %.$(MAIN_FILE_EXT) *.$(SOURCE_FILE_EXT)
+	make $(BIN_DIR)
 	$(CXX) $< $(UTEST_PREFIX)*.$(SOURCE_FILE_EXT) -o $@ $(ALL_TEST_FLAGS)
 
 clean:

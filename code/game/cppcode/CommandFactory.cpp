@@ -7,6 +7,14 @@
 
 #include <boost/mpl/for_each.hpp>
 #include <boost/mpl/size.hpp>
+#include <boost/mpl/transform.hpp>
+#include <boost/mpl/placeholders.hpp>
+
+#include <boost/type_traits/detail/wrap.hpp>
+
+using namespace boost::mpl::placeholders;
+namespace mpl = boost::mpl;
+namespace traits = boost::type_traits;
 
 namespace baal {
 
@@ -27,7 +35,7 @@ struct SearchAndCreate
   {}
 
   template <class CommandClass>
-  void operator()(CommandClass)
+  void operator()(traits::wrap<CommandClass>)
   {
     if (m_name == CommandClass::NAME) {
       Require(m_return_val == nullptr, "Found multiple matches");
@@ -52,7 +60,7 @@ struct Initializer
   Initializer(CommandFactory& factory) : m_factory(factory) {}
 
   template <class CommandClass>
-  void operator()(CommandClass)
+  void operator()(traits::wrap<CommandClass>)
   {
     std::map<std::string, std::string>& aliases = m_factory.m_aliases;
     std::vector<std::string>& commands = m_factory.m_cmd_map;
@@ -90,8 +98,10 @@ const CommandFactory& CommandFactory::instance()
 CommandFactory::CommandFactory()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  m_cmd_map.reserve(boost::mpl::size<command_types>::value);
-  boost::mpl::for_each<command_types>(command_factory_only::Initializer(*this));
+  m_cmd_map.reserve(mpl::size<command_types>::value);
+  mpl::for_each<
+    mpl::transform<command_types, traits::wrap<_1> >::type
+    > (command_factory_only::Initializer(*this));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -130,7 +140,9 @@ CommandFactory::parse_command(const std::string& text, Engine& engine) const
                                             args,
                                             new_cmd,
                                             engine);
-  boost::mpl::for_each<command_types>(search_and_create_functor);
+  mpl::for_each<
+    mpl::transform<command_types, traits::wrap<_1> >::type
+    >(search_and_create_functor);
   RequireUser(new_cmd != nullptr,
               "Unknown command: " << cmd_name << ". Type 'help' for help.");
 

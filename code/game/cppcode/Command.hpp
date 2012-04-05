@@ -47,8 +47,6 @@ class HelpCommand : public Command
   static const std::string HELP;
 
   static const std::vector<std::string> ALIASES;
-
-  HelpCommand() {} // do not use
  private:
   std::string m_arg;
 };
@@ -70,8 +68,6 @@ class SaveCommand : public Command
   static const std::string HELP;
 
   static const std::vector<std::string> ALIASES;
-
-  SaveCommand() {} // do not use
  private:
   std::string m_arg;
 };
@@ -93,8 +89,6 @@ class EndTurnCommand : public Command
   static const std::string HELP;
 
   static const std::vector<std::string> ALIASES;
-
-  EndTurnCommand() {} // do not use
  private:
   unsigned m_num_turns;
 
@@ -118,8 +112,6 @@ class QuitCommand : public Command
   static const std::string HELP;
 
   static const std::vector<std::string> ALIASES;
-
-  QuitCommand() {} // do not use
 };
 
 /**
@@ -139,8 +131,6 @@ class SpellCommand : public Command
   static const std::string HELP;
 
   static const std::vector<std::string> ALIASES;
-
-  SpellCommand() {} // do not use
  private:
   std::string m_spell_name;
   Location    m_spell_location;
@@ -164,8 +154,6 @@ class LearnCommand : public Command
   static const std::string HELP;
 
   static const std::vector<std::string> ALIASES;
-
-  LearnCommand() {} // do not use
  private:
   std::string m_spell_name;
 };
@@ -187,8 +175,6 @@ class DrawCommand : public Command
   static const std::string HELP;
 
   static const std::vector<std::string> ALIASES;
-
-  DrawCommand() {} // do not use
  private:
   std::string m_draw_mode;
 };
@@ -209,8 +195,6 @@ class HackCommand : public Command
   static const std::string HELP;
 
   static const std::vector<std::string> ALIASES;
-
-  HackCommand() {} // do not use
  private:
   unsigned m_exp;
 };

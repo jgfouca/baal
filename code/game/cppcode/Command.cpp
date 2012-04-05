@@ -16,6 +16,14 @@
 #include <boost/mpl/for_each.hpp>
 #include <boost/mpl/contains.hpp>
 #include <boost/mpl/assert.hpp>
+#include <boost/mpl/transform.hpp>
+#include <boost/mpl/placeholders.hpp>
+
+#include <boost/type_traits/detail/wrap.hpp>
+
+using namespace boost::mpl::placeholders;
+namespace mpl = boost::mpl;
+namespace traits = boost::type_traits;
 
 namespace baal {
 
@@ -101,7 +109,7 @@ struct CreateHelpDump
 
   /////////////////////////////////////////////////////////////////////////////
   template <class CommandClass>
-  void operator()(CommandClass)
+  void operator()(traits::wrap<CommandClass>)
   /////////////////////////////////////////////////////////////////////////////
   {
     if (m_name == "" || m_name == CommandClass::NAME) {
@@ -110,7 +118,7 @@ struct CreateHelpDump
   }
 
   /////////////////////////////////////////////////////////////////////////////
-  void operator()(SpellCommand)
+  void operator()(traits::wrap<SpellCommand>)
   /////////////////////////////////////////////////////////////////////////////
   {
     if (m_name == "" || m_name == SpellCommand::NAME) {
@@ -130,7 +138,7 @@ struct CreateHelpDump
   }
 
   /////////////////////////////////////////////////////////////////////////////
-  void operator()(LearnCommand)
+  void operator()(traits::wrap<LearnCommand>)
   /////////////////////////////////////////////////////////////////////////////
   {
     if (m_name == "" || m_name == LearnCommand::NAME) {
@@ -159,7 +167,7 @@ struct CreateHelpDump
   }
 
   /////////////////////////////////////////////////////////////////////////////
-  void operator()(DrawCommand)
+  void operator()(traits::wrap<DrawCommand>)
   /////////////////////////////////////////////////////////////////////////////
   {
     if (m_name == "" || m_name == DrawCommand::NAME) {
@@ -183,7 +191,7 @@ struct CreateHelpDump
 ///////////////////////////////////////////////////////////////////////////////
 template <class T>
 struct is_in_command_factory :
-  boost::mpl::contains<CommandFactory::command_types, T>
+  mpl::contains<CommandFactory::command_types, T>
 {};
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -224,7 +232,10 @@ void HelpCommand::apply() const
       out << "List of available commands:\n\n";
     }
     CreateHelpDump help_dump_functor(m_arg, out, m_engine);
-    boost::mpl::for_each<CommandFactory::command_types>(help_dump_functor);
+    mpl::for_each<
+      mpl::transform<CommandFactory::command_types,
+                     traits::wrap<_1> >::type
+      >(help_dump_functor);
   }
   // Case 2: argument is a spell name
   else if (SpellFactory::is_in_all_names(m_arg)) {
