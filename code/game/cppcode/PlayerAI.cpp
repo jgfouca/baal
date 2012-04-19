@@ -55,16 +55,8 @@ void PlayerAI::cycle_turn()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PlayerAI::draw_text(std::ostream& out) const
+xmlNodePtr PlayerAI::to_xml()
 ///////////////////////////////////////////////////////////////////////////////
-{
-  out << "AI PLAYER STATS:\n"
-      << "  tech level: " << BOLD_COLOR << GREEN << m_tech_level << CLEAR_ALL << "\n"
-      << "  population: " << BOLD_COLOR << BLUE << m_population << CLEAR_ALL << "\n";
-}
-
-///////////////////////////////////////////////////////////////////////////////
-xmlNodePtr PlayerAI::to_xml()///////////////////////////////////////////////////////////////////////////////
 {
   xmlNodePtr PlayerAI_node = xmlNewNode(nullptr, BAD_CAST "PlayerAI - stub");
   return PlayerAI_node;

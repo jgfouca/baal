@@ -1,7 +1,7 @@
 #ifndef Weather_hpp
 #define Weather_hpp
 
-#include "Drawable.hpp"
+#include "DrawMode.hpp"
 #include "BaalCommon.hpp"
 #include "Time.hpp"
 
@@ -55,7 +55,7 @@ struct Wind
 };
 
 /**
- * Every tile has a climate. Averate temp, average rainfall, and
+ * Every tile has a climate. Averate temp, average precip, and
  * prevailing wind.
  *
  * TODO: This needs to be different from season to season.
@@ -63,15 +63,15 @@ struct Wind
 class Climate
 {
  public:
-  Climate(int temperature, float rainfall, Wind wind)
+  Climate(int temperature, float precip, Wind wind)
     : m_temperature(temperature),
-      m_rainfall(rainfall),
+      m_precip(precip),
       m_wind(wind)
   {}
 
   int temperature(Season season) const { return m_temperature; }
 
-  float rainfall(Season season) const { return m_rainfall / 4; }
+  float precip(Season season) const { return m_precip / 4; }
 
   Wind wind(Season season) const { return m_wind; }
 
@@ -79,7 +79,7 @@ class Climate
 
  private:
   int   m_temperature; // in farenheit
-  float m_rainfall;    // in inches/year
+  float m_precip;    // in inches/year
   Wind  m_wind;        // prevailing wind
 };
 
@@ -87,7 +87,7 @@ class Climate
  * Every tile has atmosphere above it. Atmosphere has dewpoint,
  * temperature, wind vector, and pressure.
  */
-class Atmosphere : public Drawable
+class Atmosphere
 {
  public:
   Atmosphere(const Climate& climate);
@@ -96,15 +96,11 @@ class Atmosphere : public Drawable
 
   int dewpoint() const { return m_dewpoint; }
 
-  float rainfall() const { return m_rainfall; }
+  float precip() const { return m_precip; }
 
   unsigned pressure() const { return m_pressure; }
 
   Wind wind() const { return m_wind; }
-
-  virtual void draw_text(std::ostream& out) const;
-
-  virtual void draw_graphics() const { /*TODO*/ }
 
   static bool is_atmospheric(DrawMode mode);
 
@@ -134,7 +130,7 @@ class Atmosphere : public Drawable
 
   int            m_temperature; // in farenheit
   int            m_dewpoint;    // in farenheit
-  float          m_rainfall;    // in inches, most recent season
+  float          m_precip;    // in inches, most recent season
   unsigned       m_pressure;    // in millibars
   Wind           m_wind;
   const Climate& m_climate;
@@ -149,7 +145,7 @@ class Atmosphere : public Drawable
  * exponentially less likely. The area affected by the anomaly
  * will depend on the size of the map.
  */
-class Anomaly : public Drawable
+class Anomaly
 {
  public:
   enum Type
@@ -193,10 +189,6 @@ class Anomaly : public Drawable
    */
   int pressure_effect(const Location& location) const;
 
-  virtual void draw_text(std::ostream& out) const;
-
-  virtual void draw_graphics() const { /*TODO*/ }
-
   static std::string type_to_str(Type type);
 
   static std::string category_to_str(AnomalyCategory category);
@@ -212,6 +204,16 @@ class Anomaly : public Drawable
   static constexpr float PRECIP_CHANGE_PER_LEVEL = 0.25;
   static constexpr int TEMP_CHANGE_PER_LEVEL = 7;
   static constexpr int PRESSURE_CHANGE_PER_LEVEL = 15;
+
+  // Getters
+
+  Type type() const { return m_type; }
+
+  AnomalyCategory category() const { return m_category; }
+
+  unsigned intensity() const { return m_intensity; }
+
+  Location location() const { return m_location; }
 
  private:
   Anomaly(AnomalyCategory category,

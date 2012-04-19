@@ -116,7 +116,7 @@ WorldTile& WorldFactoryFromFile::parse_Tile(int row, int col)
 ///////////////////////////////////////////////////////////////////////////////
 {
   // m_curr_node is tile
-  // Climate(int temperature, unsigned rainfall, Wind wind)
+  // Climate(int temperature, unsigned precip, Wind wind)
 
   Location location(row, col);
   char *type = get_element("type");
@@ -160,10 +160,10 @@ Climate& WorldFactoryFromFile::get_Climate_from_parent()
   while (m_curr_node != nullptr) {
     if (!xmlStrcmp(m_curr_node->name, (const xmlChar *)"Climate")) {
       int temperature = get_int_from_parent("temperature");
-      unsigned rainfall = get_unsigned_from_parent("rainfall");
+      unsigned precip = get_unsigned_from_parent("precip");
       Wind wind = get_Wind_from_parent();
       m_curr_node = parent;
-      return *new Climate(temperature, rainfall, wind);
+      return *new Climate(temperature, precip, wind);
     }
     m_curr_node = m_curr_node->next;
   }

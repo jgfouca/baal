@@ -36,113 +36,6 @@ std::string direction_str(Direction direction)
   }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-void draw_wind(std::ostream& out, const Wind& wind)
-///////////////////////////////////////////////////////////////////////////////
-{
-  const unsigned max_direction_len = 3;
-  out << std::setw(max_direction_len) << std::left
-      << direction_str(wind.m_direction);
-  out << std::right;
-
-  unsigned speed = wind.m_speed;
-  const char* color = "";
-  if (speed < 10) {
-    color = GREEN;
-  }
-  else if (speed < 20) {
-    color = YELLOW;
-  }
-  else {
-    color = RED;
-  }
-
-  out << BOLD_COLOR << color       // set color and bold text
-      << std::setw(WorldTile::TILE_TEXT_WIDTH - max_direction_len) << speed
-      << CLEAR_ALL;                // clear color and boldness
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void draw_dewpoint(std::ostream& out, int dewpoint)
-///////////////////////////////////////////////////////////////////////////////
-{
-  const char* color = "";
-  if (dewpoint < 32) {
-    color = RED;
-  }
-  else if (dewpoint < 55) {
-    color = YELLOW;
-  }
-  else {
-    color = GREEN;
-  }
-
-  out << BOLD_COLOR << color       // set color and bold text
-      << std::setw(WorldTile::TILE_TEXT_WIDTH) << dewpoint //value
-      << CLEAR_ALL;                // clear color and boldness
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void draw_temperature(std::ostream& out, int temperature)
-///////////////////////////////////////////////////////////////////////////////
-{
-  const char* color = "";
-  if (temperature < 32) {
-    color = BLUE;
-  }
-  else if (temperature < 80) {
-    color = YELLOW;
-  }
-  else {
-    color = RED;
-  }
-
-  out << BOLD_COLOR << color       // set color and bold text
-      << std::setw(WorldTile::TILE_TEXT_WIDTH) << temperature  // print value
-      << CLEAR_ALL;                // clear color and boldness
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void draw_pressure(std::ostream& out, unsigned pressure)
-///////////////////////////////////////////////////////////////////////////////
-{
-  const char* color = "";
-  if (pressure < 975) {
-    color = GREEN;
-  }
-  else if (pressure < 1025) {
-    color = YELLOW;
-  }
-  else {
-    color = RED;
-  }
-
-  out << BOLD_COLOR << color   // set color and bold text
-      << std::setw(WorldTile::TILE_TEXT_WIDTH) << pressure  // print value
-      << CLEAR_ALL;            // clear color and boldness
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void draw_rainfall(std::ostream& out, float rainfall)
-///////////////////////////////////////////////////////////////////////////////
-{
-  const char* color = "";
-  if (rainfall > 10) {
-    color = GREEN;
-  }
-  else if (rainfall > 2) {
-    color = YELLOW;
-  }
-  else {
-    color = RED;
-  }
-
-  out << BOLD_COLOR << color   // set color and bold text
-      << std::setw(WorldTile::TILE_TEXT_WIDTH)
-      << std::setprecision(3) << rainfall  // print value
-      << CLEAR_ALL;            // clear color and boldness
-}
-
 } // empty namespace
 
 /*****************************************************************************/
@@ -152,11 +45,11 @@ xmlNodePtr Climate::to_xml()
 {
   xmlNodePtr Climate_node = xmlNewNode(nullptr, BAD_CAST "Climate");
 
-  std::ostringstream m_temperature_oss, m_rainfall_oss;
+  std::ostringstream m_temperature_oss, m_precip_oss;
   m_temperature_oss << m_temperature;
-  m_rainfall_oss << m_rainfall;
+  m_precip_oss << m_precip;
   xmlNewChild(Climate_node, nullptr, BAD_CAST "m_temperature", BAD_CAST m_temperature_oss.str().c_str());
-  xmlNewChild(Climate_node, nullptr, BAD_CAST "m_rainfall", BAD_CAST m_rainfall_oss.str().c_str());
+  xmlNewChild(Climate_node, nullptr, BAD_CAST "m_precip", BAD_CAST m_precip_oss.str().c_str());
 
   xmlNodePtr Wind_node;
   Wind_node = xmlNewNode(nullptr, BAD_CAST "Wind");
@@ -176,7 +69,7 @@ xmlNodePtr Climate::to_xml()
 Atmosphere::Atmosphere(const Climate& climate)
 ///////////////////////////////////////////////////////////////////////////////
   : m_temperature(climate.temperature(Time::LAST_SEASON_OF_YEAR)),
-    m_rainfall(climate.rainfall(Time::LAST_SEASON_OF_YEAR)),
+    m_precip(climate.precip(Time::LAST_SEASON_OF_YEAR)),
     m_pressure(NORMAL_PRESSURE),
     m_wind(climate.wind(Time::LAST_SEASON_OF_YEAR)),
     m_climate(climate)
@@ -185,35 +78,10 @@ Atmosphere::Atmosphere(const Climate& climate)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void Atmosphere::draw_text(std::ostream& out) const
-///////////////////////////////////////////////////////////////////////////////
-{
-  switch (s_draw_mode) {
-  case WIND:
-    draw_wind(out, m_wind);
-    break;
-  case DEWPOINT:
-    draw_dewpoint(out, m_dewpoint);
-    break;
-  case TEMPERATURE:
-    draw_temperature(out, m_temperature);
-    break;
-  case PRESSURE:
-    draw_pressure(out, m_pressure);
-    break;
-  case RAINFALL:
-    draw_rainfall(out, m_rainfall);
-    break;
-  default:
-    Require(false, "Should not draw atmosphere in mode: " << s_draw_mode);
-  }
-}
-
-///////////////////////////////////////////////////////////////////////////////
 int Atmosphere::compute_dewpoint() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // TODO - Function of temp and rainfall probably
+  // TODO - Function of temp and precip probably
   return m_temperature - 20;
 }
 
@@ -249,7 +117,7 @@ void Atmosphere::cycle_turn(const std::vector<const Anomaly*>& anomalies,
 
   m_temperature = m_climate.temperature(season) + temp_modifier;
   m_pressure    = NORMAL_PRESSURE + pressure_modifier;
-  m_rainfall    = m_climate.rainfall(season) * precip_modifier;
+  m_precip    = m_climate.precip(season) * precip_modifier;
 
   m_dewpoint = compute_dewpoint();
 
@@ -263,14 +131,14 @@ xmlNodePtr Atmosphere::to_xml()
 {
   xmlNodePtr Atmosphere_node = xmlNewNode(nullptr, BAD_CAST "Atmosphere");
 
-  std::ostringstream m_temperature_oss, m_dewpoint_oss, m_rainfall_oss, m_pressure_oss;
+  std::ostringstream m_temperature_oss, m_dewpoint_oss, m_precip_oss, m_pressure_oss;
   m_temperature_oss << m_temperature;
   m_dewpoint_oss << m_dewpoint;
-  m_rainfall_oss << m_rainfall;
+  m_precip_oss << m_precip;
   m_pressure_oss << m_pressure;
   xmlNewChild(Atmosphere_node, nullptr, BAD_CAST "m_temperature", BAD_CAST m_temperature_oss.str().c_str());
   xmlNewChild(Atmosphere_node, nullptr, BAD_CAST "m_dewpoint", BAD_CAST m_dewpoint_oss.str().c_str());
-  xmlNewChild(Atmosphere_node, nullptr, BAD_CAST "m_rainfall", BAD_CAST m_rainfall_oss.str().c_str());
+  xmlNewChild(Atmosphere_node, nullptr, BAD_CAST "m_precip", BAD_CAST m_precip_oss.str().c_str());
   xmlNewChild(Atmosphere_node, nullptr, BAD_CAST "m_pressure", BAD_CAST m_pressure_oss.str().c_str());
 
   xmlNodePtr Wind_node;
@@ -381,14 +249,6 @@ int Anomaly::pressure_effect(const Location& location) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void Anomaly::draw_text(std::ostream& out) const
-///////////////////////////////////////////////////////////////////////////////
-{
-  out << "Level: " << type_to_str(m_type) << m_intensity << " "
-      << category_to_str(m_category) << " anomaly at location: " << m_location;
-}
-
-///////////////////////////////////////////////////////////////////////////////
 std::string Anomaly::type_to_str(Type type)
 ///////////////////////////////////////////////////////////////////////////////
 {
@@ -410,7 +270,7 @@ std::string Anomaly::category_to_str(AnomalyCategory category)
   case TEMPERATURE:
     return "temperature";
   case RAINFALL:
-    return "rainfall";
+    return "precip";
   case PRESSURE:
     return "pressure";
   default:

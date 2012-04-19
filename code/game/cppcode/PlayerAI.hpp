@@ -1,8 +1,6 @@
 #ifndef PlayerAI_hpp
 #define PlayerAI_hpp
 
-#include "Drawable.hpp"
-
 #include <libxml/parser.h>
 
 namespace baal {
@@ -15,16 +13,12 @@ class Engine;
  * of the AI's "thought" goes into city management, most of the AI code is
  * actually in the City class.
  */
-class PlayerAI : public Drawable
+class PlayerAI
 {
  public:
   PlayerAI(const Engine& engine);
 
   void cycle_turn();
-
-  virtual void draw_text(std::ostream& out) const;
-
-  virtual void draw_graphics() const { /*TODO*/ }
 
   unsigned tech_level() const { return m_tech_level; }
 

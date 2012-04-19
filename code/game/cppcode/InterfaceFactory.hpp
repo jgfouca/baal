@@ -25,6 +25,8 @@ class InterfaceFactory
   static const std::string SEPARATOR;
   static const std::string TEXT_WITH_COUT;
   static const std::string TEXT_WITH_CIN;
+  static const std::string TEXT_WITH_OSTRINGSTREAM;
+  static const std::string TEXT_WITH_ISTRINGSTREAM;
 };
 
 }

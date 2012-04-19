@@ -4,9 +4,19 @@
 #include <string>
 #include <sstream>
 
+#include "DrawMode.hpp"
+
 namespace baal {
 
 class Engine;
+class Geology;
+class Player;
+class PlayerAI;
+class Time;
+class Atmosphere;
+class Anomaly;
+class World;
+class WorldTile;
 
 /**
  * Interfaces are responsible for presenting information to the
@@ -18,10 +28,22 @@ class Interface
 {
  public:
   Interface()
-    : m_end_turns(0)
+    : m_end_turns(0),
+      m_draw_mode(CIV) // default to civ
   {}
 
+  // Draw entire screen
   virtual void draw() = 0;
+
+  // Draw individual items
+  virtual void draw(const Geology&) = 0;
+  virtual void draw(const Player&) = 0;
+  virtual void draw(const PlayerAI&) = 0;
+  virtual void draw(const Time&) = 0;
+  virtual void draw(const Atmosphere&) = 0;
+  virtual void draw(const Anomaly&) = 0;
+  virtual void draw(const World&) = 0;
+  virtual void draw(const WorldTile&) = 0;
 
   virtual void interact() = 0;
 
@@ -37,6 +59,13 @@ class Interface
 
  protected:
   unsigned m_end_turns;
+  DrawMode m_draw_mode;
+
+ private:
+  void set_draw_mode(DrawMode mode) { m_draw_mode = mode; }
+
+  // only friends can change draw mode
+  friend class DrawCommand;
 };
 
 #define SPELL_REPORT(msg)                                               \

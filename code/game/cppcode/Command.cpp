@@ -7,7 +7,7 @@
 #include "SpellFactory.hpp"
 #include "World.hpp"
 #include "Player.hpp"
-#include "Drawable.hpp"
+#include "DrawMode.hpp"
 
 #include <ctime>
 #include <sstream>
@@ -174,9 +174,9 @@ struct CreateHelpDump
       m_return_val << create_help_str<DrawCommand>() << "\n";
 
       m_return_val << "  Available draw modes:\n";
-      for (DrawMode mode_itr = Drawable::FIRST; ; ++mode_itr) {
-        m_return_val << "    " << Drawable::draw_mode_to_str(mode_itr) << "\n";
-        if (mode_itr == Drawable::LAST) {
+      for (DrawMode mode_itr = FIRST; ; ++mode_itr) {
+        m_return_val << "    " << draw_mode_to_str(mode_itr) << "\n";
+        if (mode_itr == LAST) {
           break;
         }
       }
@@ -250,7 +250,7 @@ void HelpCommand::apply() const
   // Case 3: argument is a draw mode
   else {
     try {
-      DrawMode mode = Drawable::parse_draw_mode(m_arg);
+      DrawMode mode = parse_draw_mode(m_arg);
       out << "Description of draw-mode: " << m_arg << "\n"
           << explain_draw_mode(mode);
     }
@@ -495,8 +495,8 @@ DrawCommand::DrawCommand(const std::vector<std::string>& args, Engine& engine) :
 void DrawCommand::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  DrawMode new_draw_mode = Drawable::parse_draw_mode(m_draw_mode);
-  Drawable::set_draw_mode(new_draw_mode);
+  DrawMode new_draw_mode = parse_draw_mode(m_draw_mode);
+  m_engine.interface().set_draw_mode(new_draw_mode);
   m_engine.interface().draw(); // redraw
 }
 

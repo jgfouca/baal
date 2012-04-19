@@ -1,12 +1,10 @@
-#include "Drawable.hpp"
+#include "DrawMode.hpp"
 #include "BaalExceptions.hpp"
 
 namespace baal {
 
-DrawMode Drawable::s_draw_mode = CIV;
-
 ///////////////////////////////////////////////////////////////////////////////
-DrawMode Drawable::parse_draw_mode(const std::string& draw_mode_str)
+DrawMode parse_draw_mode(const std::string& draw_mode_str)
 ///////////////////////////////////////////////////////////////////////////////
 {
   if (draw_mode_str == "civ") {
@@ -39,7 +37,7 @@ DrawMode Drawable::parse_draw_mode(const std::string& draw_mode_str)
   else if (draw_mode_str == "pressure") {
     return PRESSURE;
   }
-  else if (draw_mode_str == "rainfall") {
+  else if (draw_mode_str == "precip") {
     return RAINFALL;
   }
   else if (draw_mode_str == "dewpoint") {
@@ -63,7 +61,7 @@ DrawMode Drawable::parse_draw_mode(const std::string& draw_mode_str)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::string Drawable::draw_mode_to_str(DrawMode draw_mode)
+std::string draw_mode_to_str(DrawMode draw_mode)
 ///////////////////////////////////////////////////////////////////////////////
 {
   switch(draw_mode) {
@@ -88,7 +86,7 @@ std::string Drawable::draw_mode_to_str(DrawMode draw_mode)
   case PRESSURE:
     return "pressure";
   case RAINFALL:
-    return "rainfall";
+    return "precip";
   case DEWPOINT:
     return "dewpoint";
   case ELEVATION:
@@ -108,7 +106,7 @@ std::string Drawable::draw_mode_to_str(DrawMode draw_mode)
 DrawMode& operator++(DrawMode& draw_mode)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Require(draw_mode != Drawable::LAST, "Iterating off end of draw modes");
+  Require(draw_mode != LAST, "Iterating off end of draw modes");
 
   int i = static_cast<int>(draw_mode);
   ++i;

@@ -1,8 +1,8 @@
 #ifndef Geology_hpp
 #define Geology_hpp
 
-#include "Drawable.hpp"
 #include "BaalCommon.hpp"
+#include "DrawMode.hpp"
 
 #include <string>
 #include <iosfwd>
@@ -27,7 +27,7 @@ namespace baal {
  *
  * Every tile builds up plate tension and magma based on geology.
  */
-class Geology : public Drawable
+class Geology
 {
  public:
   Geology(float base_tension_buildup,
@@ -40,20 +40,11 @@ class Geology : public Drawable
 
   float magma() const { return m_magma; }
 
-  virtual void draw_text(std::ostream& out) const;
-
-  virtual void draw_graphics() const { /*TODO*/ }
-
   static bool is_geological(DrawMode mode);
 
   xmlNodePtr to_xml();
 
  protected:
-
-  virtual const char* color() const = 0;
-
-  virtual std::string symbol() const = 0;
-
   virtual const char* geology_type() const = 0;
 
   float m_tension;
@@ -76,10 +67,6 @@ class Divergent : public Geology
   {}
 
  protected:
-  virtual const char* color() const { return BLUE; }
-
-  virtual std::string symbol() const { return " <-->"; }
-
   virtual const char* geology_type() const { return "Divergent"; }
 
  private:
@@ -101,10 +88,6 @@ class Subducting : public Geology
   {}
 
  protected:
-  virtual const char* color() const { return RED; }
-
-  virtual std::string symbol() const { return " -v<-"; }
-
   virtual const char* geology_type() const { return "Subducting"; }
 
  private:
@@ -125,10 +108,6 @@ class Orogenic : public Geology
   {}
 
  protected:
-  virtual const char* color() const { return GREEN; }
-
-  virtual std::string symbol() const { return " -><-"; }
-
   virtual const char* geology_type() const { return "Orogenic"; }
 
  private:
@@ -149,10 +128,6 @@ class Transform : public Geology
   {}
 
  protected:
-  virtual const char* color() const { return YELLOW; }
-
-  virtual std::string symbol() const { return " vv^^"; }
-
   virtual const char* geology_type() const { return "Transform"; }
 
  private:
@@ -173,10 +148,6 @@ class Inactive : public Geology
   {}
 
  protected:
-  virtual const char* color() const { return WHITE; }
-
-  virtual std::string symbol() const { return "     "; }
-
   virtual const char* geology_type() const { return "Inactive"; }
 
  private:

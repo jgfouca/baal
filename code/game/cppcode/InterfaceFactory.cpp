@@ -14,12 +14,14 @@
 
 namespace baal {
 
-const std::string InterfaceFactory::TEXT_INTERFACE      = "t";
-const std::string InterfaceFactory::GRAPHICAL_INTERFACE = "g";
-const std::string InterfaceFactory::DEFAULT_INTERFACE   = TEXT_INTERFACE;
-const std::string InterfaceFactory::SEPARATOR           = ":";
-const std::string InterfaceFactory::TEXT_WITH_COUT      = "cout";
-const std::string InterfaceFactory::TEXT_WITH_CIN       = "cin";
+const std::string InterfaceFactory::TEXT_INTERFACE          = "t";
+const std::string InterfaceFactory::GRAPHICAL_INTERFACE     = "g";
+const std::string InterfaceFactory::DEFAULT_INTERFACE       = TEXT_INTERFACE;
+const std::string InterfaceFactory::SEPARATOR               = ":";
+const std::string InterfaceFactory::TEXT_WITH_COUT          = "cout";
+const std::string InterfaceFactory::TEXT_WITH_CIN           = "cin";
+const std::string InterfaceFactory::TEXT_WITH_OSTRINGSTREAM = "cout";
+const std::string InterfaceFactory::TEXT_WITH_ISTRINGSTREAM = "cin";
 
 ///////////////////////////////////////////////////////////////////////////////
 Interface& InterfaceFactory::create(Engine& engine)
@@ -41,6 +43,9 @@ Interface& InterfaceFactory::create(Engine& engine)
     if (tokens.size() < 2 || tokens[1] == TEXT_WITH_COUT) {
       out = &std::cout;
     }
+    else if (tokens[1] == TEXT_WITH_OSTRINGSTREAM) {
+      out = new std::ostringstream();
+    }
     else {
       out = new std::ofstream(tokens[1]);
       RequireUser(!out->fail(), "Could not open " << tokens[1]);
@@ -48,6 +53,9 @@ Interface& InterfaceFactory::create(Engine& engine)
 
     if (tokens.size() < 3 || tokens[2] == TEXT_WITH_CIN) {
       in = &std::cin;
+    }
+    else if (tokens[1] == TEXT_WITH_ISTRINGSTREAM) {
+      in = new std::istringstream();
     }
     else {
       in = new std::ifstream(tokens[2]);

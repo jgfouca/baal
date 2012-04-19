@@ -7,8 +7,6 @@
 #include "Engine.hpp"
 #include "PlayerAI.hpp"
 
-#include <iomanip>
-
 namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -55,89 +53,6 @@ WorldTile::~WorldTile()
 {
   delete &m_climate;
   delete &m_geology;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void WorldTile::draw_land(std::ostream& out) const
-///////////////////////////////////////////////////////////////////////////////
-{
-  out << BOLD_COLOR << color(); // bold text and set color
-  for (unsigned w = 0; w < TILE_TEXT_WIDTH; ++w) {
-    out << symbol(); // print symbol
-  }
-  out << CLEAR_ALL; // clear color and boldness
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void WorldTile::draw_text(std::ostream& out) const
-///////////////////////////////////////////////////////////////////////////////
-{
-  if (s_draw_mode == LAND) {
-    draw_land(out);
-  }
-  else if (s_draw_mode == CIV) {
-    if (city() != nullptr) {
-      out << BOLD_COLOR << RED
-          << " C:" << std::setw(TILE_TEXT_WIDTH - 3) << city()->rank()
-          << CLEAR_ALL;
-    }
-    else if (infra_level() > 0) {
-      out << BOLD_COLOR << YELLOW
-          << " I:" << std::setw(TILE_TEXT_WIDTH- 3) << infra_level()
-          << CLEAR_ALL;
-    }
-    else {
-      draw_land(out);
-    }
-  }
-  else if (s_draw_mode == MOISTURE) {
-    const FoodTile* tile_ptr =
-      dynamic_cast<const FoodTile*>(this);
-    if (tile_ptr != nullptr) {
-      float moisture = tile_ptr->soil_moisture();
-      out << BOLD_COLOR;
-      if (moisture < 1.0) {
-        out << YELLOW;
-      }
-      else if (moisture < FoodTile::FLOODING_THRESHOLD) {
-        out << GREEN;
-      }
-      else if (moisture < FoodTile::TOTALLY_FLOODED) {
-        out << BLUE;
-      }
-      else {
-        out << RED;
-      }
-      out << std::setprecision(3) << std::setw(TILE_TEXT_WIDTH) << moisture
-          << CLEAR_ALL;
-    }
-    else {
-      draw_land(out);
-    }
-  }
-  else if (s_draw_mode == YIELD) {
-    Yield y = yield();
-    out << BOLD_COLOR;
-    if (y.m_food > 0) {
-      out << GREEN << std::setprecision(3) << std::setw(TILE_TEXT_WIDTH)
-          << y.m_food
-          << CLEAR_ALL;
-    }
-    else {
-      out << RED << std::setprecision(3) << std::setw(TILE_TEXT_WIDTH)
-          << y.m_prod
-          << CLEAR_ALL;
-    }
-  }
-  else if (Geology::is_geological(s_draw_mode)) {
-    m_geology.draw_text(out);
-  }
-  else if (Atmosphere::is_atmospheric(s_draw_mode)) {
-    m_atmosphere.draw_text(out);
-  }
-  else {
-    Require(false, "Unhandled mode: " << s_draw_mode);
-  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -322,7 +237,7 @@ void MountainTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
 
   // MODEL: Model how snowpack changes
 
-  float precip = m_atmosphere.rainfall();
+  float precip = m_atmosphere.precip();
   int temp = m_atmosphere.temperature();
 
   // How much precip fell as snow?
@@ -401,9 +316,9 @@ void FoodTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
   // MODEL: Model how precip and temp changes soil moisture
 
   // Get the parameters we need to make the calculation
-  float precip         = m_atmosphere.rainfall();
+  float precip         = m_atmosphere.precip();
   int temp             = m_atmosphere.temperature();
-  float av_precip      = m_climate.rainfall(season);
+  float av_precip      = m_climate.precip(season);
   int av_temp          = m_climate.temperature(season);
   float prior_moisture = m_soil_moisture;
 

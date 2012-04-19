@@ -18,20 +18,6 @@ class Engine;
 
 extern const unsigned INVALID;
 
-// Common ascii colors
-extern const char* BLACK;
-extern const char* RED;
-extern const char* GREEN;
-extern const char* YELLOW;
-extern const char* BLUE;
-extern const char* MAGENTA;
-extern const char* CYAN;
-extern const char* WHITE;
-
-// Ascii bold prefix/postfix
-extern const char* BOLD_COLOR;
-extern const char* CLEAR_ALL;
-
 // Basically a named pair defining a location in a 2D space
 struct Location
 {

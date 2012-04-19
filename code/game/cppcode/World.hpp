@@ -4,7 +4,6 @@
 #include "WorldTile.hpp"
 #include "BaalExceptions.hpp"
 #include "BaalCommon.hpp"
-#include "Drawable.hpp"
 #include "Time.hpp"
 #include "City.hpp"
 
@@ -20,7 +19,7 @@ class Engine;
 /**
  * Represents the world.
  */
-class World : public Drawable
+class World
 {
  public:
   World(unsigned width, unsigned height, Engine& engine);
@@ -60,11 +59,10 @@ class World : public Drawable
 
   const std::vector<City*>& cities() const { return m_cities; }
 
-  // Display-related
+  const Time& time() const { return m_time; }
 
-  virtual void draw_text(std::ostream& out) const;
-
-  virtual void draw_graphics() const { /* TODO */ }
+  const std::vector<const Anomaly*> anomalies() const
+  { return m_recent_anomalies; }
 
   // Modification API
 

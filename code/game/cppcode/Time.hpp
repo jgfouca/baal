@@ -1,8 +1,6 @@
 #ifndef Time_hpp
 #define Time_hpp
 
-#include "Drawable.hpp"
-
 #include <string>
 #include <iosfwd>
 #include <utility>
@@ -21,20 +19,16 @@ enum Season
 /**
  * Encapsulates how time elapses in the system.
  */
-class Time : public Drawable
+class Time
 {
  public:
   Time();
 
   void operator++();
 
-  virtual void draw_text(std::ostream& out) const;
-
-  virtual void draw_graphics() const { /* TODO */ }
-
   Season season() const { return m_curr_season; }
 
-  static std::pair<std::string, const char*> season_info(Season season);
+  unsigned year() const { return m_curr_year; }
 
   xmlNodePtr to_xml();
 

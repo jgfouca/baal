@@ -10,17 +10,7 @@ using std::ostream;
 
 namespace baal {
 
-const unsigned INVALID    = INT_MAX;
-const char*    BLACK      = "30m";
-const char*    RED        = "31m";
-const char*    GREEN      = "32m";
-const char*    YELLOW     = "33m";
-const char*    BLUE       = "34m";
-const char*    MAGENTA    = "35m";
-const char*    CYAN       = "36m";
-const char*    WHITE      = "37m";
-const char*    BOLD_COLOR = "\033[1;";
-const char*    CLEAR_ALL  = "\033[0m";
+const unsigned INVALID = INT_MAX;
 
 ///////////////////////////////////////////////////////////////////////////////
 Location::Location(const std::string& str_location)

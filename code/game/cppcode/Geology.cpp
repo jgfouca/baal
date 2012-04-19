@@ -35,51 +35,6 @@ void Geology::cycle_turn()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void Geology::draw_text(std::ostream& out) const
-///////////////////////////////////////////////////////////////////////////////
-{
-  const char* invalid_color = "";
-  const char* color = invalid_color;
-  std::string invalid_symbol = "????";
-  std::string symbol = invalid_symbol;
-  float property;
-  std::ostringstream oss;
-
-  switch (s_draw_mode) {
-  case GEOLOGY:
-    color = this->color();
-    symbol = this->symbol();
-    break;
-  case TENSION:
-  case MAGMA:
-    property = s_draw_mode == TENSION ? m_tension : m_magma;
-    if (property < .333) {
-      color = GREEN;
-    }
-    else if (property < .666) {
-      color = YELLOW;
-    }
-    else {
-      color = RED;
-    }
-    oss << std::setprecision(3) << std::fixed << property;
-    symbol = oss.str();
-    break;
-  default:
-    Require(false, "Should not draw geology in mode: " << s_draw_mode);
-  }
-
-  Require(color  != invalid_color , "Color was not set");
-  Require(symbol != invalid_symbol, "Symbol was not set");
-  Require(symbol.size() <= WorldTile::TILE_TEXT_WIDTH,
-          "Symbol '" << symbol << "' is too long");
-
-  out << BOLD_COLOR << color    // set color and bold text
-      << std::setw(WorldTile::TILE_TEXT_WIDTH) << symbol // print symbol
-      << CLEAR_ALL;             // clear color and boldness
-}
-
-///////////////////////////////////////////////////////////////////////////////
 bool Geology::is_geological(DrawMode mode)
 ///////////////////////////////////////////////////////////////////////////////
 {

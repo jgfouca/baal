@@ -1,7 +1,6 @@
 #ifndef WorldTile_hpp
 #define WorldTile_hpp
 
-#include "Drawable.hpp"
 #include "Weather.hpp"
 #include "BaalCommon.hpp"
 #include "Time.hpp"
@@ -42,8 +41,7 @@ struct Yield
 
 /**
  * WorldTile is the abstract base class of all tiles. Tile classes
- * are generally passive containers of data but they do know
- * how to draw themselves.
+ * are generally passive containers of data.
  *
  * Every tile has an atmosphere, climate, geology, and yield.
  *
@@ -59,7 +57,7 @@ struct Yield
  * TODO: There is probably a better way to design this... consider not
  * relying so heavily on inheritence.
  */
-class WorldTile : public Drawable
+class WorldTile
 {
  public:
   WorldTile(Location location, Yield yield, Climate& climate, Geology& geology);
@@ -74,10 +72,6 @@ class WorldTile : public Drawable
   // Basic tile interface
 
   virtual Yield yield() const = 0;
-
-  virtual void draw_text(std::ostream& out) const;
-
-  virtual void draw_graphics() const { /*TODO*/ }
 
   virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
                           const Location& location,
@@ -113,24 +107,13 @@ class WorldTile : public Drawable
 
   const Atmosphere& atmosphere() const { return m_atmosphere; }
 
+  const Geology& geology() const { return m_geology; }
+
   Atmosphere& atmosphere() { return m_atmosphere; }
-
-  // Public constants
-
-  static const unsigned TILE_TEXT_HEIGHT = 5;
-  static const unsigned TILE_TEXT_WIDTH = 5;
 
   xmlNodePtr to_xml();
 
  protected:
-
-  // Internal methods relating to drawing
-
-  virtual const char* color() const = 0;
-
-  virtual char symbol() const = 0;
-
-  void draw_land(std::ostream& out) const;
 
   // Members
 
@@ -153,10 +136,6 @@ class OceanTile : public WorldTile
   OceanTile(Location location, unsigned depth, Climate& climate, Geology& geology);
 
   virtual Yield yield() const;
-
-  virtual const char* color() const { return BLUE; }
-
-  virtual char symbol() const { return '~'; }
 
   virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
                           const Location& location,
@@ -249,10 +228,6 @@ class MountainTile : public LandTile
       m_elevation(elevation)
   {}
 
-  virtual const char* color() const { return WHITE; }
-
-  virtual char symbol() const { return '^'; }
-
   virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
                           const Location& location,
                           Season season);
@@ -289,10 +264,6 @@ class DesertTile : public LandTile
   DesertTile(Location location, Climate& climate, Geology& geology)
     : LandTile(location, Yield(0, 0.5), climate, geology)
   {}
-
-  virtual const char* color() const { return YELLOW; }
-
-  virtual char symbol() const { return '-'; }
 };
 
 /**
@@ -304,10 +275,6 @@ class TundraTile : public LandTile
   TundraTile(Location location, Climate& climate, Geology& geology)
     : LandTile(location, Yield(0, 0.5), climate, geology)
   {}
-
-  virtual const char* color() const { return WHITE; }
-
-  virtual char symbol() const { return '-'; }
 };
 
 /**
@@ -320,10 +287,6 @@ class HillsTile : public LandTile
   HillsTile(Location location, Climate& climate, Geology& geology)
     : LandTile(location, Yield(0, 1), climate, geology)
   {}
-
-  virtual const char* color() const { return GREEN; }
-
-  virtual char symbol() const { return '^'; }
 };
 
 /**
@@ -361,10 +324,6 @@ class PlainsTile : public FoodTile
   PlainsTile(Location location, Climate& climate, Geology& geology)
     : FoodTile(location, Yield(1, 0), climate, geology)
   {}
-
-  virtual const char* color() const { return GREEN; }
-
-  virtual char symbol() const { return '_'; }
 };
 
 /**
@@ -376,10 +335,6 @@ class LushTile : public FoodTile
   LushTile(Location location, Climate& climate, Geology& geology)
     : FoodTile(location, Yield(2, 0), climate, geology)
   {}
-
-  virtual const char* color() const { return GREEN; }
-
-  virtual char symbol() const { return '='; }
 };
 
 }

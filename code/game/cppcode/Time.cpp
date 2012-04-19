@@ -25,38 +25,6 @@ void Time::operator++()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void Time::draw_text(std::ostream& out) const
-///////////////////////////////////////////////////////////////////////////////
-{
-  std::pair<std::string, const char*> info = season_info(m_curr_season);
-  std::string name = info.first;
-  const char* color = info.second;
-  out << BOLD_COLOR << color << name << ", Year " << m_curr_year << CLEAR_ALL << "\n";
-}
-
-///////////////////////////////////////////////////////////////////////////////
-std::pair<std::string, const char*> Time::season_info(Season season)
-///////////////////////////////////////////////////////////////////////////////
-{
-  switch(season) {
-  case WINTER:
-    return std::pair<std::string, const char*>("Winter", BLUE);
-    break;
-  case SPRING:
-    return std::pair<std::string, const char*>("Spring", GREEN);
-    break;
-  case SUMMER:
-    return std::pair<std::string, const char*>("Summer", RED);
-    break;
-  case FALL:
-    return std::pair<std::string, const char*>("Fall", YELLOW);
-    break;
-  default:
-    Require(false, "Unknown season: " << season);
-  }
-}
-
-///////////////////////////////////////////////////////////////////////////////
 void operator++(Season& season)
 ///////////////////////////////////////////////////////////////////////////////
 {

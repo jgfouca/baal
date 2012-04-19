@@ -47,64 +47,6 @@ Location World::get_location(const WorldTile& tile) const
   Require(false, "Failed to find tile");
   return Location();
 }
-///////////////////////////////////////////////////////////////////////////////
-void World::draw_text(std::ostream& out) const
-///////////////////////////////////////////////////////////////////////////////
-{
-  DrawMode real_draw_mode = s_draw_mode;
-
-  // Draw time
-  m_time.draw_text(out);
-
-  // Make room for row labels
-  out << "  ";
-
-  // Draw column labels. Need to take 1 char space separator into account.
-  {
-    unsigned ws_lead = WorldTile::TILE_TEXT_WIDTH / 2;
-    unsigned col_width = WorldTile::TILE_TEXT_WIDTH - ws_lead + 1; // 1->sep
-    for (unsigned col = 0; col < width(); ++col) {
-      for (unsigned w = 0; w < ws_lead; ++w) {
-        out << " ";
-      }
-      out << std::left << std::setw(col_width) << col;
-    }
-    out << std::right << "\n";
-  }
-
-  // Draw tiles
-  for (unsigned row = 0; row < height(); ++row) {
-    for (unsigned height = 0; height < WorldTile::TILE_TEXT_HEIGHT; ++height) {
-      // Middle of tile displays "overlay" info, for the rest of the tile,
-      // just draw the land.
-      if (height == WorldTile::TILE_TEXT_HEIGHT / 2) {
-        s_draw_mode = real_draw_mode;
-        out << row << " ";  // row labels
-      }
-      else {
-        s_draw_mode = LAND;
-        out << "  ";
-      }
-
-      for (unsigned col = 0; col < width(); ++col) {
-        m_tiles[row][col]->draw_text(out);
-        out << " ";
-      }
-      out << "\n";
-    }
-    out << "\n";
-  }
-  s_draw_mode = real_draw_mode;
-
-  // Draw recent anomalies
-  for (std::vector<const Anomaly*>::const_iterator
-       itr = m_recent_anomalies.begin();
-       itr != m_recent_anomalies.end();
-       ++itr) {
-    (*itr)->draw_text(out);
-    out << "\n";
-  }
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 void World::cycle_turn()

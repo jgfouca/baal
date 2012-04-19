@@ -2,7 +2,6 @@
 #define Player_hpp
 
 #include "TalentTree.hpp"
-#include "Drawable.hpp"
 
 #include <string>
 #include <libxml/parser.h>
@@ -15,7 +14,7 @@ class Engine;
 /**
  * Encapsulates player state.
  */
-class Player : public Drawable
+class Player
 {
  public:
   Player(const Engine& engine);
@@ -30,12 +29,6 @@ class Player : public Drawable
 
   void cycle_turn();
 
-  // Drawing methods
-
-  virtual void draw_text(std::ostream& out) const;
-
-  virtual void draw_graphics() const { /*TODO*/ }
-
   // Getters
 
   unsigned level() const { return m_level; }
@@ -49,6 +42,12 @@ class Player : public Drawable
   unsigned exp() const { return m_exp; }
 
   unsigned next_level_cost() const { return m_next_level_cost; }
+
+  const std::string& name() const { return m_name; }
+
+  unsigned mana() const { return m_mana; }
+
+  unsigned max_mana() const { return m_max_mana; }
 
 private:
   // Forbidden
