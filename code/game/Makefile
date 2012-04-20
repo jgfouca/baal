@@ -1,22 +1,28 @@
 include ../common.mk
 
-.PHONY: clean check test
+.PHONY: clean test
 
-check:
-	for pyfile in $$(/bin/ls -1 *.py); \
-        do   echo "@@@@@@@@@@ Checking file $$pyfile @@@@@@@@@@"; \
-        pylint --errors-only $$pyfile \
-          && echo "\033[1;32mPASS - $$pyfile\033[0m" \
-          || echo "\033[1;31mFAILED - $$pyfile\033[0m" ;\
-        done
+OBJECTS = $(patsubst %.$(SOURCE_FILE_EXT), $(BIN_DIR)/%.$(OBJ_FILE_EXT),$(wildcard *.$(SOURCE_FILE_EXT)))
 
-test:
-	for pyfile in $$(/bin/ls -1 *.py); \
-        do   echo "@@@@@@@@@@ Testing file $$pyfile @@@@@@@@@@"; \
-        ./$$pyfile \
-          && echo "\033[1;32mPASS - $$pyfile\033[0m" \
-          || echo "\033[1;31mFAILED - $$pyfile\033[0m" ;\
-        done
+EXES = $(patsubst %.$(MAIN_FILE_EXT), $(BIN_DIR)/%.$(EXE_FILE_EXT),$(wildcard *.$(MAIN_FILE_EXT)))
+
+all : $(BIN_DIR) $(EXES)
+
+$(BIN_DIR):
+	-mkdir $(BIN_DIR)
+
+$(EXES): $(BIN_DIR)/%.$(EXE_FILE_EXT) : %.$(MAIN_FILE_EXT) $(GAME_LIB_PATH)
+	g++ $(CXXFLAGS) $(LDFLAGS) $< -o $@ ${OBJECTS} $(GAMECXXFLAGS) $(GAMELDFLAGS)
+
+$(OBJECTS) : $(BIN_DIR)/%.$(OBJ_FILE_EXT): %.$(SOURCE_FILE_EXT) *.$(HEADER_FILE_EXT)
+	$(CXX) $(GAMECXXFLAGS) -o $@ -c $<
+
+$(GAME_LIB_PATH) : $(OBJECTS)
+	ar -rsc $@ $(OBJECTS)
+
+test: $(GAME_LIB_PATH)
+	cd $(TEST_PATH) && make $(MAKE_ARG) test
 
 clean:
-	rm -f *~ *.pyc *.pyo
+	rm -f $(BIN_DIR)/*.$(ALL_EXE_FILE_EXT) $(BIN_DIR)/*.$(ALL_OBJ_FILE_EXT) $(BIN_DIR)/*.$(ALL_LIB_FILE_EXT)
+	-@rmdir $(BIN_DIR) 2> /dev/null
