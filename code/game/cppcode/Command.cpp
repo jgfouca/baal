@@ -209,12 +209,6 @@ HelpCommand::HelpCommand(const std::vector<std::string>& args, Engine& engine) :
 
   if (!args.empty()) {
     m_arg = args.front();
-
-    // Verify m_arg is a valid command name
-    const CommandFactory& factory = CommandFactory::instance();
-    const std::vector<std::string>& cmd_map = factory.get_command_map();
-    RequireUser(contains(m_arg, cmd_map),
-                "Cannot get help for unknown command " << m_arg);
   }
 }
 
@@ -388,7 +382,7 @@ SpellCommand::SpellCommand(const std::vector<std::string>& args, Engine& engine)
 
   // Parse location
   try {
-    m_spell_location = Location(args[2]);
+    m_spell_location = Location(args[1]);
   }
   catch (ProgramError& e) {
     RequireUser(false, "Second argument was not a valid location. " <<
@@ -397,12 +391,12 @@ SpellCommand::SpellCommand(const std::vector<std::string>& args, Engine& engine)
 
   // Parse spell level
   if (args.size() == 3) {
-    std::istringstream iss(args[1]);
+    std::istringstream iss(args[2]);
     iss >> m_spell_level;
     RequireUser(!iss.fail(), "Third argument not a valid integer");
   }
   else {
-    m_engine.player().talents().spell_skill(m_spell_name);
+    m_spell_level = m_engine.player().talents().spell_skill(m_spell_name);
   }
 }
 

@@ -51,14 +51,14 @@ class InterfaceText : public Interface
   virtual void ai_wins();
 
   // Common ascii colors
-  static constexpr char* BLACK   = "30m";
-  static constexpr char* RED     = "31m";
-  static constexpr char* GREEN   = "32m";
-  static constexpr char* YELLOW  = "33m";
-  static constexpr char* BLUE    = "34m";
-  static constexpr char* MAGENTA = "35m";
-  static constexpr char* CYAN    = "36m";
-  static constexpr char* WHITE   = "37m";
+  static constexpr const char* BLACK   = "30m";
+  static constexpr const char* RED     = "31m";
+  static constexpr const char* GREEN   = "32m";
+  static constexpr const char* YELLOW  = "33m";
+  static constexpr const char* BLUE    = "34m";
+  static constexpr const char* MAGENTA = "35m";
+  static constexpr const char* CYAN    = "36m";
+  static constexpr const char* WHITE   = "37m";
 
  private:
   struct stream_wrap
@@ -68,9 +68,7 @@ class InterfaceText : public Interface
     template <typename T>
     explicit
     stream_wrap(const T& t) : m_stream()
-    {
-      m_stream << t;
-    }
+    { m_stream << t; }
 
     template <typename T>
     stream_wrap&
@@ -81,9 +79,7 @@ class InterfaceText : public Interface
     }
 
     std::string str() const
-    {
-      return m_stream.str();
-    }
+    { return m_stream.str(); }
 
     std::ostringstream m_stream;
   };
@@ -102,8 +98,8 @@ class InterfaceText : public Interface
   Engine&       m_engine;
 
   // Ascii bold prefix/postfix
-  static constexpr char* BOLD_COLOR = "\033[1;";
-  static constexpr char* CLEAR_ALL  = "\033[0m";
+  static constexpr const char* BOLD_COLOR = "\033[1;";
+  static constexpr const char* CLEAR_ALL  = "\033[0m";
 
   static const unsigned TILE_TEXT_HEIGHT = 5;
   static const unsigned TILE_TEXT_WIDTH = 5;

@@ -20,8 +20,8 @@ const std::string InterfaceFactory::DEFAULT_INTERFACE       = TEXT_INTERFACE;
 const std::string InterfaceFactory::SEPARATOR               = ":";
 const std::string InterfaceFactory::TEXT_WITH_COUT          = "cout";
 const std::string InterfaceFactory::TEXT_WITH_CIN           = "cin";
-const std::string InterfaceFactory::TEXT_WITH_OSTRINGSTREAM = "cout";
-const std::string InterfaceFactory::TEXT_WITH_ISTRINGSTREAM = "cin";
+const std::string InterfaceFactory::TEXT_WITH_OSTRINGSTREAM = "oss";
+const std::string InterfaceFactory::TEXT_WITH_ISTRINGSTREAM = "iss";
 
 ///////////////////////////////////////////////////////////////////////////////
 Interface& InterfaceFactory::create(Engine& engine)
@@ -37,8 +37,8 @@ Interface& InterfaceFactory::create(Engine& engine)
   // Create and return the desired interface
   auto tokens = split(interface_config, SEPARATOR);
   if (tokens[0] == TEXT_INTERFACE) {
-    std::ostream* out;
-    std::istream* in;
+    std::ostream* out = nullptr;
+    std::istream* in  = nullptr;
 
     if (tokens.size() < 2 || tokens[1] == TEXT_WITH_COUT) {
       out = &std::cout;
