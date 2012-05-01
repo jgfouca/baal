@@ -150,7 +150,7 @@ void InterfaceText::interact()
         std::string command_str(line);
         boost::trim(command_str);
         try {
-          std::shared_ptr<const Command> command =
+          auto command =
             cmd_factory.parse_command(command_str, m_engine);
           command->apply();
         }
@@ -176,7 +176,7 @@ void InterfaceText::interact()
       }
 
       try {
-        std::shared_ptr<const Command> command =
+        auto command =
           cmd_factory.parse_command(command_str, m_engine);
         command->apply();
       }

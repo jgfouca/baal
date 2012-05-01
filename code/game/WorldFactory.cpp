@@ -20,7 +20,7 @@ World& WorldFactory::create(Engine& engine)
   // Get user's choice of world
   const Configuration& config = engine.config();
   std::string world_config = config.get_world_config();
-  if (world_config == Configuration::UNSET) {
+  if (world_config == "") {
     world_config = DEFAULT_WORLD;
   }
 

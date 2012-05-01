@@ -30,7 +30,7 @@ Interface& InterfaceFactory::create(Engine& engine)
   // Get user's choice of interface
   const Configuration& config = engine.config();
   std::string interface_config = config.get_interface_config();
-  if (interface_config == Configuration::UNSET) {
+  if (interface_config == "") {
     interface_config = DEFAULT_INTERFACE;
   }
 

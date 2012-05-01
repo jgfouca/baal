@@ -61,9 +61,9 @@ std::string get_help()
 Configuration parse_args(int argc, char** argv)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  std::string interface_config = Configuration::UNSET;
-  std::string world_config     = Configuration::UNSET;
-  std::string player_name      = Configuration::UNSET;
+  std::string interface_config;
+  std::string world_config;
+  std::string player_config;
 
   // Parse args
   for (int i = 1; i < argc; ++i) {
@@ -85,7 +85,7 @@ Configuration parse_args(int argc, char** argv)
         world_config     = opt_arg;
       }
       else if (arg == "-p") {
-        player_name      = opt_arg;
+        player_config    = opt_arg;
       }
       else {
         Require(false, "Should never make it here");
@@ -96,7 +96,7 @@ Configuration parse_args(int argc, char** argv)
     }
   }
 
-  return Configuration(interface_config, world_config, player_name);
+  return Configuration(interface_config, world_config, player_config);
 }
 
 } // namespace baal

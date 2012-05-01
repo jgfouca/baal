@@ -13,7 +13,7 @@ const std::string Player::DEFAULT_PLAYER_NAME = "human";
 ///////////////////////////////////////////////////////////////////////////////
 Player::Player(const Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
-  : m_name(engine.config().get_player_name()),
+  : m_name(engine.config().get_player_config()),
     m_mana(STARTING_MANA),
     m_max_mana(STARTING_MANA),
     m_mana_regen_rate(STARTING_MANA_REGEN_RATE),
@@ -23,7 +23,7 @@ Player::Player(const Engine& engine)
     m_talents(*this),
     m_engine(engine)
 {
-  if (m_name == Configuration::UNSET) {
+  if (m_name == "") {
     m_name = DEFAULT_PLAYER_NAME;
   }
 }
