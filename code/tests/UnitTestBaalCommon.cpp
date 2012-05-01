@@ -11,6 +11,8 @@
 
 using baal::Location;
 
+SMART_ENUM(TestEnum, ONE, TWO, THREE, FOUR);
+
 namespace {
 
 TEST(BaalCommon, LocationBasics)
@@ -173,6 +175,44 @@ TEST(BaalCommon, split)
     std::string input = "ab:", sep = ":";
     std::vector<std::string> expected = {"ab"};
     EXPECT_EQ(expected, baal::split(input, sep));
+  }
+
+  {
+    std::string input = "aa, bbb, c", sep = ", ";
+    std::vector<std::string> expected = {"aa", "bbb", "c"};
+    EXPECT_EQ(expected, baal::split(input, sep));
+  }
+}
+
+TEST(BaalCommon, smart_enum)
+{
+  using namespace baal;
+
+  {
+    std::ostringstream out;
+    std::string expected("1");
+    TestEnum e = ONE;
+    out << e;
+    EXPECT_EQ(expected, out.str());
+  }
+
+  {
+    std::ostringstream out;
+    std::string expected("ONE TWO THREE FOUR ");
+    for (TestEnum e : iterate<TestEnum>()) {
+      out << to_string(e) << " ";
+    }
+    EXPECT_EQ(expected, out.str());
+  }
+
+  {
+    TestEnum expected = TWO;
+    EXPECT_EQ(expected, from_string<TestEnum>("TWO"));
+    EXPECT_EQ(expected, from_string<TestEnum>("two"));
+  }
+
+  {
+    EXPECT_THROW(from_string<TestEnum>("ABCD"), UserError);
   }
 }
 

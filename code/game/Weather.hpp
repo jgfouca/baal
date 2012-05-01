@@ -159,7 +159,7 @@ class Anomaly
   enum AnomalyCategory
   {
     TEMPERATURE, // Coupled with Anomaly::FIRST
-    RAINFALL,
+    PRECIP,
     PRESSURE     // Coupled with Anomaly::LAST
   };
 

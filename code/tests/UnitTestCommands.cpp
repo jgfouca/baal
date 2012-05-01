@@ -64,22 +64,21 @@ draw <draw-mode>
   Changes how the world is drawn.
   Aliases: d 
   Available draw modes:
-    civ
-    land
-    yield
-    moisture
-    geology
-    magma
-    tension
-    wind
-    temperature
-    pressure
-    precip
-    dewpoint
-    elevation
-    snowpack
-    seasurfacetemp
-    precip
+    CIV
+    LAND
+    YIELD
+    MOISTURE
+    GEOLOGY
+    MAGMA
+    TENSION
+    WIND
+    TEMPERATURE
+    PRESSURE
+    PRECIP
+    DEWPOINT
+    ELEVATION
+    SNOWPACK
+    SEASURFACETEMP
 hack <exp>
   Gives the player free arbitrary exp. This is a cheat put in for testing
   Aliases: x 

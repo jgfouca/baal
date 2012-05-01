@@ -1,6 +1,8 @@
 #ifndef BaalCommon_hpp
 #define BaalCommon_hpp
 
+#include "BaalExceptions.hpp"
+
 #include <climits>
 #include <string>
 #include <vector>
@@ -9,12 +11,115 @@
 #include <cstdlib>
 
 #include <boost/range.hpp>
+#include <boost/range/counting_range.hpp>
 
 // Put simple, generic free functions in this file
 
 namespace baal {
 
-class Engine;
+//
+// Stuff for smart enums
+//
+
+template <typename Enum>
+Enum get_first();
+
+template <typename Enum>
+Enum get_last();
+
+template <typename Enum>
+Enum from_string(const std::string& str);
+
+template <typename Enum>
+boost::iterator_range<boost::counting_iterator<Enum> >
+iterate()
+{
+  return boost::counting_range(get_first<Enum>(), get_last<Enum>());
+}
+
+}
+
+#define SMART_ENUM(Name, ...)                                           \
+  namespace baal {                                                      \
+                                                                        \
+  enum Name {                                                           \
+    Name##FIRST,                                                        \
+    __VA_ARGS__,                                                        \
+    Name##LAST                                                          \
+  };                                                                    \
+                                                                        \
+  inline Name& operator++(Name& val)                                    \
+  {                                                                     \
+    Require(val != Name##LAST, "Ran off end of enum " << #Name);        \
+    int i = static_cast<int>(val);                                      \
+    ++i;                                                                \
+    return val = static_cast<Name>(i);                                  \
+  }                                                                     \
+                                                                        \
+  inline Name& operator--(Name& val)                                    \
+  {                                                                     \
+    Require(val != Name##FIRST, "Ran off front of enum " << #Name);     \
+    int i = static_cast<int>(val);                                      \
+    --i;                                                                \
+    return val = static_cast<Name>(i);                                  \
+  }                                                                     \
+                                                                        \
+  template <>                                                           \
+  inline                                                                \
+  Name get_first<Name>()                                                \
+  {                                                                     \
+    Name rv = Name##FIRST;                                              \
+    ++rv;                                                               \
+    return rv;                                                          \
+  }                                                                     \
+                                                                        \
+  template <>                                                           \
+  inline                                                                \
+  Name get_last<Name>()                                                 \
+  { return Name##LAST; }                                                \
+                                                                        \
+  inline const std::string& to_string(Name val)                         \
+  {                                                                     \
+    Require(val != Name##FIRST && val != Name##LAST, "Bad value " << val); \
+    static std::vector<std::string> strs = split(#__VA_ARGS__, ", ");   \
+    int idx = static_cast<int>(val) - 1;                                \
+    return strs[idx];                                                   \
+  }                                                                     \
+                                                                        \
+  template<>                                                            \
+  inline                                                                \
+  Name from_string<Name>(const std::string& str)                        \
+  {                                                                     \
+    static std::vector<std::string> strs = split(#__VA_ARGS__, ", ");   \
+    std::string up = str;                                               \
+    std::transform(up.begin(), up.end(), up.begin(), ::toupper);        \
+    auto fitr = std::find(strs.begin(), strs.end(), up);                \
+    RequireUser(fitr != strs.end(),                                     \
+                "String '" << str << "' not a valid" << #Name);         \
+    return static_cast<Name>(fitr-strs.begin() + 1);                    \
+  }                                                                     \
+                                                                        \
+  }                                                                     \
+                                                                        \
+  namespace std {                                                       \
+                                                                        \
+  template<>                                                            \
+  struct iterator_traits<baal::Name>                                    \
+  {                                                                     \
+    typedef ptrdiff_t difference_type;                                  \
+    typedef baal::Name value_type;                                      \
+    typedef baal::Name* pointer;                                        \
+    typedef baal::Name& reference;                                      \
+    typedef bidirectional_iterator_tag iterator_category;               \
+  };                                                                    \
+                                                                        \
+  }
+
+//
+// Stuff for Location
+//
+
+namespace baal {
 
 extern const unsigned INVALID;
 
@@ -127,6 +232,8 @@ std::vector<std::string> split(const std::string& str,
 //
 // AdjacentLocationIterator and associated free functions
 //
+
+class Engine;
 
 class AdjacentLocationIterator :
     public std::iterator<std::forward_iterator_tag,

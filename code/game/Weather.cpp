@@ -92,7 +92,7 @@ bool Atmosphere::is_atmospheric(DrawMode mode)
   return mode == WIND        ||
          mode == DEWPOINT    ||
          mode == TEMPERATURE ||
-         mode == RAINFALL    ||
+         mode == PRECIP    ||
          mode == PRESSURE;
 }
 
@@ -213,7 +213,7 @@ float Anomaly::precip_effect(const Location& location) const
   // determining an anomaly's effect on a location. For the moment, anomalies
   // only affect the immediate location.
 
-  if (m_category != RAINFALL || m_location != location) {
+  if (m_category != PRECIP || m_location != location) {
     return 1.0; // no effect
   }
   else {
@@ -269,7 +269,7 @@ std::string Anomaly::category_to_str(AnomalyCategory category)
   switch (category) {
   case TEMPERATURE:
     return "temperature";
-  case RAINFALL:
+  case PRECIP:
     return "precip";
   case PRESSURE:
     return "pressure";

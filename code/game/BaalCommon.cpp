@@ -96,7 +96,7 @@ std::vector<std::string> split(const std::string& str,
     }
     else {
       rv.push_back(str.substr(pos, next_colon - pos));
-      pos = next_colon + 1;
+      pos = next_colon + sep.size();
     }
   }
   return rv;
