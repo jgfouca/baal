@@ -208,15 +208,15 @@ void Spell::damage_tile(WorldTile& tile, float damage_pct) const
 unsigned Spell::spawn(const std::string& spell_name, unsigned spell_level) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  const Spell& spell = SpellFactory::create_spell(spell_name,
-                                                  m_engine,
-                                                  spell_level,
-                                                  m_location);
+  auto spell = SpellFactory::create_spell(spell_name,
+                                          m_engine,
+                                          spell_level,
+                                          m_location);
 
   // Check if this spell can be applied here
   bool verify_ok = true;
   try {
-    spell.verify_apply();
+    spell->verify_apply();
   }
   catch (UserError& error) {
     verify_ok = false;
@@ -225,8 +225,7 @@ unsigned Spell::spawn(const std::string& spell_name, unsigned spell_level) const
   if (verify_ok) {
     SPELL_REPORT("caused a level " << spell_level << " " << spell_name);
 
-    unsigned exp = CHAIN_REACTION_BONUS * spell.apply();
-    delete &spell;
+    unsigned exp = CHAIN_REACTION_BONUS * spell->apply();
     return exp;
   }
 

@@ -229,14 +229,13 @@ void HelpCommand::apply() const
   }
   // Case 2: argument is a spell name
   else if (SpellFactory::is_in_all_names(m_arg)) {
-    const Spell& spell = SpellFactory::create_spell(m_arg, m_engine);
+    auto spell = SpellFactory::create_spell(m_arg, m_engine);
 
     out << "Description of " << m_arg << " spell:\n"
-        << spell.info() << "\n"
+        << spell->info() << "\n"
         << "Player has skill level "
         << m_engine.player().talents().spell_skill(m_arg)
         << " in this spell";
-    delete &spell;
   }
   // Case 3: argument is a draw mode
   else {
@@ -413,11 +412,10 @@ void SpellCommand::apply() const
   // Create the spell. I'd rather use a reference here since spell
   // cannot be nullptr, but we need to use a shared-ptr since verify_cast can
   // throw exceptions.
-  std::shared_ptr<const Spell> spell(
-    &(SpellFactory::create_spell(m_spell_name,
-                                 m_engine,
-                                 m_spell_level,
-                                 m_spell_location)));
+  auto spell = SpellFactory::create_spell(m_spell_name,
+                                          m_engine,
+                                          m_spell_level,
+                                          m_spell_location);
 
   // Verify that player can cast this spell (can throw)
   player.verify_cast(*spell);

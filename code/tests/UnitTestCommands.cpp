@@ -169,7 +169,6 @@ TEST(Command, SpellCommands)
       engine.world().get_tile(Location(1, 1)).atmosphere().temperature();
     EXPECT_GT(new_temp, orig_temp);
   }
-
 }
 
 }

@@ -134,9 +134,9 @@ void TalentTree::check_prereqs(const std::string& spell_name,
                                unsigned player_level) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  const Spell& spell = SpellFactory::create_spell(spell_name,
-                                       const_cast<Engine&>(m_player.engine()));
-  const SpellPrereq& prereq = spell.prereq();
+  auto spell = SpellFactory::create_spell(spell_name,
+                                      const_cast<Engine&>(m_player.engine()));
+  const SpellPrereq& prereq = spell->prereq();
 
   RequireUser(player_level > m_num_learned,
               "You cannot learn any more spells until you level-up");

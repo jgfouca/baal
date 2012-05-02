@@ -5,6 +5,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace baal {
 
@@ -19,10 +20,12 @@ class SpellFactory
 {
  public:
   // client responsible for deletion
-  static const Spell& create_spell(const std::string& spell_name,
-                                   Engine&            engine,
-                                   unsigned           spell_level = 1,
-                                   const Location&    location = Location());
+  static
+  std::shared_ptr<const Spell>
+  create_spell(const std::string& spell_name,
+               Engine&            engine,
+               unsigned           spell_level = 1,
+               const Location&    location = Location());
 
   static bool is_in_all_names(const std::string& spell_name);
 

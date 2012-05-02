@@ -30,82 +30,84 @@ std::string SpellFactory::ALL_SPELLS[] = {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-const Spell& SpellFactory::create_spell(const std::string& spell_name,
-                                        Engine&            engine,
-                                        unsigned           spell_level,
-                                        const Location&    location)
+std::shared_ptr<const Spell>
+SpellFactory::create_spell(const std::string& spell_name,
+                           Engine&            engine,
+                           unsigned           spell_level,
+                           const Location&    location)
 ///////////////////////////////////////////////////////////////////////////////
 {
+  Spell* new_spell = nullptr;
   if (spell_name == Hot::NAME) {
-    return *(new Hot(spell_level, location, engine));
+    new_spell = new Hot(spell_level, location, engine);
   }
   else if (spell_name == Cold::NAME) {
-    return *(new Cold(spell_level, location, engine));
+    new_spell = new Cold(spell_level, location, engine);
   }
   else if (spell_name == WindSpell::NAME) {
-    return *(new WindSpell(spell_level, location, engine));
+    new_spell = new WindSpell(spell_level, location, engine);
   }
   else if (spell_name == Infect::NAME) {
-    return *(new Infect(spell_level, location, engine));
+    new_spell = new Infect(spell_level, location, engine);
   }
   else if (spell_name == Fire::NAME) {
-    return *(new Fire(spell_level, location, engine));
+    new_spell = new Fire(spell_level, location, engine);
   }
   else if (spell_name == Tstorm::NAME) {
-    return *(new Tstorm(spell_level, location, engine));
+    new_spell = new Tstorm(spell_level, location, engine);
   }
   else if (spell_name == Snow::NAME) {
-    return *(new Snow(spell_level, location, engine));
+    new_spell = new Snow(spell_level, location, engine);
   }
   else if (spell_name == Avalanche::NAME) {
-    return *(new Avalanche(spell_level, location, engine));
+    new_spell = new Avalanche(spell_level, location, engine);
   }
   else if (spell_name == Flood::NAME) {
-    return *(new Flood(spell_level, location, engine));
+    new_spell = new Flood(spell_level, location, engine);
   }
   else if (spell_name == Dry::NAME) {
-    return *(new Dry(spell_level, location, engine));
+    new_spell = new Dry(spell_level, location, engine);
   }
   else if (spell_name == Blizzard::NAME) {
-    return *(new Blizzard(spell_level, location, engine));
+    new_spell = new Blizzard(spell_level, location, engine);
   }
   else if (spell_name == Tornado::NAME) {
-    return *(new Tornado(spell_level, location, engine));
+    new_spell = new Tornado(spell_level, location, engine);
   }
   else if (spell_name == Heatwave::NAME) {
-    return *(new Heatwave(spell_level, location, engine));
+    new_spell = new Heatwave(spell_level, location, engine);
   }
   else if (spell_name == Coldwave::NAME) {
-    return *(new Coldwave(spell_level, location, engine));
+    new_spell = new Coldwave(spell_level, location, engine);
   }
   else if (spell_name == Drought::NAME) {
-    return *(new Drought(spell_level, location, engine));
+    new_spell = new Drought(spell_level, location, engine);
   }
   else if (spell_name == Monsoon::NAME) {
-    return *(new Monsoon(spell_level, location, engine));
+    new_spell = new Monsoon(spell_level, location, engine);
   }
   else if (spell_name == Disease::NAME) {
-    return *(new Disease(spell_level, location, engine));
+    new_spell = new Disease(spell_level, location, engine);
   }
   else if (spell_name == Earthquake::NAME) {
-    return *(new Earthquake(spell_level, location, engine));
+    new_spell = new Earthquake(spell_level, location, engine);
   }
   else if (spell_name == Hurricane::NAME) {
-    return *(new Hurricane(spell_level, location, engine));
+    new_spell = new Hurricane(spell_level, location, engine);
   }
   else if (spell_name == Plague::NAME) {
-    return *(new Plague(spell_level, location, engine));
+    new_spell = new Plague(spell_level, location, engine);
   }
   else if (spell_name == Volcano::NAME) {
-    return *(new Volcano(spell_level, location, engine));
+    new_spell = new Volcano(spell_level, location, engine);
   }
   else if (spell_name == Asteroid::NAME) {
-    return *(new Asteroid(spell_level, location, engine));
+    new_spell = new Asteroid(spell_level, location, engine);
   }
   else {
     RequireUser(false, "Unknown spell: " << spell_name);
-    return *static_cast<Spell*>(nullptr);
   }
+  return std::shared_ptr<const Spell>(new_spell);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

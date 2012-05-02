@@ -34,6 +34,8 @@ class Geology
           float base_magma_buildup,
           float plate_movement); // cm/year
 
+  virtual ~Geology() {}
+
   void cycle_turn();
 
   float tension() const { return m_tension; }

@@ -57,9 +57,9 @@ InterfaceText::~InterfaceText()
 
   // Check assumptions: that both streams are one of:
   //   file stream, string stream, or cin/cout
-  Require(outfile != nullptr || outss != nullptr || m_ostream == &std::cout,
+  Require(outfile != nullptr || outss != nullptr || &m_ostream == &std::cout,
           "m_ostream is not file-stream, string-stream, or cout");
-  Require(infile != nullptr || inss != nullptr || m_istream == &std::cin,
+  Require(infile != nullptr || inss != nullptr || &m_istream == &std::cin,
           "m_istream is not file-stream, string-stream, or cin");
 
   // File streams need to be closed

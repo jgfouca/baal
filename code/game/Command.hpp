@@ -21,6 +21,8 @@ class Command
  public:
   Command(Engine& engine) : m_engine(engine) {}
 
+  virtual ~Command() {}
+
   virtual void apply() const = 0;
 
  protected:

@@ -32,6 +32,8 @@ class Interface
       m_draw_mode(CIV) // default to civ
   {}
 
+  virtual ~Interface() {}
+
   // Draw entire screen
   virtual void draw() = 0;
 
