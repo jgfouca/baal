@@ -40,7 +40,7 @@ class Engine
   PlayerAI& ai_player() { return m_ai_player; }
   const PlayerAI& ai_player() const { return m_ai_player; }
 
-  void quit() { m_quit = true; }
+  void quit();
 
  private:
 
@@ -50,6 +50,8 @@ class Engine
   Player&              m_player;
   PlayerAI&            m_ai_player;
   bool                 m_quit;
+
+  static constexpr unsigned AI_WINS_AT_TECH_LEVEL = 100;
 
   // Forbidden
   Engine(const Engine&) = delete;

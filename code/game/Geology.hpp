@@ -42,6 +42,12 @@ class Geology
 
   float magma() const { return m_magma; }
 
+  float plate_movement() const { return m_plate_movement; }
+
+  float tension_buildup() const { return m_tension_buildup; }
+
+  float magma_buildup() const { return m_magma_buildup; }
+
   static bool is_geological(DrawMode mode);
 
   xmlNodePtr to_xml();
@@ -63,17 +69,16 @@ class Divergent : public Geology
 {
  public:
   Divergent(float plate_movement)
-    : Geology(DIVERGENT_TENSION_BUILDUP,
-              DIVERGENT_MAGMA_BUILDUP,
+    : Geology(TENSION_BUILDUP,
+              MAGMA_BUILDUP,
               plate_movement)
   {}
 
+  static constexpr float MAGMA_BUILDUP   = 0.001;
+  static constexpr float TENSION_BUILDUP = 0.000;
+
  protected:
   virtual const char* geology_type() const { return "Divergent"; }
-
- private:
-  static constexpr float DIVERGENT_MAGMA_BUILDUP   = 0.001;
-  static constexpr float DIVERGENT_TENSION_BUILDUP = 0.000;
 };
 
 /**
@@ -84,17 +89,16 @@ class Subducting : public Geology
 {
  public:
   Subducting(float plate_movement)
-    : Geology(SUBDUCTING_TENSION_BUILDUP,
-              SUBDUCTING_MAGMA_BUILDUP,
+    : Geology(TENSION_BUILDUP,
+              MAGMA_BUILDUP,
               plate_movement)
   {}
 
+  static constexpr float MAGMA_BUILDUP   = 0.002;
+  static constexpr float TENSION_BUILDUP = 0.002;
+
  protected:
   virtual const char* geology_type() const { return "Subducting"; }
-
- private:
-  static constexpr float SUBDUCTING_MAGMA_BUILDUP   = 0.002;
-  static constexpr float SUBDUCTING_TENSION_BUILDUP = 0.002;
 };
 
 /**
@@ -104,17 +108,16 @@ class Orogenic : public Geology
 {
  public:
   Orogenic(float plate_movement)
-    : Geology(OROGENIC_TENSION_BUILDUP,
-              OROGENIC_MAGMA_BUILDUP,
+    : Geology(TENSION_BUILDUP,
+              MAGMA_BUILDUP,
               plate_movement)
   {}
 
+  static constexpr float MAGMA_BUILDUP   = 0.002;
+  static constexpr float TENSION_BUILDUP = 0.002;
+
  protected:
   virtual const char* geology_type() const { return "Orogenic"; }
-
- private:
-  static constexpr float OROGENIC_MAGMA_BUILDUP   = 0.002;
-  static constexpr float OROGENIC_TENSION_BUILDUP = 0.002;
 };
 
 /**
@@ -124,17 +127,16 @@ class Transform : public Geology
 {
  public:
   Transform(float plate_movement)
-    : Geology(TRANSFORM_TENSION_BUILDUP,
-              TRANSFORM_MAGMA_BUILDUP,
+    : Geology(TENSION_BUILDUP,
+              MAGMA_BUILDUP,
               plate_movement)
   {}
 
+  static constexpr float MAGMA_BUILDUP   = 0.000;
+  static constexpr float TENSION_BUILDUP = 0.003;
+
  protected:
   virtual const char* geology_type() const { return "Transform"; }
-
- private:
-  static constexpr float TRANSFORM_MAGMA_BUILDUP   = 0.000;
-  static constexpr float TRANSFORM_TENSION_BUILDUP = 0.003;
 };
 
 /**
@@ -144,17 +146,16 @@ class Inactive : public Geology
 {
  public:
   Inactive()
-    : Geology(INACTIVE_TENSION_BUILDUP,
-              INACTIVE_MAGMA_BUILDUP,
+    : Geology(TENSION_BUILDUP,
+              MAGMA_BUILDUP,
               0.0)
   {}
 
+  static constexpr float MAGMA_BUILDUP   = 0.000;
+  static constexpr float TENSION_BUILDUP = 0.000;
+
  protected:
   virtual const char* geology_type() const { return "Inactive"; }
-
- private:
-  static constexpr float INACTIVE_MAGMA_BUILDUP   = 0.000;
-  static constexpr float INACTIVE_TENSION_BUILDUP = 0.000;
 };
 
 }

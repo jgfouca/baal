@@ -55,11 +55,17 @@ void Engine::play()
       m_interface.human_wins();
       break;
     }
-    else if (m_ai_player.tech_level() >= 100) {
+    else if (m_ai_player.tech_level() >= AI_WINS_AT_TECH_LEVEL) {
       m_interface.ai_wins();
       break;
     }
   }
+}
+
+void Engine::quit()
+{
+  m_quit = true;
+  interface().end_turn();
 }
 
 }
