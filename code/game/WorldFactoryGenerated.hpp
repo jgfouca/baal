@@ -1,6 +1,8 @@
 #ifndef WorldFactoryGenerated_hpp
 #define WorldFactoryGenerated_hpp
 
+#include <memory>
+
 namespace baal {
 
 class World;
@@ -9,7 +11,7 @@ class Engine;
 class WorldFactoryGenerated
 {
  public:
-  static World& create(Engine& engine);
+  static std::shared_ptr<World> create(Engine& engine);
 };
 
 }

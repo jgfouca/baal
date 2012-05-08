@@ -26,9 +26,30 @@ class Configuration
                 const std::string& world_config     = "",
                 const std::string& player_config    = "")
     : m_interface_config(interface_config),
-      m_world_config(world_config),
-      m_player_config(player_config)
+      m_world_config    (world_config),
+      m_player_config   (player_config)
   {}
+
+  Configuration(const Configuration& rhs)
+    : m_interface_config(rhs.m_interface_config),
+      m_world_config    (rhs.m_world_config),
+      m_player_config   (rhs.m_player_config)
+  {}
+
+  Configuration(Configuration&& rhs)
+    : m_interface_config(std::move(rhs.m_interface_config)),
+      m_world_config    (std::move(rhs.m_world_config)),
+      m_player_config   (std::move(rhs.m_player_config))
+  {}
+
+  Configuration& operator=(Configuration&& rhs)
+  {
+    m_interface_config = std::move(rhs.m_interface_config);
+    m_world_config     = std::move(rhs.m_world_config);
+    m_player_config    = std::move(rhs.m_player_config);
+
+    return *this;
+  }
 
   // Getters
 

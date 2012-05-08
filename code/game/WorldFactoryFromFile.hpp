@@ -4,6 +4,8 @@
 #include "World.hpp"
 
 #include <string>
+#include <memory>
+
 #include <libxml/parser.h>
 
 namespace baal {
@@ -13,7 +15,7 @@ class Engine;
 class WorldFactoryFromFile
 {
  public:
-  static World& create(const std::string& mapfilename, Engine& engine);
+  static std::shared_ptr<World> create(const std::string& mapfilename, Engine& engine);
 
   static const std::string WORLD_FILE_EXT;
 
@@ -25,7 +27,7 @@ class WorldFactoryFromFile
 
   // Internal methods
 
-  World& load();
+  std::shared_ptr<World> load();
 
   char* get_element(const char *elemname);
 
@@ -48,9 +50,9 @@ class WorldFactoryFromFile
   // Members
 
   const char* m_mapfilename;
-  xmlDocPtr m_mapfile;
-  xmlNodePtr m_curr_node;
-  Engine& m_engine;
+  xmlDocPtr   m_mapfile;
+  xmlNodePtr  m_curr_node;
+  Engine&     m_engine;
 };
 
 bool is_baal_map_file(const std::string& filename);

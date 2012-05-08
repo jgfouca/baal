@@ -22,10 +22,10 @@ TEST(City, CityBasics)
   //
 
   // Create a city
-  baal::Engine engine;
+  auto engine = baal::create_engine();
   std::string city_name = "testCity";
   Location location(4, 2);
-  CityImpl city(city_name, location, engine);
+  CityImpl city(city_name, location, *engine);
 
   // Need to do the following to avoid link errors
   unsigned expected_pop = CityImpl::CITY_STARTING_POP;
@@ -47,10 +47,10 @@ TEST(City, CityAdvanced)
   //
 
   // Create a city
-  baal::Engine engine;
+  auto engine = baal::create_engine();
   std::string city_name = "testCity";
   Location location(4, 2);
-  CityImpl city(city_name, location, engine);
+  CityImpl city(city_name, location, *engine);
   unsigned starting_defense = CityImpl::CITY_STARTING_DEFENSE;
   unsigned starting_pop = CityImpl::CITY_STARTING_POP;
 
@@ -85,7 +85,7 @@ TEST(City, CityAdvanced)
   // Test build-infra
   Location infra_location(3, 3);
   baal::LandTile& infra_tile =
-    dynamic_cast<baal::LandTile&>(engine.world().get_tile(infra_location));
+    dynamic_cast<baal::LandTile&>(engine->world().get_tile(infra_location));
   CityImpl::Action build_infra(CityImpl::BUILD_INFRA, &infra_tile);
   city.m_production = CityImpl::INFRA_PROD_COST;
   EXPECT_TRUE(city.produce_item(build_infra));
@@ -98,10 +98,10 @@ TEST(City, CityAI)
   // Test functionality of CityAI
 
   // Create a city
-  baal::Engine engine;
+  auto engine = baal::create_engine();
   std::string city_name = "testCity";
   Location location(4, 2);
-  CityImpl city(city_name, location, engine);
+  CityImpl city(city_name, location, *engine);
 
   // Test examination of nearby tiles
   auto tiles_pair = city.examine_workable_tiles();

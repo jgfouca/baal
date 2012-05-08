@@ -11,8 +11,8 @@ namespace baal {
 const std::string WorldFactoryFromFile::WORLD_FILE_EXT = ".baalmap";
 
 ///////////////////////////////////////////////////////////////////////////////
-World& WorldFactoryFromFile::create(const std::string& mapfilename,
-                                    Engine& engine)
+std::shared_ptr<World> WorldFactoryFromFile::create(const std::string& mapfilename,
+                                                    Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
   WorldFactoryFromFile wfff(mapfilename.c_str(), engine);
@@ -21,7 +21,7 @@ World& WorldFactoryFromFile::create(const std::string& mapfilename,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-World& WorldFactoryFromFile::load()
+std::shared_ptr<World> WorldFactoryFromFile::load()
 ///////////////////////////////////////////////////////////////////////////////
 {
   m_mapfile = xmlParseFile(m_mapfilename);
@@ -41,23 +41,24 @@ World& WorldFactoryFromFile::load()
   int map_width = get_int_from_parent("map_width");
   int map_height = get_int_from_parent("map_height");
 
-  World& world = *(new World(map_width, map_height, m_engine));
+  std::shared_ptr<World> world =
+    std::shared_ptr<World>(new World(map_width, map_height, m_engine));
   m_curr_node = m_curr_node->xmlChildrenNode;
   while (m_curr_node != nullptr) {
     if (!xmlStrcmp(m_curr_node->name, (const xmlChar *)"tile")) {
       int row = get_int_from_parent("row");
       int col = get_int_from_parent("col");
-      world.m_tiles[row][col] = &parse_Tile(row, col);
+      world->m_tiles[row][col] = &parse_Tile(row, col);
     }
     else if (!xmlStrcmp(m_curr_node->name, (const xmlChar *)"city")) {
       int row = get_int_from_parent("row");
       int col = get_int_from_parent("col");
       char* name = get_element("name");
-      LandTile* landtile = dynamic_cast<LandTile*>(world.m_tiles[row][col]);
+      LandTile* landtile = dynamic_cast<LandTile*>(world->m_tiles[row][col]);
       RequireUser(landtile != nullptr,
                   "Tried to place city at " << row << ", " << col <<
                   "; which is not a landtile");
-      world.place_city(name, Location(row, col));
+      world->place_city(name, Location(row, col));
     }
     m_curr_node = m_curr_node->next;
   }

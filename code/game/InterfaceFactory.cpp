@@ -24,7 +24,7 @@ const std::string InterfaceFactory::TEXT_WITH_OSTRINGSTREAM = "oss";
 const std::string InterfaceFactory::TEXT_WITH_ISTRINGSTREAM = "iss";
 
 ///////////////////////////////////////////////////////////////////////////////
-Interface& InterfaceFactory::create(Engine& engine)
+std::shared_ptr<Interface> InterfaceFactory::create(Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
   // Get user's choice of interface
@@ -54,7 +54,7 @@ Interface& InterfaceFactory::create(Engine& engine)
     if (tokens.size() < 3 || tokens[2] == TEXT_WITH_CIN) {
       in = &std::cin;
     }
-    else if (tokens[1] == TEXT_WITH_ISTRINGSTREAM) {
+    else if (tokens[2] == TEXT_WITH_ISTRINGSTREAM) {
       in = new std::istringstream();
     }
     else {
@@ -62,11 +62,11 @@ Interface& InterfaceFactory::create(Engine& engine)
       RequireUser(!in->fail(), "Could not open " << tokens[2]);
     }
 
-    return *(new InterfaceText(*out, *in, engine));
+    return std::shared_ptr<Interface>(new InterfaceText(*out, *in, engine));
   }
-  //else if (tokens[0] == GRAPHICAL_INTERFACE) {
-  //  return *(InterfaceGraphical::create());
-  //}
+  else if (tokens[0] == GRAPHICAL_INTERFACE) {
+    return std::shared_ptr<Interface>(new InterfaceGraphical(engine));
+  }
   else {
     RequireUser(false, "Invalid choice of interface: " << interface_config);
   }

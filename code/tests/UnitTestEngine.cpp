@@ -9,9 +9,9 @@ TEST(Engine, Basic)
   using namespace baal;
 
   // Test that quit works.
-  Engine engine;
-  engine.quit();
-  engine.play();
+  auto engine = create_engine();
+  engine->quit();
+  engine->play();
 }
 
 }

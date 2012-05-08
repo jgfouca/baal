@@ -2,6 +2,7 @@
 #define WorldFactory_hpp
 
 #include <string>
+#include <memory>
 
 namespace baal {
 
@@ -12,7 +13,7 @@ class WorldFactory
 {
  public:
   // Note, client is responsible for deletion
-  static World& create(Engine& engine);
+  static std::shared_ptr<World> create(Engine& engine);
 
   static const std::string GENERATED_WORLD;
   static const std::string DEFAULT_WORLD;

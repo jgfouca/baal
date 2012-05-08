@@ -126,8 +126,8 @@ int main(int argc, char** argv)
   baal::Configuration config = baal::parse_args(argc, argv);
 
   // Begin game, errors during construction are probably user-errors
-  baal::Engine engine(config);
-  engine.play();
+  auto engine = baal::create_engine(config);
+  engine->play();
 
   return 0;
 }

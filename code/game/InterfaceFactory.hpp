@@ -2,6 +2,7 @@
 #define InterfaceFactory_hpp
 
 #include <string>
+#include <memory>
 
 namespace baal {
 
@@ -17,7 +18,7 @@ class InterfaceFactory
 {
  public:
   // Note, client is responsible for deletion
-  static Interface& create(Engine& engine);
+  static std::shared_ptr<Interface> create(Engine& engine);
 
   static const std::string TEXT_INTERFACE;
   static const std::string GRAPHICAL_INTERFACE;

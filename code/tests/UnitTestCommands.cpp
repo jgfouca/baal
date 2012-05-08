@@ -25,9 +25,9 @@ TEST(Command, HelpCommand)
                        InterfaceFactory::TEXT_WITH_OSTRINGSTREAM +
                        InterfaceFactory::SEPARATOR +
                        "/dev/null");
-  Engine engine(config);
+  auto engine = create_engine(config);
 
-  InterfaceText& interface = dynamic_cast<InterfaceText&>(engine.interface());
+  InterfaceText& interface = dynamic_cast<InterfaceText&>(engine->interface());
   std::ostringstream& stream = dynamic_cast<std::ostringstream&>(interface.m_ostream);
 
   {
@@ -85,7 +85,7 @@ hack <exp>
 
 )";
 
-    HelpCommand help_command({""}, engine);
+    HelpCommand help_command({""}, *engine);
     help_command.apply();
     EXPECT_EQ(expected, stream.str());
 
@@ -103,7 +103,7 @@ R"(cast <spell-name> <row>,<col> [<level>]
 
 )";
 
-    HelpCommand help_command({"cast"}, engine);
+    HelpCommand help_command({"cast"}, *engine);
     help_command.apply();
     EXPECT_EQ(expected, stream.str());
 
@@ -118,7 +118,7 @@ TODO
 Player has skill level 0 in this spell
 )";
 
-    HelpCommand help_command({"fire"}, engine);
+    HelpCommand help_command({"fire"}, *engine);
     help_command.apply();
     EXPECT_EQ(expected, stream.str());
 
@@ -132,7 +132,7 @@ R"(Description of draw-mode: temperature
 Draws the current average (not high or low) temperature in degrees farenheit.
 )";
 
-    HelpCommand help_command({"temperature"}, engine);
+    HelpCommand help_command({"temperature"}, *engine);
     help_command.apply();
     EXPECT_EQ(expected, stream.str());
 
@@ -152,21 +152,21 @@ TEST(Command, SpellCommands)
                        InterfaceFactory::TEXT_WITH_OSTRINGSTREAM +
                        InterfaceFactory::SEPARATOR +
                        "/dev/null");
-  Engine engine(config);
+  auto engine = create_engine(config);
 
   {
-    LearnCommand command({"hot"}, engine);
+    LearnCommand command({"hot"}, *engine);
     command.apply();
-    EXPECT_TRUE(engine.player().talents().has("hot"));
+    EXPECT_TRUE(engine->player().talents().has("hot"));
   }
 
   {
     int orig_temp =
-      engine.world().get_tile(Location(1, 1)).atmosphere().temperature();
-    SpellCommand command({"hot", "1,1"}, engine);
+      engine->world().get_tile(Location(1, 1)).atmosphere().temperature();
+    SpellCommand command({"hot", "1,1"}, *engine);
     command.apply();
     int new_temp =
-      engine.world().get_tile(Location(1, 1)).atmosphere().temperature();
+      engine->world().get_tile(Location(1, 1)).atmosphere().temperature();
     EXPECT_GT(new_temp, orig_temp);
   }
 }

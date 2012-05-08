@@ -14,7 +14,7 @@ const std::string WorldFactory::GENERATED_WORLD  = "g";
 const std::string WorldFactory::DEFAULT_WORLD = "1";
 
 ///////////////////////////////////////////////////////////////////////////////
-World& WorldFactory::create(Engine& engine)
+std::shared_ptr<World> WorldFactory::create(Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
   // Get user's choice of world

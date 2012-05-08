@@ -4,11 +4,11 @@
 namespace baal {
 
 ///////////////////////////////////////////////////////////////////////////////
-World& WorldFactoryGenerated::create(Engine& engine)
+std::shared_ptr<World> WorldFactoryGenerated::create(Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
   // TODO
-  return *(new World(1, 1, engine));
+  return std::shared_ptr<World>(new World(1, 1, engine));
 }
 
 }

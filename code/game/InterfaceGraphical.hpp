@@ -1,6 +1,8 @@
 #ifndef InterfaceGraphical_hpp
 #define InterfaceGraphical_hpp
 
+#include "Interface.hpp"
+
 namespace baal {
 
 class Engine;
@@ -17,6 +19,8 @@ class WorldTile;
 class InterfaceGraphical : public Interface
 {
  public:
+  InterfaceGraphical(Engine& engine);
+
   virtual void draw() {}
 
   virtual void draw(const Geology&) { }
@@ -34,9 +38,12 @@ class InterfaceGraphical : public Interface
 
   virtual void spell_report(const std::string& report) {}
 
-  virtual void human_wins();
+  virtual void human_wins() {}
 
-  virtual void ai_wins();
+  virtual void ai_wins() {}
+
+ private:
+  Engine& m_engine;
 };
 
 }
