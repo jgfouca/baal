@@ -36,7 +36,7 @@ class CommandFactory
 
   void aliases(const std::string& name, std::vector<std::string>& alias_rv) const;
 
-  const std::vector<std::string>& get_command_map() const { return m_cmd_map; }
+  const std::vector<std::string>& commands() const { return m_commands; }
 
   typedef boost::mpl::vector<HelpCommand,
                              SaveCommand,
@@ -56,8 +56,8 @@ class CommandFactory
   CommandFactory& operator=(const CommandFactory&) = delete;
 
   // Members
-  std::vector<std::string>           m_cmd_map;
-  std::map<std::string, std::string> m_aliases;
+  std::vector<std::string>           m_commands; // command primary names (no alias)
+  std::map<std::string, std::string> m_aliases;  // alias->primary name
 
   friend struct command_factory_only::Initializer;
 };

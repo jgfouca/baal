@@ -36,11 +36,11 @@ TEST(InterfaceFactory, basic)
 
   {
     Configuration config(InterfaceFactory::GRAPHICAL_INTERFACE);
-    auto engine = create_engine(config);
+    EXPECT_THROW(create_engine(config), UserError);
 
-    Interface* interface = &engine->interface();
-    InterfaceGraphical* expected_interface = dynamic_cast<InterfaceGraphical*>(interface);
-    EXPECT_NE(nullptr, expected_interface);
+    // Interface* interface = &engine->interface();
+    // InterfaceGraphical* expected_interface = dynamic_cast<InterfaceGraphical*>(interface);
+    // EXPECT_NE(nullptr, expected_interface);
 
   }
 

@@ -32,7 +32,7 @@ char* command_generator (const char* text, int state)
 
   // Get handle to command factory, and pointer to command map
   const CommandFactory& cmd_factory = CommandFactory::instance();
-  const std::vector<std::string>& cmd_map = cmd_factory.get_command_map();
+  const std::vector<std::string>& cmd_map = cmd_factory.commands();
 
   if (!state) {
     list_index = cmd_map.begin();

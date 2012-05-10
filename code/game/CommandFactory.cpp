@@ -63,19 +63,16 @@ struct Initializer
   void operator()(traits::wrap<CommandClass>)
   {
     std::map<std::string, std::string>& aliases = m_factory.m_aliases;
-    std::vector<std::string>& commands = m_factory.m_cmd_map;
+    std::vector<std::string>& commands = m_factory.m_commands;
 
-    Require(std::find(commands.begin(), commands.end(), CommandClass::NAME) ==
-            commands.end(),
+    Require(!contains(CommandClass::NAME, commands),
             "Duplicate command name " << CommandClass::NAME);
 
-    m_factory.m_cmd_map.push_back(CommandClass::NAME);
+    commands.push_back(CommandClass::NAME);
 
     for (std::string alias : CommandClass::ALIASES) {
-      Require(aliases.find(alias) == aliases.end(),
-              "Duplicate alias: " << alias);
-      Require(std::find(commands.begin(), commands.end(), alias) ==
-              commands.end(),
+      Require(!contains(alias, aliases), "Duplicate alias: " << alias);
+      Require(!contains(alias, commands),
               "Alias " << alias << " conflicts with command name");
       aliases[alias] = CommandClass::NAME;
     }
@@ -98,7 +95,7 @@ const CommandFactory& CommandFactory::instance()
 CommandFactory::CommandFactory()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  m_cmd_map.reserve(mpl::size<command_types>::value);
+  m_commands.reserve(mpl::size<command_types>::value);
   mpl::for_each<
     mpl::transform<command_types, traits::wrap<_1> >::type
     > (command_factory_only::Initializer(*this));

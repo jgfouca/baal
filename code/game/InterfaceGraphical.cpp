@@ -8,6 +8,8 @@ InterfaceGraphical::InterfaceGraphical(Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
   : Interface(),
     m_engine(engine)
-{}
+{
+  RequireUser(false, "Not implemented");
+}
 
 }
