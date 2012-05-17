@@ -190,19 +190,21 @@ TEST(BaalCommon, smart_enum)
 
   {
     std::ostringstream out;
-    std::string expected("1");
+    std::string expected("ONE");
     TestEnum e = ONE;
     out << e;
     EXPECT_EQ(expected, out.str());
   }
 
   {
-    std::ostringstream out;
+    std::ostringstream out, out2;
     std::string expected("ONE TWO THREE FOUR ");
     for (TestEnum e : iterate<TestEnum>()) {
       out << to_string(e) << " ";
+      out2 << e << " ";
     }
     EXPECT_EQ(expected, out.str());
+    EXPECT_EQ(expected, out2.str());
   }
 
   {

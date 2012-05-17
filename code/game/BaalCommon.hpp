@@ -86,6 +86,12 @@ iterate()
     return strs[idx];                                                   \
   }                                                                     \
                                                                         \
+  inline std::ostream& operator<<(std::ostream& out, Name val)          \
+  {                                                                     \
+    out << to_string(val);                                              \
+    return out;                                                         \
+  }                                                                     \
+                                                                        \
   template<>                                                            \
   inline                                                                \
   Name from_string<Name>(const std::string& str)                        \
