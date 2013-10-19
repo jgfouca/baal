@@ -23,7 +23,10 @@ $(BIN_DIR):
 
 $(EXES): $(BIN_DIR)/%.$(EXE_FILE_EXT): %.$(MAIN_FILE_EXT) *.$(SOURCE_FILE_EXT)
 	make $(BIN_DIR)
-	$(CXX) $< $(UTEST_PREFIX)*.$(SOURCE_FILE_EXT) -o $@ $(ALL_TEST_FLAGS)
+#	$(CXX) $< $(UTEST_PREFIX)*.$(SOURCE_FILE_EXT) -o $@ $(ALL_TEST_FLAGS)
+	$(CXX) $< $(UTEST_PREFIX)*.$(SOURCE_FILE_EXT) -o $@ -I /Users/jgfouca/manually-installed-packges/gtest-1.7.0/include -L /Users/jgfouca/manually-installed-packges/gtest-1.7.0/install  $(ALL_TEST_FLAGS)
+# The hack above is necessary because gtest must be installed with a native
+# c++11 compiler, like clang-4
 
 clean:
 	rm -f $(BIN_DIR)/*.$(ALL_EXE_FILE_EXT)

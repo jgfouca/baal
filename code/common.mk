@@ -1,7 +1,7 @@
 #### Constants ####
 
 # Compiler constants
-CXX := colorgcc # Use colorgcc/g++ if clang not installed
+CXX := clang++ # Use colorgcc/g++ if clang not installed
 
 # File binary type substrings
 OPT_BUILD_TAG  := opt
@@ -9,7 +9,7 @@ DBG_BUILD_TAG  := dbg
 PROF_BUILD_TAG := prof
 
 # Flag constants
-ALWAYS_FLAGS   := -Wall -std=c++0x
+ALWAYS_FLAGS   := -Wall -std=c++11 -stdlib=libc++ -I /opt/local/include
 CXX_OPT_FLAGS  := -O3 -DNDEBUG $(ALWAYS_FLAGS)
 CXX_DBG_FLAGS  := -g $(ALWAYS_FLAGS) -D_GLIBCXX_DEBUG
 CXX_PROF_FLAGS := -O2 -DNDEBUG -g $(ALWAYS_FLAGS)
@@ -57,7 +57,7 @@ GAME_INC_FLAGS := -I$(GAME_PATH)
 
 # TPL constants
 BOOSTCXXFLAGS := # -I ~/manually-installed-packages/boost_1_48_0
-BOOSTLDFLAGS := -lboost_thread
+BOOSTLDFLAGS := -L /opt/local/lib -lboost_thread-mt
 
 XMLCXXFLAGS := -I /usr/include/libxml2
 XMLLDFLAGS := -lxml2

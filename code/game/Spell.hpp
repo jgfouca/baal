@@ -8,7 +8,7 @@
 #include <iosfwd>
 #include <vector>
 #include <utility>
-#include <tr1/functional>
+#include <functional>
 
 #include <boost/mpl/for_each.hpp>
 #include <boost/mpl/vector.hpp>
@@ -58,7 +58,7 @@ class SpellPrereq
 
   SpellPrereq& operator=(SpellPrereq&& rhs)
   {
-    m_min_player_level  = m_min_player_level;
+    m_min_player_level  = rhs.m_min_player_level;
     m_min_spell_prereqs = std::move(rhs.m_min_spell_prereqs);
     return *this;
   }
@@ -196,15 +196,15 @@ class Hot : public Spell
             engine)
   {
     // base_kill(temp) = (temp - KILL_THRESHOLD)^1.5 / 8;
-    m_base_kill_func = std::tr1::bind(baal::poly_growth,
-                                      std::tr1::placeholders::_1,
+    m_base_kill_func = std::bind(baal::poly_growth,
+                                      std::placeholders::_1,
                                       KILL_THRESHOLD,
                                       1.5,
                                       8);
 
     // tech_penalty(tech_level) = sqrt(tech_level)
-    m_tech_penalty_func = std::tr1::bind(baal::sqrt,
-                                         std::tr1::placeholders::_1,
+    m_tech_penalty_func = std::bind(baal::sqrt,
+                                         std::placeholders::_1,
                                          0.0); // no threshold
   }
 
@@ -220,8 +220,8 @@ class Hot : public Spell
   static const std::string NAME;
 
  private:
-  std::tr1::function<float(float)> m_base_kill_func;
-  std::tr1::function<float(float)> m_tech_penalty_func;
+  std::function<float(float)> m_base_kill_func;
+  std::function<float(float)> m_tech_penalty_func;
 };
 
 /**
@@ -249,22 +249,22 @@ class Cold : public Spell
             engine)
   {
     // base_kill(temp) = (KILL_THRESHOLD - temp)^1.5 / 8;
-    m_base_kill_func = std::tr1::bind(baal::poly_growth,
-                                      std::tr1::placeholders::_1,
+    m_base_kill_func = std::bind(baal::poly_growth,
+                                      std::placeholders::_1,
                                       -KILL_THRESHOLD,
                                       1.5,
                                       8);
 
     // wind_bonus(speed) = 1.02^speed , diminishing returns at 40
-    m_wind_bonus_func = std::tr1::bind(baal::exp_growth,
-                                       std::tr1::placeholders::_1,
+    m_wind_bonus_func = std::bind(baal::exp_growth,
+                                       std::placeholders::_1,
                                        0.0,  // no threshold
                                        1.02, // slow growth
                                        40.0);
 
     // tech_penalty(tech_level) = tech_level
-    m_tech_penalty_func = std::tr1::bind(baal::linear_growth,
-                                         std::tr1::placeholders::_1,
+    m_tech_penalty_func = std::bind(baal::linear_growth,
+                                         std::placeholders::_1,
                                          0.0, // no threshold
                                          1.0); // no multiplier
   }
@@ -282,9 +282,9 @@ class Cold : public Spell
   static const std::string NAME;
 
  private:
-  std::tr1::function<float(float)> m_base_kill_func;
-  std::tr1::function<float(float)> m_wind_bonus_func;
-  std::tr1::function<float(float)> m_tech_penalty_func;
+  std::function<float(float)> m_base_kill_func;
+  std::function<float(float)> m_wind_bonus_func;
+  std::function<float(float)> m_tech_penalty_func;
 };
 
 /**
@@ -312,29 +312,29 @@ class Infect : public Spell
             engine)
   {
     // base_kill(spell_level) = spell_level^1.3
-    m_base_kill_func = std::tr1::bind(baal::poly_growth,
-                                      std::tr1::placeholders::_1,
+    m_base_kill_func = std::bind(baal::poly_growth,
+                                      std::placeholders::_1,
                                       0.0, // no threshold
                                       1.3,
                                       1.0); // no divisor
 
     // city_bonus(size) = 1.05^size
-    m_city_size_bonus_func = std::tr1::bind(baal::exp_growth,
-                                            std::tr1::placeholders::_1,
+    m_city_size_bonus_func = std::bind(baal::exp_growth,
+                                            std::placeholders::_1,
                                             0.0,  // no threshold
                                             1.05, // fast growth
                                             MAX_FLOAT); // never diminishes
 
     // extreme_temp_bonus(degrees_extreme) = 1.03^degrees_extreme
-    m_extreme_temp_bonus_func = std::tr1::bind(baal::exp_growth,
-                                               std::tr1::placeholders::_1,
+    m_extreme_temp_bonus_func = std::bind(baal::exp_growth,
+                                               std::placeholders::_1,
                                                0.0,  // no threshold
                                                1.03, // medium growth
                                                MAX_FLOAT); // never diminishes
 
     // tech_penalty(tech_level) = tech_level
-    m_tech_penalty_func = std::tr1::bind(baal::linear_growth,
-                                         std::tr1::placeholders::_1,
+    m_tech_penalty_func = std::bind(baal::linear_growth,
+                                         std::placeholders::_1,
                                          0.0, // no threshold
                                          1.0); // no multiplier
   }
@@ -351,10 +351,10 @@ class Infect : public Spell
   static const std::string NAME;
 
  private:
-  std::tr1::function<float(float)> m_base_kill_func;
-  std::tr1::function<float(float)> m_city_size_bonus_func;
-  std::tr1::function<float(float)> m_extreme_temp_bonus_func;
-  std::tr1::function<float(float)> m_tech_penalty_func;
+  std::function<float(float)> m_base_kill_func;
+  std::function<float(float)> m_city_size_bonus_func;
+  std::function<float(float)> m_extreme_temp_bonus_func;
+  std::function<float(float)> m_tech_penalty_func;
 };
 
 /**
@@ -383,27 +383,27 @@ class WindSpell : public Spell
             engine)
   {
     // base_kill(speed) = 1.03^(speed - KILL_THRESHOLD)
-    m_base_kill_func = std::tr1::bind(baal::exp_growth,
-                                      std::tr1::placeholders::_1,
+    m_base_kill_func = std::bind(baal::exp_growth,
+                                      std::placeholders::_1,
                                       KILL_THRESHOLD,
                                       1.03, // medium growth
                                       MAX_FLOAT); // never dimishes
 
     // base_infra_destroyed(speed) = 1.03^(speed - DAMAGE_THRESHOLD)
-    m_base_infra_destroy_func = std::tr1::bind(baal::exp_growth,
-                                               std::tr1::placeholders::_1,
+    m_base_infra_destroy_func = std::bind(baal::exp_growth,
+                                               std::placeholders::_1,
                                                DAMAGE_THRESHOLD, // threshold
                                                1.03, // medium growth
                                                MAX_FLOAT); // never diminishes
 
     // defense_penalty(defense_level) = sqrt(tech_level)
-    m_defense_penalty_func = std::tr1::bind(baal::sqrt,
-                                            std::tr1::placeholders::_1,
+    m_defense_penalty_func = std::bind(baal::sqrt,
+                                            std::placeholders::_1,
                                             0.0); // no threshold
 
     // tech_penalty(tech_level) = sqrt(tech_level)
-    m_tech_penalty_func = std::tr1::bind(baal::sqrt,
-                                         std::tr1::placeholders::_1,
+    m_tech_penalty_func = std::bind(baal::sqrt,
+                                         std::placeholders::_1,
                                          0.0); // no threshold
   }
 
@@ -419,10 +419,10 @@ class WindSpell : public Spell
   static const std::string NAME;
 
  private:
-  std::tr1::function<float(float)> m_base_kill_func;
-  std::tr1::function<float(float)> m_base_infra_destroy_func;
-  std::tr1::function<float(float)> m_defense_penalty_func;
-  std::tr1::function<float(float)> m_tech_penalty_func;
+  std::function<float(float)> m_base_kill_func;
+  std::function<float(float)> m_base_infra_destroy_func;
+  std::function<float(float)> m_defense_penalty_func;
+  std::function<float(float)> m_tech_penalty_func;
 };
 
 /**
@@ -450,57 +450,57 @@ class Fire : public Spell
             engine)
   {
     // base_destructiveness(spell_level) = spell_level^1.3
-    m_base_destructiveness_func = std::tr1::bind(baal::poly_growth,
-                                                 std::tr1::placeholders::_1,
+    m_base_destructiveness_func = std::bind(baal::poly_growth,
+                                                 std::placeholders::_1,
                                                  0.0, // no threshold
                                                  1.3,
                                                  1.0); // no divisor
 
     // wind_effect(speed) = 1.05^(speed - tipping_pt)
     m_wind_effect_func =
-      std::tr1::bind(baal::exp_growth,
-                     std::tr1::placeholders::_1,
+      std::bind(baal::exp_growth,
+                     std::placeholders::_1,
                      WIND_TIPPING_POINT,
                      1.05, // fast growth
                      30.0); // diminishes at 30 mph beyond the tipping pint
 
     // temp_effect(temp) = 1.03^(temp - tipping_pt)
-    m_temp_effect_func = std::tr1::bind(baal::exp_growth,
-                                        std::tr1::placeholders::_1,
+    m_temp_effect_func = std::bind(baal::exp_growth,
+                                        std::placeholders::_1,
                                         TEMP_TIPPING_POINT,
                                         1.03, // medium growth
                                         MAX_FLOAT); // never diminishes
 
     // moisture_effect(moisture_deficit%) = 1.03^(moisture_deficit%)
     m_moisture_effect_func =
-      std::tr1::bind(baal::exp_growth,
-                     std::tr1::placeholders::_1,
+      std::bind(baal::exp_growth,
+                     std::placeholders::_1,
                      0.0, // no threshold
                      1.05, // fast growth
                      40.0); // diminishes at 30% below dry
 
 
     // base_infra_destroyed(destructiveness) = 1.05^(destructiveness)
-    m_base_infra_destroy_func = std::tr1::bind(baal::exp_growth,
-                                               std::tr1::placeholders::_1,
+    m_base_infra_destroy_func = std::bind(baal::exp_growth,
+                                               std::placeholders::_1,
                                                0.0, // no threshold
                                                1.05, // fast growth
                                                MAX_FLOAT); // never diminishes
 
     // base_kill(destructiveness) = destructiveness
-    m_base_kill_func = std::tr1::bind(baal::linear_growth,
-                                      std::tr1::placeholders::_1,
+    m_base_kill_func = std::bind(baal::linear_growth,
+                                      std::placeholders::_1,
                                       0.0, // no threshold
                                       1.0); // no multiplier
 
     // defense_penalty(defense_level) = sqrt(tech_level)
-    m_defense_penalty_func = std::tr1::bind(baal::sqrt,
-                                            std::tr1::placeholders::_1,
+    m_defense_penalty_func = std::bind(baal::sqrt,
+                                            std::placeholders::_1,
                                             0.0); // no threshold
 
     // tech_penalty(tech_level) = sqrt(tech_level)
-    m_tech_penalty_func = std::tr1::bind(baal::sqrt,
-                                         std::tr1::placeholders::_1,
+    m_tech_penalty_func = std::bind(baal::sqrt,
+                                         std::placeholders::_1,
                                          0.0); // no threshold
   }
 
@@ -521,14 +521,14 @@ class Fire : public Spell
   static const std::string NAME;
 
  private:
-  std::tr1::function<float(float)> m_base_destructiveness_func;
-  std::tr1::function<float(float)> m_temp_effect_func;
-  std::tr1::function<float(float)> m_wind_effect_func;
-  std::tr1::function<float(float)> m_moisture_effect_func;
-  std::tr1::function<float(float)> m_base_kill_func;
-  std::tr1::function<float(float)> m_base_infra_destroy_func;
-  std::tr1::function<float(float)> m_defense_penalty_func;
-  std::tr1::function<float(float)> m_tech_penalty_func;
+  std::function<float(float)> m_base_destructiveness_func;
+  std::function<float(float)> m_temp_effect_func;
+  std::function<float(float)> m_wind_effect_func;
+  std::function<float(float)> m_moisture_effect_func;
+  std::function<float(float)> m_base_kill_func;
+  std::function<float(float)> m_base_infra_destroy_func;
+  std::function<float(float)> m_defense_penalty_func;
+  std::function<float(float)> m_tech_penalty_func;
 };
 
 /**

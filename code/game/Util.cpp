@@ -68,7 +68,7 @@ char** baal_completion(const char* text, int start, int end)
 void initialize_readline ()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  rl_readline_name = "Baal";
+  rl_readline_name = (char*) "Baal";
 
   // readline binding defines autocomplete behavior
   rl_attempted_completion_function = baal_completion;

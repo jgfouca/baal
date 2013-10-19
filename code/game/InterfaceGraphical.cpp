@@ -10,6 +10,7 @@ InterfaceGraphical::InterfaceGraphical(Engine& engine)
     m_engine(engine)
 {
   RequireUser(false, "Not implemented");
+  (void) m_engine;
 }
 
 }

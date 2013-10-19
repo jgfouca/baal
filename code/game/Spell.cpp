@@ -15,6 +15,12 @@ namespace mpl = boost::mpl;
 
 namespace baal {
 
+constexpr int Hot::KILL_THRESHOLD;
+constexpr int Fire::TEMP_TIPPING_POINT;
+constexpr int Fire::WIND_TIPPING_POINT;
+constexpr unsigned WindSpell::KILL_THRESHOLD;
+constexpr unsigned WindSpell::DAMAGE_THRESHOLD;
+
 const std::string Hot::NAME       = "hot";
 const std::string Cold::NAME      = "cold";
 const std::string WindSpell::NAME = "wind";

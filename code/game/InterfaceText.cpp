@@ -459,7 +459,7 @@ void InterfaceText::draw(const World& world)
       for (unsigned w = 0; w < ws_lead; ++w) {
         print(" ");
       }
-      print(stream() << std::left << std::setw(col_width) << col);
+      print(stream() << std::left << std::setw(col_width) << std::setfill(' ') << col);
     }
     print("\n");
   }
