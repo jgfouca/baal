@@ -34,7 +34,10 @@ ProgramError::ProgramError(const std::string& expr,
 const char* ProgramError::what() const throw()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  std::ostringstream out;
+  static std::ostringstream out;
+  out.str("");
+  out.clear();
+
   out << "Error at " << m_file << ":" << m_line << "\n"
       << "Expression: " << m_expr << " FAILED\n"
       << "Message: " << m_message << std::endl;

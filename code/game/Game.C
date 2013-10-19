@@ -113,21 +113,27 @@ int main(int argc, char** argv)
   const bool isopt = true;
 #endif
 
-  if (baal::is_opt()) {
-    Require(isopt, "Expect opt, build system is broken");
-    std::cout << "Running in opt mode" << std::endl;
-  }
-  else {
-    Require(!isopt, "Expect dbg, build system is broken");
-    std::cout << "Running in dbg mode" << std::endl;
-  }
+  try {
+    if (baal::is_opt()) {
+      Require(isopt, "Expect opt, build system is broken");
+      std::cout << "Running in opt mode" << std::endl;
+    }
+    else {
+      Require(!isopt, "Expect dbg, build system is broken");
+      std::cout << "Running in dbg mode" << std::endl;
+    }
 
-  // Parse args
-  baal::Configuration config = baal::parse_args(argc, argv);
+    // Parse args
+    baal::Configuration config = baal::parse_args(argc, argv);
 
-  // Begin game, errors during construction are probably user-errors
-  auto engine = baal::create_engine(config);
-  engine->play();
+    // Begin game, errors during construction are probably user-errors
+    auto engine = baal::create_engine(config);
+    engine->play();
+  }
+  catch (std::exception& e) {
+    std::cout << e.what() << std::endl;
+    return 1;
+  }
 
   return 0;
 }
