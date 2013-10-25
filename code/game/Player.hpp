@@ -4,6 +4,7 @@
 #include "TalentTree.hpp"
 
 #include <string>
+#include <cmath>
 #include <libxml/parser.h>
 
 namespace baal {
@@ -41,7 +42,7 @@ class Player
 
   unsigned exp() const { return m_exp; }
 
-  unsigned next_level_cost() const { return m_next_level_cost; }
+  unsigned next_level_cost() const { return EXP_LEVEL_COST_FUNC(m_level); }
 
   const std::string& name() const { return m_name; }
 
@@ -58,7 +59,6 @@ private:
   std::string m_name;
   unsigned    m_mana;
   unsigned    m_max_mana;
-  unsigned    m_mana_regen_rate;
   unsigned    m_exp;
   unsigned    m_level;
   unsigned    m_next_level_cost;
@@ -68,9 +68,17 @@ private:
   // Class members
   static constexpr unsigned STARTING_MANA            = 100;
   static constexpr unsigned FIRST_LEVELUP_EXP_COST   = 100;
-  static constexpr unsigned STARTING_MANA_REGEN_RATE = STARTING_MANA / 20;
-  static constexpr float    MANA_INCREASE_PER_LEVEL  = 0.4; // 40%
-  static constexpr float    EXP_LEVEL_COST_INCREASE  = 2.0;
+  static constexpr float    MANA_REGEN_RATE          = 1.0 / 20.0; // 5%
+
+  static unsigned MANA_POOL_FUNC(unsigned level)
+  {
+    return STARTING_MANA * std::pow(1.4, level - 1); // 40% per level
+  }
+
+  static unsigned EXP_LEVEL_COST_FUNC(unsigned level)
+  {
+    return FIRST_LEVELUP_EXP_COST * std::pow(1.4, level - 1); // 40% per level
+  }
 
   static const std::string DEFAULT_PLAYER_NAME;
 };
