@@ -62,8 +62,8 @@ void Player::gain_exp(unsigned exp)
   m_exp += exp;
 
   // Check for level-up
-  while (m_exp >= EXP_LEVEL_COST_FUNC(m_level)) {
-    m_exp -= EXP_LEVEL_COST_FUNC(m_level);
+  while (m_exp >= next_level_cost()) {
+    m_exp -= next_level_cost();
     m_level++;
 
     unsigned old_max = m_max_mana;
@@ -73,8 +73,8 @@ void Player::gain_exp(unsigned exp)
   }
 
   // Check exp invariant
-  Require(m_exp < EXP_LEVEL_COST_FUNC(m_level),
-          "m_exp(" << m_exp << ") > m_next_level_cost(" << EXP_LEVEL_COST_FUNC(m_level) << ")");
+  Require(m_exp < next_level_cost(),
+          "m_exp(" << m_exp << ") > m_next_level_cost(" << next_level_cost() << ")");
 
   // Check mana invariant
   Require(m_mana <= m_max_mana,

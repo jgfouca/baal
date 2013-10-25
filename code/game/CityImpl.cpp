@@ -223,13 +223,14 @@ CityImpl::get_citizen_recommendation(const std::vector<WorldTile*>& food_tiles,
   // Choose which tiles to work. We first make sure we have ample food, then
   // we look for production tiles.
 
+  const PlayerAI& ai = m_engine.ai_player();
+
   std::vector<WorldTile*> work_food_tiles, work_prod_tiles;
   work_food_tiles.reserve(food_tiles.size());
   work_prod_tiles.reserve(prod_tiles.size());
 
   float req_food = get_required_food();
   float food_gathered = FOOD_FROM_CITY_CENTER;
-  const float tech_multiplier = m_engine.ai_player().tech_yield_multiplier();
   unsigned num_citizens_left = m_rank;
 
   // Determine how many workers should be allocated to gathering food. This
@@ -242,7 +243,7 @@ CityImpl::get_citizen_recommendation(const std::vector<WorldTile*>& food_tiles,
 
     if (food_gathered < req_food) {
       work_food_tiles.push_back(food_tile);
-      food_gathered += food_tile->yield().m_food * tech_multiplier;
+      food_gathered += ai.get_adjusted_yield(food_tile->yield().m_food);
       --num_citizens_left;
     }
     else {
@@ -278,6 +279,7 @@ CityImpl::assign_citizens(const std::vector<WorldTile*>& work_food_tiles,
 #ifdef TRACE_CITY_AI
   std::cout << "  assign_citizens:" << std::endl;
 #endif
+  const PlayerAI& ai = m_engine.ai_player();
 
   float food_gathered = FOOD_FROM_CITY_CENTER,
         prod_gathered = PROD_FROM_CITY_CENTER;
@@ -306,9 +308,8 @@ CityImpl::assign_citizens(const std::vector<WorldTile*>& work_food_tiles,
   prod_gathered += num_specialists * PROD_FROM_SPECIALIST;
 
   // AI get's a resource collection bonus from tech
-  const float tech_multiplier = m_engine.ai_player().tech_yield_multiplier();
-  food_gathered *= tech_multiplier;
-  prod_gathered *= tech_multiplier;
+  food_gathered = ai.get_adjusted_yield(food_gathered);
+  prod_gathered = ai.get_adjusted_yield(prod_gathered);
   m_production  += prod_gathered; // prod is accumulated, all food is eaten
 #ifdef TRACE_CITY_AI
   std::cout << "    Collected a total of " << food_gathered << " food and "
@@ -322,8 +323,7 @@ CityImpl::assign_citizens(const std::vector<WorldTile*>& work_food_tiles,
   Require(work_food_tiles.size() + work_prod_tiles.size() <= m_rank,
           "Too many citizens allocated");
 
-  return std::make_pair(food_gathered * tech_multiplier,
-                        prod_gathered * tech_multiplier);
+  return std::make_pair(food_gathered, prod_gathered);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

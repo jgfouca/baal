@@ -10,7 +10,6 @@ PlayerAI::PlayerAI(const Engine& engine)
 ///////////////////////////////////////////////////////////////////////////////
   : m_tech_level(STARTING_TECH_LEVEL),
     m_tech_points(0),
-    m_next_tech_level_cost(FIRST_TECH_LEVEL_COST),
     m_population(0),
     m_engine(engine)
 {}
@@ -24,34 +23,30 @@ void PlayerAI::cycle_turn()
 
   // Manage cities. Note that this may cause additional cities to be created,
   // so we need to store the number of cities at the start of the cycle.
-  unsigned num_cities_at_start = cities.size();
-  for (unsigned i = 0; i < num_cities_at_start; ++i) {
-    City* city = cities[i];;
+  for (unsigned i = 0, ie = cities.size(); i < ie; ++i) {
+    City* city = cities[i];
     city->cycle_turn();
   }
 
   // Compute population
   m_population = 0;
-  for (std::vector<City*>::const_iterator
-       itr = cities.begin(); itr != cities.end(); ++itr) {
-    City* city = *itr;
+  for (const City* city : cities) {
     m_population += city->population();
   }
 
   // Adjust tech based on population
-  unsigned tech_points = m_population / POP_PER_TECH_POINT;
+  const unsigned tech_points = TECH_POINT_FUNC(m_population);
   m_tech_points += tech_points;
-  if (m_tech_points >= m_next_tech_level_cost) {
+  if (m_tech_points >= next_tech_level_cost()) {
     // Level up tech
+    m_tech_points -= next_tech_level_cost();
     ++m_tech_level;
-    m_tech_points -= m_next_tech_level_cost; // rollover points
-    m_next_tech_level_cost *= TECH_LEVEL_COST_INCREASE;
   }
 
   // Tech invariants
-  Require(m_tech_points < m_next_tech_level_cost,
+  Require(m_tech_points < next_tech_level_cost(),
           "Expect tech-points(" << m_tech_points <<
-          ") < tech-cost(" << m_next_tech_level_cost << ")");
+          ") < tech-cost(" << next_tech_level_cost() << ")");
 }
 
 ///////////////////////////////////////////////////////////////////////////////

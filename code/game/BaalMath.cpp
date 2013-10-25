@@ -12,7 +12,7 @@ float exp_growth(float base,
                  float diminishing_returns)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Require(base >= 1.01 && base <= 1.10, "Invalid base: " << base);
+  Require(base > 1, "Invalid base: " << base);
 
   float x = value - threshold;
 

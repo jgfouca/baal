@@ -20,14 +20,26 @@ class Player
  public:
   Player(const Engine& engine);
 
+  // Have this player learn a spell by name. If the player already
+  // knows the spell, the player's skill in that spell will be
+  // increased by one.  This method will throw a user error if the
+  // player cannot learn the spell.
   void learn(const std::string& spell_name);
 
+  // Check if this player can cast a spell. Throws a user error if the
+  // answer is no.
   void verify_cast(const Spell& spell) const;
 
+  // Adjust player state appropriately assuming that spell was cast. This
+  // method should never throw a user error. verify_cast should have been
+  // called prior to ensure that the casting of this spell is valid from
+  // this player's point-of-view.
   void cast(const Spell& spell);
 
+  // Inform the player that they have gained some exp.
   void gain_exp(unsigned exp);
 
+  // Inform this player that the turn has cycled.
   void cycle_turn();
 
   // Getters
