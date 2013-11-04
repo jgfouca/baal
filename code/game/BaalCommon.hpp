@@ -17,6 +17,8 @@
 
 namespace baal {
 
+typedef std::vector<std::string> vecstr_t;
+
 //
 // Stuff for smart enums
 //
@@ -81,7 +83,7 @@ iterate()
   inline const std::string& to_string(Name val)                         \
   {                                                                     \
     Require(val != Name##FIRST && val != Name##LAST, "Bad value " << val); \
-    static std::vector<std::string> strs = split(#__VA_ARGS__, ", ");   \
+    static vecstr_t strs = split(#__VA_ARGS__, ", ");   \
     int idx = static_cast<int>(val) - 1;                                \
     return strs[idx];                                                   \
   }                                                                     \
@@ -96,7 +98,7 @@ iterate()
   inline                                                                \
   Name from_string<Name>(const std::string& str)                        \
   {                                                                     \
-    static std::vector<std::string> strs = split(#__VA_ARGS__, ", ");   \
+    static vecstr_t strs = split(#__VA_ARGS__, ", ");   \
     std::string up = str;                                               \
     std::transform(up.begin(), up.end(), up.begin(), ::toupper);        \
     auto fitr = std::find(strs.begin(), strs.end(), up);                \
@@ -231,7 +233,7 @@ bool contains(const T& t, const std::vector<T>& container)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::vector<std::string> split(const std::string& str,
+vecstr_t split(const std::string& str,
                                const std::string& sep);
 ///////////////////////////////////////////////////////////////////////////////
 

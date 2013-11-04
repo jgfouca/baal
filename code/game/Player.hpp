@@ -64,8 +64,8 @@ class Player
 
 private:
   // Forbidden
-  Player(const Player&);
-  Player& operator=(const Player&);
+  Player(const Player&) = delete;
+  Player& operator=(const Player&) = delete;
 
   // Instance members
   std::string m_name;
@@ -73,7 +73,6 @@ private:
   unsigned    m_max_mana;
   unsigned    m_exp;
   unsigned    m_level;
-  unsigned    m_next_level_cost;
   TalentTree  m_talents;
   const Engine& m_engine;
 
@@ -83,14 +82,10 @@ private:
   static constexpr float    MANA_REGEN_RATE          = 1.0 / 20.0; // 5%
 
   static unsigned MANA_POOL_FUNC(unsigned level)
-  {
-    return STARTING_MANA * std::pow(1.4, level - 1); // 40% per level
-  }
+  { return STARTING_MANA * std::pow(1.4, level - 1); } // 40% per level
 
   static unsigned EXP_LEVEL_COST_FUNC(unsigned level)
-  {
-    return FIRST_LEVELUP_EXP_COST * std::pow(1.4, level - 1); // 40% per level
-  }
+  { return FIRST_LEVELUP_EXP_COST * std::pow(1.4, level - 1); } // 40% per level
 
   static const std::string DEFAULT_PLAYER_NAME;
 };

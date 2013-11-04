@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cmath>
 #include <limits>
+#include <algorithm>
 
 using std::ostream;
 namespace mpl = boost::mpl;
@@ -50,57 +51,34 @@ const std::string Volcano::NAME = "volcano";
 
 const std::string Asteroid::NAME = "asteroid";
 
-const SpellPrereq Hot::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector< >, 1>();
-const SpellPrereq Cold::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector< >, 1>();
-const SpellPrereq WindSpell::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector< >, 1>();
-const SpellPrereq Infect::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector< >, 1>();
+const SpellPrereq Hot::PREREQ       = {1, vecstr_t()};
+const SpellPrereq Cold::PREREQ      = {1, vecstr_t()};
+const SpellPrereq WindSpell::PREREQ = {1, vecstr_t()};
+const SpellPrereq Infect::PREREQ    = {1, vecstr_t()};
 
-const SpellPrereq Fire::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Hot>, 5>();
-const SpellPrereq Tstorm::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<WindSpell>, 5>();
-const SpellPrereq Snow::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Cold>, 5>();
+const SpellPrereq Fire::PREREQ   = {5, vecstr_t({Hot::NAME})};
+const SpellPrereq Tstorm::PREREQ = {5, vecstr_t({WindSpell::NAME})};
+const SpellPrereq Snow::PREREQ   = {5, vecstr_t({Cold::NAME})};
 
-const SpellPrereq Avalanche::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Snow>, 10>();
-const SpellPrereq Flood::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Tstorm>, 10>();
-const SpellPrereq Dry::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Fire>, 10>();
-const SpellPrereq Blizzard::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Snow>, 10>();
-const SpellPrereq Tornado::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Tstorm>, 10>();
+const SpellPrereq Avalanche::PREREQ = {10, vecstr_t({Snow::NAME})};
+const SpellPrereq Flood::PREREQ     = {10, vecstr_t({Tstorm::NAME})};
+const SpellPrereq Dry::PREREQ       = {10, vecstr_t({Fire::NAME})};
+const SpellPrereq Blizzard::PREREQ  = {10, vecstr_t({Snow::NAME})};
+const SpellPrereq Tornado::PREREQ   = {10, vecstr_t({Tstorm::NAME})};
 
-const SpellPrereq Heatwave::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Dry>, 15>();
-const SpellPrereq Coldwave::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Blizzard>, 15>();
-const SpellPrereq Drought::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Dry>, 15>();
-const SpellPrereq Monsoon::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Flood>, 15>();
+const SpellPrereq Heatwave::PREREQ = {15, vecstr_t({Dry::NAME})};
+const SpellPrereq Coldwave::PREREQ = {15, vecstr_t({Blizzard::NAME})};
+const SpellPrereq Drought::PREREQ  = {15, vecstr_t({Dry::NAME})};
+const SpellPrereq Monsoon::PREREQ  = {15, vecstr_t({Flood::NAME})};
 
-const SpellPrereq Disease::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Infect>, 20>();
-const SpellPrereq Earthquake::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector< >, 20>();
-const SpellPrereq Hurricane::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Monsoon>, 20>();
+const SpellPrereq Disease::PREREQ    = {20, vecstr_t({Infect::NAME})};
+const SpellPrereq Earthquake::PREREQ = {20, vecstr_t()};
+const SpellPrereq Hurricane::PREREQ  = {20, vecstr_t({Monsoon::NAME})};
 
-const SpellPrereq Plague::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Disease>, 25>();
-const SpellPrereq Volcano::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Earthquake>, 25>();
+const SpellPrereq Plague::PREREQ  = {25, vecstr_t({Disease::NAME})};
+const SpellPrereq Volcano::PREREQ = {25, vecstr_t({Earthquake::NAME})};
 
-const SpellPrereq Asteroid::PREREQ =
-  SpellPrereq::spell_prereq_factory<mpl::vector<Volcano>, 30>();
-
+const SpellPrereq Asteroid::PREREQ = {30, vecstr_t({Volcano::NAME})};
 
 namespace {
 
@@ -127,32 +105,48 @@ Spell::Spell(const std::string& name,
              unsigned           spell_level,
              const Location&    location,
              unsigned           base_cost,
-             unsigned           cost_increment,
              const SpellPrereq& prereq,
-             Engine&            engine)
+             Engine&            engine,
+             const SpellSpec&   spec)
 ///////////////////////////////////////////////////////////////////////////////
   : m_name(name),
     m_spell_level(spell_level),
     m_location(location),
     m_base_cost(base_cost),
-    m_cost_increment(cost_increment),
     m_prereq(prereq),
-    m_engine(engine)
+    m_engine(engine),
+    m_spec(spec)
 {
   Assert(SpellFactory::is_in_all_names(name), name);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned Spell::kill(City& city,
-                     float pct_killed) const
+std::pair<unsigned, bool> Spell::kill_base(WorldTile const& tile, float destructiveness) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Require(pct_killed > 0.0, "Do not call this if no one killed");
-
-  if (pct_killed > 100.0) {
-    pct_killed = 100.0;
+  float base_pct = m_spec.m_kill_spec.first(tile, destructiveness);
+  SPELL_REPORT("base kill %: " << base_pct);
+  for (auto factor : m_spec.m_kill_spec.second) {
+    const float mitigation_multiplier = factor.second(tile);
+    base_pct /= mitigation_multiplier;
+    SPELL_REPORT(factor.first << ": " << mitigation_multiplier);
   }
+
+  SPELL_REPORT("final kill %: " << base_pct);
+
+  return kill(*tile.city(), base_pct);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+std::pair<unsigned, bool> Spell::kill(City& city,
+                                      float pct_killed) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  pct_killed = std::min(pct_killed, float(100.0));
   unsigned num_killed = city.population() * (pct_killed / 100);
+  if (num_killed == 0) {
+    return std::make_pair(0, false);
+  }
 
   city.kill(num_killed);
   SPELL_REPORT("killed " << num_killed);
@@ -165,53 +159,95 @@ unsigned Spell::kill(City& city,
 
     // TODO: Give bigger city-kill bonus based on maximum attained rank of
     // city.
-    return num_killed + CITY_DESTROY_EXP_BONUS;
+    return std::make_pair(num_killed + CITY_DESTROY_EXP_BONUS, true);
   }
   else {
-    return num_killed;
+    return std::make_pair(num_killed, false);
   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned Spell::destroy_infra(WorldTile& tile, unsigned max_destroyed) const
+unsigned Spell::damage(LandTile& tile, float destructiveness, const base_factor_pair_t& spec, const std::string& name) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  if (max_destroyed > 0) {
-    LandTile& land_tile = dynamic_cast<LandTile&>(tile);
-    unsigned orig_infra = land_tile.infra_level();
-    unsigned num_destroyed = // Cannot destroy infra that's not there
-      (orig_infra < max_destroyed) ? orig_infra : max_destroyed;
-    land_tile.destroy_infra(num_destroyed);
+  Require(name == "defense" || name == "infrastructure", "Unknown name " << name);
 
-    SPELL_REPORT("destroyed " << num_destroyed << " levels of infrastructure");
+  float num_destroyed = spec.first(tile, destructiveness);
+  if (num_destroyed != DOES_NOT_APPLY) {
+    SPELL_REPORT("base " << name << " damage capacity: " << num_destroyed);
+    for (auto factor : spec.second) {
+      const float mitigation_multiplier = factor.second(tile);
+      num_destroyed /= mitigation_multiplier;
+      SPELL_REPORT(factor.first << ": " << mitigation_multiplier);
+    }
+
+    unsigned damage_capacity = std::round(num_destroyed);
+    SPELL_REPORT("total " << name <<  " damage capacity: " << damage_capacity);
+
+    if (name == "defense") {
+      return destroy(tile, damage_capacity, name,
+                     [](LandTile& tile) -> unsigned { return tile.city()->defense(); },
+                     [](LandTile& tile, unsigned num_destroy) -> void { tile.city()->destroy_defense(num_destroy); },
+                     [](unsigned num_destroyed) -> unsigned { return DEFENSE_EXP_FUNC(num_destroyed); } );
+    }
+    else {
+      return destroy(tile, damage_capacity, name,
+                     [](LandTile& tile) -> unsigned { return tile.infra_level(); },
+                     [](LandTile& tile, unsigned num_destroy) -> void { tile.destroy_infra(num_destroy); },
+                     [](unsigned num_destroyed) -> unsigned { return INFRA_EXP_FUNC(num_destroyed); } );
+    }
+  }
+  return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+unsigned Spell::destroy(LandTile& tile, unsigned max_destroyed, const std::string& name,
+                        std::function<unsigned(LandTile&)> const&  getter,
+                        std::function<void(LandTile&, unsigned)> const&  destroyer,
+                        std::function<unsigned(unsigned)> const& exp) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  const unsigned num_destroyed = std::min(getter(tile), max_destroyed);
+  if (num_destroyed > 0) {
+
+    destroyer(tile, num_destroyed);
+    if (getter(tile) > 0) {
+      SPELL_REPORT("destroyed " << num_destroyed << " levels of " << name);
+    }
+    else {
+      SPELL_REPORT("destroyed all " << name << " (" << num_destroyed << " levels)");
+    }
 
     // Convert to exp
-    static const unsigned base_exp = 200;
-    return std::pow(2.0, num_destroyed) * base_exp;
+    return exp(num_destroyed);
   }
   else {
+    if (getter(tile) == 0) {
+      SPELL_REPORT("no " << name << " to destroy");
+    }
+
     return 0;
   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void Spell::damage_tile(WorldTile& tile, float damage_pct) const
+void Spell::damage_tile(LandTile& tile, float destructiveness) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  if (damage_pct > 0.0) {
-    LandTile& land_tile = dynamic_cast<LandTile&>(tile);
+  float damage_pct = m_spec.m_tile_dmg_spec(tile, destructiveness);
+  if (damage_pct != DOES_NOT_APPLY) {
+    if (damage_pct > 0.0) {
+      LandTile& land_tile = dynamic_cast<LandTile&>(tile);
 
-    if (damage_pct > 100.0) {
-      damage_pct = 100.0;
+      damage_pct = std::min(damage_pct, float(100.0));
+      land_tile.damage(damage_pct);
     }
-    land_tile.damage(damage_pct);
-
     SPELL_REPORT("caused " << damage_pct << "% damage to tile");
   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned Spell::spawn(const std::string& spell_name, unsigned spell_level) const
+unsigned Spell::trigger(const std::string& spell_name, unsigned spell_level) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   auto spell = SpellFactory::create_spell(spell_name,
@@ -220,36 +256,93 @@ unsigned Spell::spawn(const std::string& spell_name, unsigned spell_level) const
                                           m_location);
 
   // Check if this spell can be applied here
-  bool verify_ok = true;
   try {
     spell->verify_apply();
-  }
-  catch (UserError& error) {
-    verify_ok = false;
-  }
 
-  if (verify_ok) {
     SPELL_REPORT("caused a level " << spell_level << " " << spell_name);
 
     unsigned exp = CHAIN_REACTION_BONUS * spell->apply();
     return exp;
   }
-
-  return 0;
+  catch (UserError& error) {
+    return 0;
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-ostream& Spell::operator<<(ostream& out) const
+float Spell::compute_destructiveness(const WorldTile& tile, bool report) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  return out << m_name << '[' << m_spell_level << ']';
+  factor_vector_t const& factors = m_spec.m_destructiveness_spec;
+  float rv = 1.0;
+  for (auto factor : factors) {
+    const float factor_multiplier = factor.second(tile);
+    rv *= factor_multiplier;
+    if (report) {
+      SPELL_REPORT(factor.first << ": " << factor_multiplier);
+    }
+  }
+  if (report) {
+    SPELL_REPORT("total destructiveness: " << rv);
+  }
+  return rv;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+unsigned Spell::apply() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  // Every spell has the same phases:
+  // 1) Modifies the environment
+  // 2) Potentially triggers other disasters
+  // 3) Impacts civilization:
+  //   3.a) Impacting cities
+  //     3.a.1) Kills citizens
+  //     3.a.2) Reduces city defense
+  //   3.b) Destroys infrastructure
+
+  World& world         = m_engine.world();
+  WorldTile& tile      = world.get_tile(m_location);
+  unsigned exp         = 0;
+
+  std::vector<std::pair<std::string, unsigned>> triggered;
+  std::vector<WorldTile*> affected_tiles;
+  apply_to_world(tile, affected_tiles, triggered);
+
+  for (WorldTile* affected_tile : affected_tiles) {
+    const float destructiveness = compute_destructiveness(*affected_tile, true /*report*/);
+
+    if (affected_tile->infra_level() > 0) {
+      exp += damage(dynamic_cast<LandTile&>(*affected_tile), destructiveness, m_spec.m_infra_dmg_spec, "infrastructure");
+    }
+    else if (affected_tile->city() != nullptr) {
+      // order matters here!
+      std::pair<unsigned, bool> result = kill_base(*affected_tile, destructiveness);
+      exp += result.first;
+      if (!result.second) {
+        // city was not wiped, still exists
+        exp += damage(dynamic_cast<LandTile&>(*affected_tile), destructiveness, m_spec.m_defense_dmg_spec, "defense");
+      }
+    }
+
+    // Also, can damage land tiles
+    if (dynamic_cast<LandTile*>(affected_tile) != nullptr) {
+      damage_tile(dynamic_cast<LandTile&>(*affected_tile), destructiveness);
+    }
+  }
+
+  for (auto trig : triggered) {
+    exp += trigger(trig.first, trig.second);
+  }
+
+  return exp;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 ostream& operator<<(ostream& out, const Spell& spell)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  return spell.operator<<(out);
+  return out << spell.name() << '[' << spell.level() << ']';
 }
 
 /*****************************************************************************/
@@ -258,21 +351,16 @@ ostream& operator<<(ostream& out, const Spell& spell)
 void Hot::verify_apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // no-op. This spell can be cast anywhere, anytime.
+  // TODO: No affected tiles should have already been impacted by a hot spell
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned Hot::apply() const
+void Hot::apply_to_world(WorldTile& tile,
+                         std::vector<WorldTile*>& affected_tiles,
+                         std::vector<std::pair<std::string, unsigned>>& triggered) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  World& world         = m_engine.world();
-  WorldTile& tile      = world.get_tile(m_location);
   Atmosphere& atmos    = tile.atmosphere();
-  PlayerAI& ai_player  = m_engine.ai_player();
-
-  // TODO: Dewpoint should enhance spell kill count
-
-  unsigned exp = 0;
 
   // 3 cases: Ocean, Mountain, Land
   OceanTile* ocean_tile  = dynamic_cast<OceanTile*>(&tile);
@@ -303,28 +391,7 @@ unsigned Hot::apply() const
     // TODO
   }
 
-  // This spell can kill if cast on a city and temps get high enough.
-  City* city = tile.city();
-  if (city != nullptr) {
-    if (new_temp > KILL_THRESHOLD) {
-      float base_kill_pct = m_base_kill_func(new_temp);
-      float tech_penalty  = m_tech_penalty_func(ai_player.tech_level());
-
-      const float pct_killed = base_kill_pct / tech_penalty;
-
-      SPELL_REPORT("base kill % is " << base_kill_pct);
-      SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
-      SPELL_REPORT("final kill % is " << pct_killed);
-
-      // Reduce city pop by fraction
-      exp += kill(*city, pct_killed);
-    }
-    else {
-      SPELL_REPORT("fell below kill threshold " << KILL_THRESHOLD);
-    }
-  }
-
-  return exp;
+  affected_tiles.push_back(&tile);
 }
 
 /*****************************************************************************/
@@ -333,19 +400,16 @@ unsigned Hot::apply() const
 void Cold::verify_apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // no-op. This spell can be cast anywhere, anytime.
+  // TODO: No affected tiles should have already been impacted by this spell
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned Cold::apply() const
+void Cold::apply_to_world(WorldTile& tile,
+                          std::vector<WorldTile*>& affected_tiles,
+                          std::vector<std::pair<std::string, unsigned>>& triggered) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  World& world         = m_engine.world();
-  WorldTile& tile      = world.get_tile(m_location);
   Atmosphere& atmos    = tile.atmosphere();
-  PlayerAI& ai_player  = m_engine.ai_player();
-
-  unsigned exp = 0;
 
   // 2 cases: Ocean, Land
   OceanTile* ocean_tile  = dynamic_cast<OceanTile*>(&tile);
@@ -372,33 +436,7 @@ unsigned Cold::apply() const
                  prior_ocean_temp << " to " << new_ocean_temp);
   }
 
-  // This spell can kill if cast on a city and temps get low enough.
-  City* city = tile.city();
-  if (city != nullptr) {
-    if (new_temp < KILL_THRESHOLD) {
-      float base_kill_pct = m_base_kill_func(-new_temp);
-      float wind_bonus    = m_wind_bonus_func(atmos.wind().m_speed);
-      float famine_bonus  = city->famine() ? FAMINE_BONUS : 1.0;
-      float tech_penalty  = m_tech_penalty_func(ai_player.tech_level());
-
-      const float pct_killed =
-        base_kill_pct * wind_bonus * famine_bonus / tech_penalty;
-
-      SPELL_REPORT("base kill % is " << base_kill_pct);
-      SPELL_REPORT("wind bonus (multiplier) is " << wind_bonus);
-      SPELL_REPORT("famine bonus (multiplier) is " << famine_bonus);
-      SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
-      SPELL_REPORT("final kill % is " << pct_killed);
-
-      // Reduce city pop by kill-count
-      exp = kill(*city, pct_killed);
-    }
-    else {
-      SPELL_REPORT("was above kill threshold " << KILL_THRESHOLD);
-    }
-  }
-
-  return exp;
+  affected_tiles.push_back(&tile);
 }
 
 /*****************************************************************************/
@@ -414,57 +452,18 @@ void Infect::verify_apply() const
   // Check for city
   City* city = tile.city();
   RequireUser(city != nullptr, "Must cast " << m_name << " on a city.");
+
+  // TODO: No affected tiles should have already been impacted by this spell
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned Infect::apply() const
+void Infect::apply_to_world(WorldTile& tile,
+                            std::vector<WorldTile*>& affected_tiles,
+                            std::vector<std::pair<std::string, unsigned>>& triggered) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  World& world         = m_engine.world();
-  PlayerAI& ai_player  = m_engine.ai_player();
-  WorldTile& tile      = world.get_tile(m_location);
-  Atmosphere& atmos    = tile.atmosphere();
-
-  unsigned exp = 0;
-
-  // This verification should only have passed if we have a city
-  City* city = tile.city();
-  Require(city != nullptr, "Verification did not catch nullptr city");
-
-  // Calculate extreme temperature bonus
-  int degrees_extreme = 0;
-  int curr_temp = atmos.temperature();
-  if (curr_temp < COLD_THRESHOLD) {
-    degrees_extreme = COLD_THRESHOLD - curr_temp;
-  }
-  else if (curr_temp > WARM_THRESHOLD) {
-    degrees_extreme = curr_temp - WARM_THRESHOLD;
-  }
-
-  // Calculate num killed
-  float base_kill_pct      = m_base_kill_func(m_spell_level);
-  float city_size_bonus    = m_city_size_bonus_func(city->rank());
-  float extreme_temp_bonus = m_extreme_temp_bonus_func(degrees_extreme);
-  float famine_bonus       = city->famine() ? FAMINE_BONUS : 1.0;
-  float tech_penalty       = m_tech_penalty_func(ai_player.tech_level());
-
-  const float pct_killed = base_kill_pct *
-                           city_size_bonus *
-                           extreme_temp_bonus *
-                           famine_bonus /
-                           tech_penalty;
-
-  SPELL_REPORT("base kill % is " << base_kill_pct);
-  SPELL_REPORT("city-size bonus (multiplier) is " << city_size_bonus);
-  SPELL_REPORT("extreme-temperature bonus (multiplier) is " << extreme_temp_bonus);
-  SPELL_REPORT("famine bonus (multiplier) is " << famine_bonus);
-  SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
-  SPELL_REPORT("final kill % is " << pct_killed);
-
-  // Reduce city pop by kill-count
-  exp += kill(*city, pct_killed);
-
-  return exp;
+  // No affect on world properties
+  affected_tiles.push_back(&tile);
 }
 
 /*****************************************************************************/
@@ -473,19 +472,16 @@ unsigned Infect::apply() const
 void WindSpell::verify_apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // no-op. This spell can be cast anywhere, anytime.
+  // TODO: No affected tiles should have already been impacted by this spell
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned WindSpell::apply() const
+void WindSpell::apply_to_world(WorldTile& tile,
+                               std::vector<WorldTile*>& affected_tiles,
+                               std::vector<std::pair<std::string, unsigned>>& triggered) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  World& world         = m_engine.world();
-  WorldTile& tile      = world.get_tile(m_location);
   Atmosphere& atmos    = tile.atmosphere();
-  PlayerAI& ai_player  = m_engine.ai_player();
-
-  unsigned exp = 0;
 
   // Compute and apply new wind speed
   Wind prior_wind = atmos.wind();
@@ -496,53 +492,7 @@ unsigned WindSpell::apply() const
   SPELL_REPORT("increased wind from " << prior_wind.m_speed <<
                " to " << new_wind_speed);
 
-  // Wind can destroy infrastructure
-  if (tile.infra_level() > 0) {
-    if (new_wind_speed > DAMAGE_THRESHOLD) {
-      float base_infra_destroyed = m_base_infra_destroy_func(new_wind_speed);
-      float tech_penalty         = m_tech_penalty_func(ai_player.tech_level());
-
-      const unsigned max_infra_destroyed =
-        static_cast<unsigned>(round(base_infra_destroyed / tech_penalty));
-
-      SPELL_REPORT("base infra damage % is " << base_infra_destroyed);
-      SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
-
-      exp += destroy_infra(tile, max_infra_destroyed);
-    }
-    else {
-      SPELL_REPORT("fell below the threshold of " << DAMAGE_THRESHOLD <<
-                   " required to destroy infrastructure");
-    }
-  }
-
-  // Check for the existence of a city
-  // This spell can kill if cast on a city and winds get high enough
-  City* city = tile.city();
-  if (city != nullptr) {
-    if (new_wind_speed > KILL_THRESHOLD) {
-      float base_kill_pct   = m_base_kill_func(new_wind_speed);
-      float tech_penalty    = m_tech_penalty_func(ai_player.tech_level());
-      float defense_penalty = m_defense_penalty_func(city->defense());
-
-      const float pct_killed = base_kill_pct /
-                               tech_penalty  /
-                               defense_penalty;
-
-      SPELL_REPORT("base kill % is " << base_kill_pct);
-      SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
-      SPELL_REPORT("city defense penalty (divisor) is " << defense_penalty);
-      SPELL_REPORT("final kill % is " << pct_killed);
-
-      // Reduce city pop by kill-count
-      exp += kill(*city, pct_killed);
-    }
-    else {
-      SPELL_REPORT("fell below the kill theshold " << KILL_THRESHOLD);
-    }
-  }
-
-  return exp;
+  affected_tiles.push_back(&tile);
 }
 
 /*****************************************************************************/
@@ -557,80 +507,18 @@ void Fire::verify_apply() const
   FoodTile* food_tile = dynamic_cast<FoodTile*>(&tile);
   RequireUser(food_tile != nullptr,
               "Fire can only be cast on tiles with plant growth");
+
+  // TODO: No affected tiles should have already been impacted by this spell
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned Fire::apply() const
+void Fire::apply_to_world(WorldTile& tile,
+                          std::vector<WorldTile*>& affected_tiles,
+                          std::vector<std::pair<std::string, unsigned>>& triggered) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  World& world         = m_engine.world();
-  FoodTile& tile       = dynamic_cast<FoodTile&>(world.get_tile(m_location));
-  Atmosphere& atmos    = tile.atmosphere();
-  PlayerAI& ai_player  = m_engine.ai_player();
-
-  unsigned exp = 0;
-
-  // Query properties relevant to fire destructiveness
-  int wind_speed      = atmos.wind().m_speed;
-  int temperature     = atmos.temperature();
-  //int dewpoint        = atmos.dewpoint(); // TODO
-  float soil_moisture = tile.soil_moisture();
-
-  // Compute destructiveness of fire
-  float base_destructiveness = m_base_destructiveness_func(m_spell_level);
-  float temp_multiplier      = m_temp_effect_func(temperature);
-  float wind_multiplier      = m_wind_effect_func(wind_speed);
-  float pct_beyond_dry       = (MOISTURE_TIPPING_POINT - soil_moisture) * 100;
-  float moisture_multiplier  = m_moisture_effect_func(pct_beyond_dry);
-
-  const float destructiveness = base_destructiveness *
-                                temp_multiplier *
-                                wind_multiplier *
-                                moisture_multiplier;
-
-  SPELL_REPORT("base destructiveness " << base_destructiveness);
-  SPELL_REPORT("temperature multiplier " << temp_multiplier);
-  SPELL_REPORT("wind multiplier " << wind_multiplier);
-  SPELL_REPORT("moisture multiplier " << moisture_multiplier);
-  SPELL_REPORT("total destructiveness " << destructiveness);
-
-  // Fire can destroy infrastructure
-  if (tile.infra_level() > 0) {
-    float base_infra_destroyed = m_base_infra_destroy_func(destructiveness);
-    float tech_penalty         = m_tech_penalty_func(ai_player.tech_level());
-
-    const unsigned max_infra_destroyed =
-      static_cast<unsigned>(round(base_infra_destroyed / tech_penalty));
-
-    SPELL_REPORT("base infra damage % is " << base_infra_destroyed);
-    SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
-
-    exp += destroy_infra(tile, max_infra_destroyed);
-
-    damage_tile(tile, destructiveness);
-  }
-
-  // This spell will kill if cast on a city
-  City* city = tile.city();
-  if (city != nullptr) {
-    float base_kill_pct   = m_base_kill_func(destructiveness);
-    float tech_penalty    = m_tech_penalty_func(ai_player.tech_level());
-    float defense_penalty = m_defense_penalty_func(city->defense());
-
-    const float pct_killed = base_kill_pct /
-                             tech_penalty  /
-                             defense_penalty;
-
-    SPELL_REPORT("base kill % is " << base_kill_pct);
-    SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
-    SPELL_REPORT("city defense penalty (divisor) is " << defense_penalty);
-    SPELL_REPORT("final kill % is " << pct_killed);
-
-    // Reduce city pop by kill-count
-    exp += kill(*city, pct_killed);
-  }
-
-  return exp;
+  // No extra effects on world.
+  affected_tiles.push_back(&tile);
 }
 
 /*****************************************************************************/
@@ -645,48 +533,24 @@ void Tstorm::verify_apply() const
   FoodTile* food_tile = dynamic_cast<FoodTile*>(&tile);
   RequireUser(food_tile != nullptr,
               "Tstorm can only be cast on tiles with plant growth");
+
+  // TODO: No affected tiles should have already been impacted by this spell
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned Tstorm::apply() const
+void Tstorm::apply_to_world(WorldTile& tile,
+                            std::vector<WorldTile*>& affected_tiles,
+                            std::vector<std::pair<std::string, unsigned>>& triggered) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  World& world         = m_engine.world();
-  FoodTile& tile       = dynamic_cast<FoodTile&>(world.get_tile(m_location));
-  Atmosphere& atmos    = tile.atmosphere();
-  PlayerAI& ai_player  = m_engine.ai_player();
-
-  unsigned exp = 0;
-
-  // Query properties relevant to tstorm destructiveness
-  int wind_speed = atmos.wind().m_speed;
-  int temperature     = atmos.temperature();
-  //int dewpoint        = atmos.dewpoint(); // TODO
-  int pressure   = atmos.pressure();
-
-  // Compute destructiveness of tstorm
-  float base_destructiveness = m_spell_level;
-  float temp_multiplier = std::pow(TEMP_EXP_BASE, temperature - TEMP_TIPPING_POINT);
-  float wind_multiplier = std::pow(WIND_EXP_BASE, wind_speed - WIND_TIPPING_POINT);
-  float pressure_multiplier = std::pow(PRESSURE_EXP_BASE, pressure - PRESSURE_TIPPING_POINT);
-
-  float destructiveness = base_destructiveness *
-                          temp_multiplier *
-                          wind_multiplier *
-                          pressure_multiplier;
-
-  SPELL_REPORT("base destructiveness " << base_destructiveness);
-  SPELL_REPORT("temperature multiplier " << temp_multiplier);
-  SPELL_REPORT("wind multiplier " << wind_multiplier);
-  SPELL_REPORT("pressure multiplier " << pressure_multiplier);
-  SPELL_REPORT("total destructiveness " << destructiveness);
+  const float destructiveness = compute_destructiveness(tile, false);
 
   if (destructiveness > WIND_DESTRUCTIVENESS_THRESHOLD) {
     unsigned wind_level =
       tstorm_spawn_helper(destructiveness, WIND_DESTRUCTIVENESS_THRESHOLD);
     Require(wind_level > 0, "Problem in helper");
 
-    exp += spawn(WindSpell::NAME, wind_level);
+    triggered.push_back(std::make_pair(WindSpell::NAME, wind_level));
   }
 
   if (destructiveness > FLOOD_DESTRUCTIVENESS_THRESHOLD) {
@@ -694,7 +558,7 @@ unsigned Tstorm::apply() const
       tstorm_spawn_helper(destructiveness, FLOOD_DESTRUCTIVENESS_THRESHOLD);
     Require(flood_level > 0, "Problem in helper");
 
-    exp += spawn(Flood::NAME, flood_level);
+    triggered.push_back(std::make_pair(Flood::NAME, flood_level));
   }
 
   if (destructiveness > TORNADO_DESTRUCTIVENESS_THRESHOLD) {
@@ -702,28 +566,11 @@ unsigned Tstorm::apply() const
       tstorm_spawn_helper(destructiveness, TORNADO_DESTRUCTIVENESS_THRESHOLD);
     Require(tornado_level > 0, "Problem in helper");
 
-    exp += spawn(Tornado::NAME, tornado_level);
+    triggered.push_back(std::make_pair(Tornado::NAME, tornado_level));
   }
 
-  // Check for the existence of a city
-  // This spell can kill via lightning on a city
-  City* city = tile.city();
-  if (city != nullptr) {
-    float base_kill_pct = destructiveness * LIGHTING_PCT_KILL_PER_DESTRUCTIVENESS;
-    float tech_penalty = std::sqrt(ai_player.tech_level());
-    float defense_penalty = std::sqrt(city->defense());
-    float pct_killed = base_kill_pct / tech_penalty / defense_penalty;
-
-    SPELL_REPORT("base kill % is " << base_kill_pct);
-    SPELL_REPORT("tech penalty (divisor) is " << tech_penalty);
-    SPELL_REPORT("city defense penalty (divisor) is " << defense_penalty);
-    SPELL_REPORT("final kill % is " << pct_killed);
-
-    // Reduce city pop by kill-count
-    exp += kill(*city, pct_killed);
-  }
-
-  return exp;
+  // TODO: Need a better system for this (computing affected area)
+  affected_tiles.push_back(&tile);
 }
 
 }

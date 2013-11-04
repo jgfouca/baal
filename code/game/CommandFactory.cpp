@@ -25,7 +25,7 @@ struct SearchAndCreate
 ///////////////////////////////////////////////////////////////////////////////
 {
   SearchAndCreate(const std::string& name,
-                  const std::vector<std::string>& args,
+                  const vecstr_t& args,
                   Command*& return_val,
                   Engine& engine) :
     m_name(name),
@@ -44,7 +44,7 @@ struct SearchAndCreate
   }
 
   const std::string& m_name;
-  const std::vector<std::string>& m_args;
+  const vecstr_t& m_args;
   Command*& m_return_val;
   Engine& m_engine;
 };
@@ -63,7 +63,7 @@ struct Initializer
   void operator()(traits::wrap<CommandClass>)
   {
     std::map<std::string, std::string>& aliases = m_factory.m_aliases;
-    std::vector<std::string>& commands = m_factory.m_commands;
+    vecstr_t& commands = m_factory.m_commands;
 
     Require(!contains(CommandClass::NAME, commands),
             "Duplicate command name " << CommandClass::NAME);
@@ -115,7 +115,7 @@ CommandFactory::parse_command(const std::string& text, Engine& engine) const
               "Failed while retrieving command name (first token)");
 
   // Get command args
-  std::vector<std::string> args;
+  vecstr_t args;
   while (!iss.eof()) {
     std::string token;
     iss >> token;
@@ -148,7 +148,7 @@ CommandFactory::parse_command(const std::string& text, Engine& engine) const
 
 ///////////////////////////////////////////////////////////////////////////////
 void CommandFactory::aliases(const std::string& name,
-                             std::vector<std::string>& alias_rv) const
+                             vecstr_t& alias_rv) const
 ///////////////////////////////////////////////////////////////////////////////
 {
   for (std::map<std::string, std::string>::const_iterator

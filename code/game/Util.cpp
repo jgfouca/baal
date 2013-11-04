@@ -27,12 +27,12 @@ char* command_generator (const char* text, int state)
 ///////////////////////////////////////////////////////////////////////////////
 {
   static int len;
-  static std::vector<std::string>::const_iterator list_index;
+  static vecstr_t::const_iterator list_index;
   char *name;
 
   // Get handle to command factory, and pointer to command map
   const CommandFactory& cmd_factory = CommandFactory::instance();
-  const std::vector<std::string>& cmd_map = cmd_factory.commands();
+  const vecstr_t& cmd_map = cmd_factory.commands();
 
   if (!state) {
     list_index = cmd_map.begin();

@@ -4,25 +4,21 @@
 #include "SpellFactory.hpp"
 #include "BaalCommon.hpp"
 #include "BaalMath.hpp"
+#include "PlayerAI.hpp"
+#include "WorldTile.hpp"
+#include "City.hpp"
+#include "Engine.hpp"
 
 #include <iosfwd>
 #include <vector>
 #include <utility>
 #include <functional>
 
-#include <boost/mpl/for_each.hpp>
-#include <boost/mpl/vector.hpp>
-#include <boost/mpl/transform.hpp>
-#include <boost/mpl/placeholders.hpp>
-
-#include <boost/type_traits/detail/wrap.hpp>
-
 namespace baal {
 
 // We use this file to define all the spells. This will avoid
 // creation of lots of very small hpp/cpp files.
 
-class WorldTile;
 class City;
 class Engine;
 
@@ -30,65 +26,34 @@ class Engine;
  * Defines the prerequisits for a spell. The previous level of any
  * spell > level 1 is always a prereq.
  */
-class SpellPrereq
+struct SpellPrereq
 {
-  typedef std::vector<std::string> spell_list;
-  typedef spell_list::const_iterator const_iterator;
-
-  struct add_to_list
-  {
-    add_to_list(spell_list& list) : m_list(list) {}
-
-    template <typename Spell>
-    void operator()(boost::type_traits::wrap<Spell>) const
-    {
-      m_list.push_back(Spell::NAME);
-    }
-
-    spell_list& m_list;
-  };
-
-  SpellPrereq() = default;
-
- public:
-  SpellPrereq(SpellPrereq&& rhs)
-    : m_min_player_level(rhs.m_min_player_level),
-      m_min_spell_prereqs(std::move(rhs.m_min_spell_prereqs))
-  {}
-
-  SpellPrereq& operator=(SpellPrereq&& rhs)
-  {
-    m_min_player_level  = rhs.m_min_player_level;
-    m_min_spell_prereqs = std::move(rhs.m_min_spell_prereqs);
-    return *this;
-  }
-
-  template <typename SpellList, unsigned MinLevel>
-  static SpellPrereq spell_prereq_factory()
-  {
-    SpellPrereq rv;
-    rv.m_min_player_level = MinLevel;
-
-    // Spells are not default constructable, so we must transform
-    // the list of spell types into pointer types so that they can
-    // be instantiated with a default constructor and given to for_each.
-    typedef typename boost::mpl::transform
-      <SpellList,
-       boost::type_traits::wrap<boost::mpl::placeholders::_1> >::type
-      wrapped_spell_list;
-    boost::mpl::for_each<wrapped_spell_list>(add_to_list(rv.m_min_spell_prereqs));
-    return rv;
-  }
-
   unsigned min_player_level() const { return m_min_player_level; }
 
-  const_iterator begin() const { return std::begin(m_min_spell_prereqs); }
+  vecstr_t::const_iterator begin() const { return std::begin(m_min_spell_prereqs); }
 
-  const_iterator end() const { return std::end(m_min_spell_prereqs); }
+  vecstr_t::const_iterator end() const { return std::end(m_min_spell_prereqs); }
 
- private:
   unsigned m_min_player_level;
-  spell_list m_min_spell_prereqs;
+  vecstr_t m_min_spell_prereqs;
+};
+
+const float DOES_NOT_APPLY = -1.0;
+
+typedef std::function<float(const WorldTile&)> factor_function_t;
+typedef std::pair<std::string, factor_function_t> factor_t;
+typedef std::vector<factor_t> factor_vector_t;
+typedef std::function<float(const WorldTile&, float)> base_function_t;
+typedef std::pair<base_function_t, factor_vector_t> base_factor_pair_t;
+
+// Functors that describe how a spell works
+struct SpellSpec
+{
+  factor_vector_t    m_destructiveness_spec;
+  base_factor_pair_t m_kill_spec;
+  base_factor_pair_t m_infra_dmg_spec;
+  base_factor_pair_t m_defense_dmg_spec;
+  base_function_t    m_tile_dmg_spec;
 };
 
 /**
@@ -102,11 +67,18 @@ class Spell
         unsigned            spell_level,
         const Location&     location,
         unsigned            base_cost,
-        unsigned            cost_increment,
         const SpellPrereq&  prereq,
-        Engine&             engine);
+        Engine&             engine,
+        const SpellSpec&    spec);
 
-  virtual ~Spell() {}
+  virtual ~Spell() = default;
+
+  Spell(const Spell&) = delete;
+  Spell& operator=(const Spell&) = delete;
+
+  //
+  // API
+  //
 
   // Verify that the user's attempt to cast this spell is sane.
   // This method should throw user errors so that apply doesn't
@@ -114,20 +86,32 @@ class Spell
   virtual void verify_apply() const = 0;
 
   // Apply should NEVER throw a User exception
-  virtual unsigned apply() const = 0;
+  unsigned apply() const;
+
+  //
+  // getters
+  //
 
   virtual unsigned cost() const
-  { return m_base_cost + (m_spell_level - 1) * m_cost_increment; }
+  { return DEFAULT_COST_FUNC(m_base_cost, m_spell_level); }
 
   const std::string& name() const { return m_name; }
 
-  const char* info() const { return "TODO"; }
+  virtual const char* info() const { return ""; }
 
   const SpellPrereq& prereq() const { return m_prereq; }
 
   unsigned level() const { return m_spell_level; }
 
-  std::ostream& operator<<(std::ostream& out) const;
+  friend std::ostream& operator<<(std::ostream& out, const Spell& spell);
+
+ protected:
+
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const = 0;
+
+  float compute_destructiveness(const WorldTile& tile, bool report) const;
 
  protected:
 
@@ -136,33 +120,50 @@ class Spell
   unsigned           m_spell_level;
   Location           m_location;
   unsigned           m_base_cost;
-  unsigned           m_cost_increment;
   const SpellPrereq& m_prereq;
   Engine&            m_engine;
+  SpellSpec          m_spec;
 
   // Constants
+
+ private:
 
   static constexpr unsigned CITY_DESTROY_EXP_BONUS = 1000;
   static constexpr unsigned CHAIN_REACTION_BONUS = 2;
 
+  static unsigned INFRA_EXP_FUNC(unsigned infra_destroyed)
+  { return std::pow(2, infra_destroyed) * 200; }
+
+  static unsigned DEFENSE_EXP_FUNC(unsigned levels_destroyed)
+  { return std::pow(2, levels_destroyed) * 400; }
+
+  static unsigned DEFAULT_COST_FUNC(unsigned base, unsigned level)
+  { return base * (std::pow(1.3, level - 1)); }
+
+  //
   // Internal methods
+  //
+
+  // Returns exp gained and if city was wiped
+  std::pair<unsigned,bool> kill_base(WorldTile const& city,
+                                     float destructiveness) const;
+  std::pair<unsigned,bool> kill(City& city, float kill_pct) const;
 
   // Returns exp gained
-  unsigned kill(City& city,
-                float pct_killed) const;
+  unsigned damage(LandTile& tile, float destructiveness, const base_factor_pair_t& spec, const std::string& name) const;
 
-  // Returns exp gained
-  unsigned destroy_infra(WorldTile& tile, unsigned max_destroyed) const;
+  unsigned destroy(LandTile& tile, unsigned max_destroyed, const std::string& name,
+                   std::function<unsigned(LandTile&)> const&  getter,
+                   std::function<void(LandTile&, unsigned)> const&  destroyer,
+                   std::function<unsigned(unsigned)> const& exp) const;
 
-  void damage_tile(WorldTile& tile, float damage_pct) const;
+  void damage_tile(LandTile& tile, float destructiveness) const;
 
-  // Some disasters can spawn other disasters (chain reaction). This method
+  // Some disasters can trigger other disasters (chain reaction). This method
   // encompassed the implementation of this phenominon. The amount of exp
   // gained is returned.
-  unsigned spawn(const std::string& spell_name, unsigned spell_level) const;
+  unsigned trigger(const std::string& spell_name, unsigned spell_level) const;
 };
-
-std::ostream& operator<<(std::ostream& out, const Spell& spell);
 
 // TODO - Do we want spells for controlling all the basic properties
 // of the atmosphere? Or do we want to leave some up to pure chance (pressure)?
@@ -191,37 +192,43 @@ class Hot : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
-  {
-    // base_kill(temp) = (temp - KILL_THRESHOLD)^1.5 / 8;
-    m_base_kill_func = std::bind(baal::poly_growth,
-                                      std::placeholders::_1,
-                                      KILL_THRESHOLD,
-                                      1.5,
-                                      8);
-
-    // tech_penalty(tech_level) = sqrt(tech_level)
-    m_tech_penalty_func = std::bind(baal::sqrt,
-                                         std::placeholders::_1,
-                                         0.0); // no threshold
-  }
+            engine,
+            SpellSpec {
+              // destructiveness
+              { {"temperature", [](WorldTile const& tile) -> float{
+                    return baal::poly_growth(tile.atmosphere().temperature(), KILL_THRESHOLD, 1.5, 8);
+                  } },
+                {"dewpoint", [](WorldTile const& tile) -> float{
+                    return 1.0;  // TODO
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return baal::sqrt(engine.ai_player().tech_level());
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
+  {}
 
   virtual void verify_apply() const;
-  virtual unsigned apply() const;
+
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const;
 
   static constexpr unsigned BASE_COST = 50;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static constexpr unsigned DEGREES_PER_LEVEL = 7;
   static constexpr float OCEAN_SURFACE_CHG_RATIO = .35;
   static constexpr int KILL_THRESHOLD = 100;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
-
- private:
-  std::function<float(float)> m_base_kill_func;
-  std::function<float(float)> m_tech_penalty_func;
 };
 
 /**
@@ -244,47 +251,44 @@ class Cold : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
-  {
-    // base_kill(temp) = (KILL_THRESHOLD - temp)^1.5 / 8;
-    m_base_kill_func = std::bind(baal::poly_growth,
-                                      std::placeholders::_1,
-                                      -KILL_THRESHOLD,
-                                      1.5,
-                                      8);
-
-    // wind_bonus(speed) = 1.02^speed , diminishing returns at 40
-    m_wind_bonus_func = std::bind(baal::exp_growth,
-                                       std::placeholders::_1,
-                                       0.0,  // no threshold
-                                       1.02, // slow growth
-                                       40.0);
-
-    // tech_penalty(tech_level) = tech_level
-    m_tech_penalty_func = std::bind(baal::linear_growth,
-                                         std::placeholders::_1,
-                                         0.0, // no threshold
-                                         1.0); // no multiplier
-  }
+            engine,
+            SpellSpec {
+              // destructiveness
+              { {"temperature", [](WorldTile const& tile) -> float{
+                    return baal::poly_growth(tile.atmosphere().temperature(), -KILL_THRESHOLD, 1.5, 8) ;
+                  } },
+                {"wind", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.atmosphere().wind().m_speed, 0, 1.02, 40);
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
+  {}
 
   virtual void verify_apply() const;
-  virtual unsigned apply() const;
+
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const;
 
   static constexpr unsigned BASE_COST = 50;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static constexpr unsigned DEGREES_PER_LEVEL = 7;
   static constexpr float OCEAN_SURFACE_CHG_RATIO = .35;
   static constexpr int KILL_THRESHOLD = 0;
   static constexpr float FAMINE_BONUS = 2.0;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
-
- private:
-  std::function<float(float)> m_base_kill_func;
-  std::function<float(float)> m_wind_bonus_func;
-  std::function<float(float)> m_tech_penalty_func;
 };
 
 /**
@@ -307,54 +311,56 @@ class Infect : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
-  {
-    // base_kill(spell_level) = spell_level^1.3
-    m_base_kill_func = std::bind(baal::poly_growth,
-                                      std::placeholders::_1,
-                                      0.0, // no threshold
-                                      1.3,
-                                      1.0); // no divisor
+            engine,
+            SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"extreme temp", [](WorldTile const& tile) -> float{
+                    const int curr_temp = tile.atmosphere().temperature();
+                    if (curr_temp < COLD_THRESHOLD) {
+                      return baal::exp_growth(COLD_THRESHOLD - curr_temp, 0, 1.03);
+                    }
+                    else if (curr_temp > WARM_THRESHOLD) {
+                      return baal::exp_growth(curr_temp - WARM_THRESHOLD, 0, 1.03);
+                    }
+                    return 1.0;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? FAMINE_BONUS : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
 
-    // city_bonus(size) = 1.05^size
-    m_city_size_bonus_func = std::bind(baal::exp_growth,
-                                            std::placeholders::_1,
-                                            0.0,  // no threshold
-                                            1.05, // fast growth
-                                            MAX_FLOAT); // never diminishes
-
-    // extreme_temp_bonus(degrees_extreme) = 1.03^degrees_extreme
-    m_extreme_temp_bonus_func = std::bind(baal::exp_growth,
-                                               std::placeholders::_1,
-                                               0.0,  // no threshold
-                                               1.03, // medium growth
-                                               MAX_FLOAT); // never diminishes
-
-    // tech_penalty(tech_level) = tech_level
-    m_tech_penalty_func = std::bind(baal::linear_growth,
-                                         std::placeholders::_1,
-                                         0.0, // no threshold
-                                         1.0); // no multiplier
-  }
+  {}
 
   virtual void verify_apply() const;
-  virtual unsigned apply() const;
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const;
 
   static constexpr unsigned BASE_COST = 50;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static constexpr float FAMINE_BONUS = 2.0;
   static constexpr int WARM_THRESHOLD = 90;
   static constexpr int COLD_THRESHOLD = 30;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
-
- private:
-  std::function<float(float)> m_base_kill_func;
-  std::function<float(float)> m_city_size_bonus_func;
-  std::function<float(float)> m_extreme_temp_bonus_func;
-  std::function<float(float)> m_tech_penalty_func;
 };
 
 /**
@@ -378,57 +384,54 @@ class WindSpell : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
-  {
-    // base_kill(speed) = 1.03^(speed - KILL_THRESHOLD)
-    m_base_kill_func = std::bind(baal::exp_growth,
-                                      std::placeholders::_1,
-                                      KILL_THRESHOLD,
-                                      1.03, // medium growth
-                                      MAX_FLOAT); // never dimishes
-
-    // base_infra_destroyed(speed) = 1.03^(speed - DAMAGE_THRESHOLD)
-    m_base_infra_destroy_func = std::bind(baal::exp_growth,
-                                               std::placeholders::_1,
-                                               DAMAGE_THRESHOLD, // threshold
-                                               1.03, // medium growth
-                                               MAX_FLOAT); // never diminishes
-
-    // defense_penalty(defense_level) = sqrt(tech_level)
-    m_defense_penalty_func = std::bind(baal::sqrt,
-                                            std::placeholders::_1,
-                                            0.0); // no threshold
-
-    // tech_penalty(tech_level) = sqrt(tech_level)
-    m_tech_penalty_func = std::bind(baal::sqrt,
-                                         std::placeholders::_1,
-                                         0.0); // no threshold
-  }
+            engine,
+            SpellSpec {
+              // destructiveness
+              { {"wind", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.atmosphere().wind().m_speed, KILL_THRESHOLD, 1.03);
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return baal::sqrt(engine.ai_player().tech_level());
+                  } },
+                {"defense", [](WorldTile const& tile) -> float {
+                    return baal::sqrt(tile.city()->defense());
+                  } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const& tile, float) -> float{
+                  return baal::exp_growth(tile.atmosphere().wind().m_speed, DAMAGE_THRESHOLD, 1.03);
+                },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return baal::sqrt(engine.ai_player().tech_level());
+                    } } }
+              },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
+  {}
 
   virtual void verify_apply() const;
-  virtual unsigned apply() const;
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const;
 
   static constexpr unsigned BASE_COST = 50;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static constexpr unsigned MPH_PER_LEVEL = 20;
   static constexpr unsigned DAMAGE_THRESHOLD = 60;
   static constexpr unsigned KILL_THRESHOLD = 80;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
-
- private:
-  std::function<float(float)> m_base_kill_func;
-  std::function<float(float)> m_base_infra_destroy_func;
-  std::function<float(float)> m_defense_penalty_func;
-  std::function<float(float)> m_tech_penalty_func;
 };
 
 /**
  * Starts a fire at a location. Fires will kill people in cities and
  * destroy infrastructure.
- * TODO: has a chance to spead?
+ * TODO: has a chance to spread?
  *
  * Enhanced by high wind, low dewpoint, high temperature, and low soil
  * moisture. Reduced by city defense and tech level.
@@ -445,70 +448,58 @@ class Fire : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
-  {
-    // base_destructiveness(spell_level) = spell_level^1.3
-    m_base_destructiveness_func = std::bind(baal::poly_growth,
-                                                 std::placeholders::_1,
-                                                 0.0, // no threshold
-                                                 1.3,
-                                                 1.0); // no divisor
-
-    // wind_effect(speed) = 1.05^(speed - tipping_pt)
-    m_wind_effect_func =
-      std::bind(baal::exp_growth,
-                     std::placeholders::_1,
-                     WIND_TIPPING_POINT,
-                     1.05, // fast growth
-                     30.0); // diminishes at 30 mph beyond the tipping pint
-
-    // temp_effect(temp) = 1.03^(temp - tipping_pt)
-    m_temp_effect_func = std::bind(baal::exp_growth,
-                                        std::placeholders::_1,
-                                        TEMP_TIPPING_POINT,
-                                        1.03, // medium growth
-                                        MAX_FLOAT); // never diminishes
-
-    // moisture_effect(moisture_deficit%) = 1.03^(moisture_deficit%)
-    m_moisture_effect_func =
-      std::bind(baal::exp_growth,
-                     std::placeholders::_1,
-                     0.0, // no threshold
-                     1.05, // fast growth
-                     40.0); // diminishes at 30% below dry
-
-
-    // base_infra_destroyed(destructiveness) = 1.05^(destructiveness)
-    m_base_infra_destroy_func = std::bind(baal::exp_growth,
-                                               std::placeholders::_1,
-                                               0.0, // no threshold
-                                               1.05, // fast growth
-                                               MAX_FLOAT); // never diminishes
-
-    // base_kill(destructiveness) = destructiveness
-    m_base_kill_func = std::bind(baal::linear_growth,
-                                      std::placeholders::_1,
-                                      0.0, // no threshold
-                                      1.0); // no multiplier
-
-    // defense_penalty(defense_level) = sqrt(tech_level)
-    m_defense_penalty_func = std::bind(baal::sqrt,
-                                            std::placeholders::_1,
-                                            0.0); // no threshold
-
-    // tech_penalty(tech_level) = sqrt(tech_level)
-    m_tech_penalty_func = std::bind(baal::sqrt,
-                                         std::placeholders::_1,
-                                         0.0); // no threshold
-  }
+            engine,
+            SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0, 1.3);
+                  } },
+                {"wind", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.atmosphere().wind().m_speed, WIND_TIPPING_POINT, 1.05, 30);
+                  } },
+                {"temperature", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.atmosphere().temperature(), TEMP_TIPPING_POINT, 1.03);
+                  } },
+                {"moisture", [](WorldTile const& tile) -> float{
+                    const float pct_beyond_dry = (MOISTURE_TIPPING_POINT - dynamic_cast<FoodTile const&>(tile).soil_moisture()) * 100;
+                    return baal::exp_growth(pct_beyond_dry, 0, 1.05, 40);
+                  } },
+                {"dewpoint", [](WorldTile const& tile) -> float{
+                    return 1.0; // TODO
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{
+                  return baal::linear_growth(destructiveness, 0, 1.0);
+                },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return baal::sqrt(engine.ai_player().tech_level());
+                  } },
+                {"defense", [](WorldTile const& tile) -> float {
+                    return baal::sqrt(tile.city()->defense());
+                  } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float destructiveness) -> float{
+                  return baal::exp_growth(destructiveness, 0, 1.05);
+                },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return baal::sqrt(engine.ai_player().tech_level());
+                    } } }
+              },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float destructiveness) -> float{ return destructiveness; } } )
+  {}
 
   virtual void verify_apply() const;
-  virtual unsigned apply() const;
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const;
 
   static constexpr unsigned BASE_COST = 100;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static constexpr int TEMP_TIPPING_POINT = 75;
   static constexpr float TEMP_EXP_BASE = 1.03;
   static constexpr int WIND_TIPPING_POINT = 20;
@@ -519,16 +510,6 @@ class Fire : public Spell
 
   static const SpellPrereq PREREQ;
   static const std::string NAME;
-
- private:
-  std::function<float(float)> m_base_destructiveness_func;
-  std::function<float(float)> m_temp_effect_func;
-  std::function<float(float)> m_wind_effect_func;
-  std::function<float(float)> m_moisture_effect_func;
-  std::function<float(float)> m_base_kill_func;
-  std::function<float(float)> m_base_infra_destroy_func;
-  std::function<float(float)> m_defense_penalty_func;
-  std::function<float(float)> m_tech_penalty_func;
 };
 
 /**
@@ -552,16 +533,52 @@ class Tstorm : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+            SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return spell_level;
+                  } },
+                {"wind", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.atmosphere().wind().m_speed, WIND_TIPPING_POINT, WIND_EXP_BASE);
+                  } },
+                {"temperature", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.atmosphere().temperature(), TEMP_TIPPING_POINT, TEMP_EXP_BASE);
+                  } },
+                {"pressure", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.atmosphere().pressure(), PRESSURE_TIPPING_POINT, PRESSURE_EXP_BASE);
+                  } },
+                {"dewpoint", [](WorldTile const& tile) -> float{
+                    return 1.0; // TODO
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{
+                  return destructiveness / 5.0;
+                },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return baal::sqrt(engine.ai_player().tech_level());
+                  } },
+                {"defense", [](WorldTile const& tile) -> float {
+                    return baal::sqrt(tile.city()->defense());
+                  } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float destructiveness) -> float{ return destructiveness; } } )
   {}
 
   virtual void verify_apply() const;
-  virtual unsigned apply() const;
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const;
+
 
   static constexpr unsigned BASE_COST = 100;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static constexpr int TEMP_TIPPING_POINT = 85;
   static constexpr float TEMP_EXP_BASE = 1.03;
   static constexpr int WIND_TIPPING_POINT = 15;
@@ -596,16 +613,40 @@ class Snow : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 100;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };
@@ -628,16 +669,40 @@ class Avalanche : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 200;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };
@@ -660,16 +725,40 @@ class Flood : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 200;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };
@@ -692,16 +781,40 @@ class Dry : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 200;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };
@@ -724,16 +837,40 @@ class Blizzard : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 200;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };
@@ -757,16 +894,40 @@ class Tornado : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 200;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };
@@ -789,16 +950,40 @@ class Heatwave : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 400;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };
@@ -821,16 +1006,40 @@ class Coldwave : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 400;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };
@@ -853,16 +1062,40 @@ class Drought : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 400;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };
@@ -885,16 +1118,40 @@ class Monsoon : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 400;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };
@@ -916,16 +1173,50 @@ class Disease : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"extreme temp", [](WorldTile const& tile) -> float{
+                    const int curr_temp = tile.atmosphere().temperature();
+                    if (curr_temp < 0) {
+                      return baal::exp_growth(-curr_temp, 0, 1.03);
+                    }
+                    else if (curr_temp > 90) {
+                      return baal::exp_growth(curr_temp - 90, 0, 1.03);
+                    }
+                    return 1.0;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 800;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };
@@ -948,16 +1239,40 @@ class Earthquake : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 800;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };
@@ -982,16 +1297,40 @@ class Hurricane : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 800;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };
@@ -1013,16 +1352,40 @@ class Plague : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 1600;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };
@@ -1045,16 +1408,40 @@ class Volcano : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 1600;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };
@@ -1076,16 +1463,40 @@ class Asteroid : public Spell
             spell_level,
             location,
             BASE_COST,
-            COST_INC,
             PREREQ,
-            engine)
+            engine,
+                        SpellSpec {
+              // destructiveness
+              { {"spell power", [spell_level](WorldTile const& tile) -> float{
+                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                  } },
+                {"city size", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                  } },
+                {"famine", [](WorldTile const& tile) -> float{
+                    return tile.city()->famine() ? 0.0 : 1.0;
+                  } }
+              },
+                // kill spec
+              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+                { {"tech level", [&engine](WorldTile const& tile) -> float {
+                    return engine.ai_player().tech_level();
+                    } } }
+              },
+                // infra dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // defense dmg spec
+              { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
+                // tile dmg spec
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
   virtual void verify_apply() const { /*TODO*/ }
-  virtual unsigned apply() const { return 0; /*TODO*/ }
+  virtual void apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
 
   static constexpr unsigned BASE_COST = 3200;
-  static constexpr unsigned COST_INC = BASE_COST / 3;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
 };

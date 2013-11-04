@@ -82,11 +82,11 @@ void AdjacentLocationIterator::advance()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::vector<std::string> split(const std::string& str,
+vecstr_t split(const std::string& str,
                                const std::string& sep)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  std::vector<std::string> rv;
+  vecstr_t rv;
   size_t pos = 0;
   while (pos < str.size()) {
     size_t next_colon = str.find(sep, pos);

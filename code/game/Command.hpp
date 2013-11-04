@@ -39,7 +39,7 @@ class Command
 class HelpCommand : public Command
 {
  public:
-  HelpCommand(const std::vector<std::string>& args, Engine& engine);
+  HelpCommand(const vecstr_t& args, Engine& engine);
 
   virtual void apply() const;
 
@@ -47,7 +47,7 @@ class HelpCommand : public Command
 
   static const std::string HELP;
 
-  static const std::vector<std::string> ALIASES;
+  static const vecstr_t ALIASES;
  private:
   std::string m_arg;
 };
@@ -60,7 +60,7 @@ class HelpCommand : public Command
 class SaveCommand : public Command
 {
  public:
-  SaveCommand(const std::vector<std::string>& args, Engine& engine);
+  SaveCommand(const vecstr_t& args, Engine& engine);
 
   virtual void apply() const;
 
@@ -68,7 +68,7 @@ class SaveCommand : public Command
 
   static const std::string HELP;
 
-  static const std::vector<std::string> ALIASES;
+  static const vecstr_t ALIASES;
  private:
   std::string m_arg;
 };
@@ -81,7 +81,7 @@ class SaveCommand : public Command
 class EndTurnCommand : public Command
 {
  public:
-  EndTurnCommand(const std::vector<std::string>& args, Engine& engine);
+  EndTurnCommand(const vecstr_t& args, Engine& engine);
 
   virtual void apply() const;
 
@@ -89,7 +89,7 @@ class EndTurnCommand : public Command
 
   static const std::string HELP;
 
-  static const std::vector<std::string> ALIASES;
+  static const vecstr_t ALIASES;
  private:
   unsigned m_num_turns;
 
@@ -104,7 +104,7 @@ class EndTurnCommand : public Command
 class QuitCommand : public Command
 {
  public:
-  QuitCommand(const std::vector<std::string>& args, Engine& engine);
+  QuitCommand(const vecstr_t& args, Engine& engine);
 
   virtual void apply() const;
 
@@ -112,7 +112,7 @@ class QuitCommand : public Command
 
   static const std::string HELP;
 
-  static const std::vector<std::string> ALIASES;
+  static const vecstr_t ALIASES;
 };
 
 /**
@@ -123,7 +123,7 @@ class QuitCommand : public Command
 class SpellCommand : public Command
 {
  public:
-  SpellCommand(const std::vector<std::string>& args, Engine& engine);
+  SpellCommand(const vecstr_t& args, Engine& engine);
 
   virtual void apply() const;
 
@@ -131,7 +131,7 @@ class SpellCommand : public Command
 
   static const std::string HELP;
 
-  static const std::vector<std::string> ALIASES;
+  static const vecstr_t ALIASES;
  private:
   std::string m_spell_name;
   Location    m_spell_location;
@@ -146,7 +146,7 @@ class SpellCommand : public Command
 class LearnCommand : public Command
 {
  public:
-  LearnCommand(const std::vector<std::string>& args, Engine& engine);
+  LearnCommand(const vecstr_t& args, Engine& engine);
 
   virtual void apply() const;
 
@@ -154,7 +154,7 @@ class LearnCommand : public Command
 
   static const std::string HELP;
 
-  static const std::vector<std::string> ALIASES;
+  static const vecstr_t ALIASES;
  private:
   std::string m_spell_name;
 };
@@ -167,7 +167,7 @@ class LearnCommand : public Command
 class DrawCommand : public Command
 {
  public:
-  DrawCommand(const std::vector<std::string>& args, Engine& engine);
+  DrawCommand(const vecstr_t& args, Engine& engine);
 
   virtual void apply() const;
 
@@ -175,7 +175,7 @@ class DrawCommand : public Command
 
   static const std::string HELP;
 
-  static const std::vector<std::string> ALIASES;
+  static const vecstr_t ALIASES;
  private:
   std::string m_draw_mode;
 };
@@ -187,7 +187,7 @@ class DrawCommand : public Command
 class HackCommand : public Command
 {
  public:
-  HackCommand(const std::vector<std::string>& args, Engine& engine);
+  HackCommand(const vecstr_t& args, Engine& engine);
 
   virtual void apply() const;
 
@@ -195,7 +195,7 @@ class HackCommand : public Command
 
   static const std::string HELP;
 
-  static const std::vector<std::string> ALIASES;
+  static const vecstr_t ALIASES;
  private:
   unsigned m_exp;
 };

@@ -53,24 +53,17 @@ class PlayerAI
   static constexpr unsigned FIRST_TECH_LEVEL_COST = 1000;
 
   static unsigned TECH_NEXT_LEVEL_COST_FUNC(unsigned tech_level)
-  {
-    return FIRST_TECH_LEVEL_COST * poly_growth(tech_level - STARTING_TECH_LEVEL, 1.5);
-  }
+  { return FIRST_TECH_LEVEL_COST * poly_growth(tech_level - STARTING_TECH_LEVEL, 1.5); }
 
   static unsigned TECH_POINT_FUNC(unsigned population)
-  {
-    return population / 100;
-  }
+  { return population / 100; }
 
   static unsigned ADJUSTED_YIELD_FUNC(float base_yield, unsigned tech_level)
-  {
-    return base_yield * (1 + ((tech_level - STARTING_TECH_LEVEL) * 0.1));
-  }
+  { return base_yield * (1 + ((tech_level - STARTING_TECH_LEVEL) * 0.1)); }
 
   // Forbidden
-  PlayerAI(const PlayerAI&);
-  PlayerAI& operator=(const PlayerAI&);
-
+  PlayerAI(const PlayerAI&) = delete;
+  PlayerAI& operator=(const PlayerAI&) = delete;
 };
 
 }

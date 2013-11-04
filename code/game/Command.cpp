@@ -36,14 +36,14 @@ const std::string LearnCommand::NAME   = "learn";
 const std::string DrawCommand::NAME    = "draw";
 const std::string HackCommand::NAME    = "hack";
 
-const std::vector<std::string> HelpCommand::ALIASES    = {"h"};
-const std::vector<std::string> SaveCommand::ALIASES    = {"s"};
-const std::vector<std::string> EndTurnCommand::ALIASES = {"n"};
-const std::vector<std::string> QuitCommand::ALIASES    = {"q"};
-const std::vector<std::string> SpellCommand::ALIASES   = {"c"};
-const std::vector<std::string> LearnCommand::ALIASES   = {"l"};
-const std::vector<std::string> DrawCommand::ALIASES    = {"d"};
-const std::vector<std::string> HackCommand::ALIASES    = {"x"};
+const vecstr_t HelpCommand::ALIASES    = {"h"};
+const vecstr_t SaveCommand::ALIASES    = {"s"};
+const vecstr_t EndTurnCommand::ALIASES = {"n"};
+const vecstr_t QuitCommand::ALIASES    = {"q"};
+const vecstr_t SpellCommand::ALIASES   = {"c"};
+const vecstr_t LearnCommand::ALIASES   = {"l"};
+const vecstr_t DrawCommand::ALIASES    = {"d"};
+const vecstr_t HackCommand::ALIASES    = {"x"};
 
 const std::string HelpCommand::HELP =
   "[item]\n"
@@ -195,7 +195,7 @@ struct is_in_command_factory :
 } // empty namespace
 
 ///////////////////////////////////////////////////////////////////////////////
-HelpCommand::HelpCommand(const std::vector<std::string>& args, Engine& engine) :
+HelpCommand::HelpCommand(const vecstr_t& args, Engine& engine) :
   Command(engine),
   m_arg("")
 ///////////////////////////////////////////////////////////////////////////////
@@ -256,7 +256,7 @@ void HelpCommand::apply() const
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-EndTurnCommand::EndTurnCommand(const std::vector<std::string>& args, Engine& engine) :
+EndTurnCommand::EndTurnCommand(const vecstr_t& args, Engine& engine) :
   Command(engine),
   m_num_turns(1)
 ///////////////////////////////////////////////////////////////////////////////
@@ -286,7 +286,7 @@ void EndTurnCommand::apply() const
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-QuitCommand::QuitCommand(const std::vector<std::string>& args, Engine& engine) :
+QuitCommand::QuitCommand(const vecstr_t& args, Engine& engine) :
   Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
@@ -306,7 +306,7 @@ void QuitCommand::apply() const
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-SaveCommand::SaveCommand(const std::vector<std::string>& args, Engine& engine)
+SaveCommand::SaveCommand(const vecstr_t& args, Engine& engine)
   : Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
@@ -365,7 +365,7 @@ void SaveCommand::apply() const
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-SpellCommand::SpellCommand(const std::vector<std::string>& args, Engine& engine) :
+SpellCommand::SpellCommand(const vecstr_t& args, Engine& engine) :
   Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
@@ -445,7 +445,7 @@ void SpellCommand::apply() const
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-LearnCommand::LearnCommand(const std::vector<std::string>& args, Engine& engine) :
+LearnCommand::LearnCommand(const vecstr_t& args, Engine& engine) :
   Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
@@ -468,7 +468,7 @@ void LearnCommand::apply() const
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-DrawCommand::DrawCommand(const std::vector<std::string>& args, Engine& engine) :
+DrawCommand::DrawCommand(const vecstr_t& args, Engine& engine) :
   Command(engine)
 ///////////////////////////////////////////////////////////////////////////////
 {
@@ -492,7 +492,7 @@ void DrawCommand::apply() const
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-HackCommand::HackCommand(const std::vector<std::string>& args, Engine& engine) :
+HackCommand::HackCommand(const vecstr_t& args, Engine& engine) :
   Command(engine),
   m_exp(0)
 ///////////////////////////////////////////////////////////////////////////////

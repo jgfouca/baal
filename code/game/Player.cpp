@@ -74,7 +74,7 @@ void Player::gain_exp(unsigned exp)
 
   // Check exp invariant
   Require(m_exp < next_level_cost(),
-          "m_exp(" << m_exp << ") > m_next_level_cost(" << next_level_cost() << ")");
+          "m_exp(" << m_exp << ") > next_level_cost(" << next_level_cost() << ")");
 
   // Check mana invariant
   Require(m_mana <= m_max_mana,
