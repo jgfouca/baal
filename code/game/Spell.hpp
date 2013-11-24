@@ -103,6 +103,8 @@ class Spell
 
   unsigned level() const { return m_spell_level; }
 
+  const Location& location() const { return m_location; }
+
   friend std::ostream& operator<<(std::ostream& out, const Spell& spell);
 
  protected:

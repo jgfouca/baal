@@ -50,6 +50,13 @@ TEST(Player, PlayerBasics)
     player.gain_exp(player.next_level_cost() / 4);
   }
   EXPECT_EQ(player.level(), 4u);
+
+  auto cold_2 = baal::SpellFactory::create_spell(baal::Cold::NAME, *engine, 2 /*level*/);
+  player.learn(cold->name());
+  EXPECT_THROW(player.verify_cast(*cold_2), baal::UserError);
+  player.verify_cast(*cold);
+  player.learn(cold->name());
+  player.verify_cast(*cold_2);
 }
 
 

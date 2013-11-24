@@ -36,7 +36,9 @@ template <typename Enum>
 boost::iterator_range<boost::counting_iterator<Enum> >
 iterate()
 {
-  return boost::counting_range(get_first<Enum>(), get_last<Enum>());
+  Enum last = get_last<Enum>();
+  ++last;
+  return boost::counting_range(get_first<Enum>(), last);
 }
 
 }
@@ -78,7 +80,11 @@ iterate()
   template <>                                                           \
   inline                                                                \
   Name get_last<Name>()                                                 \
-  { return Name##LAST; }                                                \
+  {                                                                     \
+    Name rv = Name##LAST;                                               \
+    --rv;                                                               \
+    return rv;                                                          \
+  }                                                                     \
                                                                         \
   inline const std::string& to_string(Name val)                         \
   {                                                                     \

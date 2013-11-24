@@ -216,6 +216,13 @@ TEST(BaalCommon, smart_enum)
   {
     EXPECT_THROW(from_string<TestEnum>("ABCD"), UserError);
   }
+
+  {
+    TestEnum first = get_first<TestEnum>();
+    TestEnum last  = get_last<TestEnum>();
+    EXPECT_EQ(first, ONE);
+    EXPECT_EQ(last, FOUR);
+  }
 }
 
 }

@@ -26,6 +26,11 @@ class TalentTree
     m_player(player)
   {}
 
+  ~TalentTree() = default;
+
+  TalentTree(const TalentTree&) = delete;
+  TalentTree& operator=(const TalentTree&) = delete;
+
   void add(const std::string& spell_name);
 
   bool has(const Spell& spell) const;
@@ -42,6 +47,8 @@ class TalentTree
 
   xmlNodePtr to_xml();
 
+  static const unsigned MAX_SPELL_LEVEL = 5;
+
  private:
   void check_prereqs(const std::string& spell_name,
                      unsigned spell_level,
@@ -51,8 +58,6 @@ class TalentTree
   map_type      m_spell_level_map;
   unsigned      m_num_learned;
   const Player& m_player;
-
-  static const unsigned MAX_SPELL_LEVEL = 5;
 };
 
 }

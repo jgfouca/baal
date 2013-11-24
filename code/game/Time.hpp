@@ -6,15 +6,11 @@
 #include <utility>
 #include <libxml/parser.h>
 
-namespace baal {
+#include "BaalCommon.hpp"
 
-enum Season
-{
-  WINTER = 0,
-  SPRING = 1,
-  SUMMER = 2,
-  FALL   = 3
-};
+SMART_ENUM(Season, WINTER, SPRING, SUMMER, FALL);
+
+namespace baal {
 
 /**
  * Encapsulates how time elapses in the system.
@@ -33,16 +29,12 @@ class Time
   xmlNodePtr to_xml();
 
   // Constants
-  static const unsigned STARTING_YEAR         = 0;
-  static const Season   FIRST_SEASON_OF_YEAR  = WINTER;
-  static const Season   LAST_SEASON_OF_YEAR   = FALL;
+  static const unsigned STARTING_YEAR = 0;
 
 private:
   unsigned m_curr_year;
   Season   m_curr_season;
 };
-
-void operator++(Season& season);
 
 }
 

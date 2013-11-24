@@ -70,9 +70,7 @@ TalentTree::query_return_type TalentTree::query_all_castable_spells() const
        ++itr) {
     std::string spell_name = itr->first;
     unsigned max_level = itr->second;
-    for (unsigned l = 1; l <= max_level; ++l) {
-      rv.push_back(std::make_pair(spell_name, l));
-    }
+    rv.push_back(std::make_pair(spell_name, max_level));
   }
 
   return rv;

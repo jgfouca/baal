@@ -68,10 +68,10 @@ xmlNodePtr Climate::to_xml()
 ///////////////////////////////////////////////////////////////////////////////
 Atmosphere::Atmosphere(const Climate& climate)
 ///////////////////////////////////////////////////////////////////////////////
-  : m_temperature(climate.temperature(Time::LAST_SEASON_OF_YEAR)),
-    m_precip(climate.precip(Time::LAST_SEASON_OF_YEAR)),
+  : m_temperature(climate.temperature(get_last<Season>())),
+    m_precip(climate.precip(get_last<Season>())),
     m_pressure(NORMAL_PRESSURE),
-    m_wind(climate.wind(Time::LAST_SEASON_OF_YEAR)),
+    m_wind(climate.wind(get_last<Season>())),
     m_climate(climate)
 {
   m_dewpoint = compute_dewpoint();
