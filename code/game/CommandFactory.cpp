@@ -65,14 +65,14 @@ struct Initializer
     std::map<std::string, std::string>& aliases = m_factory.m_aliases;
     vecstr_t& commands = m_factory.m_commands;
 
-    Require(!contains(CommandClass::NAME, commands),
+    Require(!contains(commands, CommandClass::NAME),
             "Duplicate command name " << CommandClass::NAME);
 
     commands.push_back(CommandClass::NAME);
 
     for (std::string alias : CommandClass::ALIASES) {
-      Require(!contains(alias, aliases), "Duplicate alias: " << alias);
-      Require(!contains(alias, commands),
+      Require(!contains(aliases, alias), "Duplicate alias: " << alias);
+      Require(!contains(commands, alias),
               "Alias " << alias << " conflicts with command name");
       aliases[alias] = CommandClass::NAME;
     }

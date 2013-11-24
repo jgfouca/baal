@@ -80,26 +80,6 @@ const SpellPrereq Volcano::PREREQ = {25, vecstr_t({Earthquake::NAME})};
 
 const SpellPrereq Asteroid::PREREQ = {30, vecstr_t({Volcano::NAME})};
 
-namespace {
-
-// Given a tstorm's destructiveness, compute the level of the spawned disaster
-unsigned tstorm_spawn_helper(float destructiveness, float base_cost)
-{
-  float destructiveness_unspent = destructiveness;
-  unsigned level = 0;
-  for ( ; ; ++level) {
-    float next_level_cost = (level+1) * base_cost;
-    if (destructiveness_unspent >= next_level_cost) {
-      destructiveness_unspent -= next_level_cost;
-    }
-    else {
-      return level;
-    }
-  }
-}
-
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 Spell::Spell(const std::string& name,
              unsigned           spell_level,
@@ -289,6 +269,14 @@ float Spell::compute_destructiveness(const WorldTile& tile, bool report) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+void Spell::verify_no_repeat_cast() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  const WorldTile& tile = m_engine.world().get_tile(m_location);
+  RequireUser(!tile.already_casted(m_name), "Already cast " << m_name << " on this tile");
+}
+
+///////////////////////////////////////////////////////////////////////////////
 unsigned Spell::apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
@@ -329,6 +317,9 @@ unsigned Spell::apply() const
     if (dynamic_cast<LandTile*>(affected_tile) != nullptr) {
       damage_tile(dynamic_cast<LandTile&>(*affected_tile), destructiveness);
     }
+
+    // Register that spell was cast on this tile
+    affected_tile->cast(m_name);
   }
 
   for (auto trig : triggered) {
@@ -351,7 +342,7 @@ ostream& operator<<(ostream& out, const Spell& spell)
 void Hot::verify_apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // TODO: No affected tiles should have already been impacted by a hot spell
+  verify_no_repeat_cast();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -367,16 +358,17 @@ void Hot::apply_to_world(WorldTile& tile,
   MountainTile* mtn_tile = dynamic_cast<MountainTile*>(&tile);
 
   // Regardless of tile type, atmosphere is warmed
-  int prior_temp = atmos.temperature();
-  unsigned warmup = m_spell_level * DEGREES_PER_LEVEL;
-  int new_temp = prior_temp + warmup;
+  const int prior_temp = atmos.temperature();
+  const unsigned warmup = m_degrees_heated_land(tile, m_spell_level);
+  const int new_temp = prior_temp + warmup;
   atmos.set_temperature(new_temp);
   SPELL_REPORT("raised temperature from " << prior_temp << " to " << new_temp);
 
   if (ocean_tile != nullptr) {
     // Heat ocean surface up
-    int prior_ocean_temp = ocean_tile->surface_temp();
-    int new_ocean_temp = prior_ocean_temp + warmup * OCEAN_SURFACE_CHG_RATIO;
+    const int prior_ocean_temp = ocean_tile->surface_temp();
+    const int ocean_warmup = m_degrees_heated_ocean(tile, m_spell_level);
+    const int new_ocean_temp = prior_ocean_temp + ocean_warmup;
     ocean_tile->set_surface_temp(new_ocean_temp);
     SPELL_REPORT("raised ocean surface temperature from " <<
                  prior_ocean_temp << " to " << new_ocean_temp);
@@ -400,7 +392,7 @@ void Hot::apply_to_world(WorldTile& tile,
 void Cold::verify_apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // TODO: No affected tiles should have already been impacted by this spell
+  verify_no_repeat_cast();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -415,16 +407,17 @@ void Cold::apply_to_world(WorldTile& tile,
   OceanTile* ocean_tile  = dynamic_cast<OceanTile*>(&tile);
 
   // Regardless of tile type, atmosphere is cooled
-  int prior_temp = atmos.temperature();
-  unsigned cooldown = m_spell_level * DEGREES_PER_LEVEL;
-  int new_temp = prior_temp - cooldown;
+  const int prior_temp = atmos.temperature();
+  const unsigned cooldown = m_degrees_cooled_land(tile, m_spell_level);
+  const int new_temp = prior_temp - cooldown;
   atmos.set_temperature(new_temp);
   SPELL_REPORT("reduced temperature from " << prior_temp << " to " << new_temp);
 
   if (ocean_tile != nullptr) {
     // Cool ocean surface down
-    int prior_ocean_temp = ocean_tile->surface_temp();
-    int new_ocean_temp = prior_ocean_temp - cooldown * OCEAN_SURFACE_CHG_RATIO;
+    const int prior_ocean_temp = ocean_tile->surface_temp();
+    const unsigned ocean_cooldown = m_degrees_cooled_ocean(tile, m_spell_level);
+    int new_ocean_temp = prior_ocean_temp - ocean_cooldown;
 
     // Once frozen, ocean temps cannot go lower
     if (new_ocean_temp < 32) {
@@ -453,7 +446,7 @@ void Infect::verify_apply() const
   City* city = tile.city();
   RequireUser(city != nullptr, "Must cast " << m_name << " on a city.");
 
-  // TODO: No affected tiles should have already been impacted by this spell
+  verify_no_repeat_cast();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -472,7 +465,7 @@ void Infect::apply_to_world(WorldTile& tile,
 void WindSpell::verify_apply() const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // TODO: No affected tiles should have already been impacted by this spell
+  verify_no_repeat_cast();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -481,13 +474,13 @@ void WindSpell::apply_to_world(WorldTile& tile,
                                std::vector<std::pair<std::string, unsigned>>& triggered) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  Atmosphere& atmos    = tile.atmosphere();
+  Atmosphere& atmos = tile.atmosphere();
 
   // Compute and apply new wind speed
-  Wind prior_wind = atmos.wind();
-  unsigned speedup = m_spell_level * MPH_PER_LEVEL;
-  Wind new_wind = prior_wind + speedup;
-  unsigned new_wind_speed = new_wind.m_speed;
+  const Wind prior_wind = atmos.wind();
+  const unsigned speedup = m_wind_speedup(tile, m_spell_level);
+  const Wind new_wind = prior_wind + speedup;
+  const unsigned new_wind_speed = new_wind.m_speed;
   atmos.set_wind(new_wind);
   SPELL_REPORT("increased wind from " << prior_wind.m_speed <<
                " to " << new_wind_speed);
@@ -508,7 +501,7 @@ void Fire::verify_apply() const
   RequireUser(food_tile != nullptr,
               "Fire can only be cast on tiles with plant growth");
 
-  // TODO: No affected tiles should have already been impacted by this spell
+  verify_no_repeat_cast();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -534,7 +527,7 @@ void Tstorm::verify_apply() const
   RequireUser(food_tile != nullptr,
               "Tstorm can only be cast on tiles with plant growth");
 
-  // TODO: No affected tiles should have already been impacted by this spell
+  verify_no_repeat_cast();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -545,32 +538,132 @@ void Tstorm::apply_to_world(WorldTile& tile,
 {
   const float destructiveness = compute_destructiveness(tile, false);
 
-  if (destructiveness > WIND_DESTRUCTIVENESS_THRESHOLD) {
-    unsigned wind_level =
-      tstorm_spawn_helper(destructiveness, WIND_DESTRUCTIVENESS_THRESHOLD);
-    Require(wind_level > 0, "Problem in helper");
+  const unsigned wind_spawn_level     = m_wind_spawn_func(destructiveness);
+  const unsigned flood_spawn_level    = m_flood_spawn_func(destructiveness);
+  const unsigned tornado_spawn_level  = m_tornado_spawn_func(destructiveness);
 
-    triggered.push_back(std::make_pair(WindSpell::NAME, wind_level));
+  if (wind_spawn_level > 0) {
+    triggered.push_back(std::make_pair(WindSpell::NAME, wind_spawn_level));
   }
 
-  if (destructiveness > FLOOD_DESTRUCTIVENESS_THRESHOLD) {
-    unsigned flood_level =
-      tstorm_spawn_helper(destructiveness, FLOOD_DESTRUCTIVENESS_THRESHOLD);
-    Require(flood_level > 0, "Problem in helper");
-
-    triggered.push_back(std::make_pair(Flood::NAME, flood_level));
+  if (flood_spawn_level > 0) {
+    triggered.push_back(std::make_pair(Flood::NAME, flood_spawn_level));
+  }
+  else {
+    // Some minimal impact on soil moisture, but this tstorm was not
+    // a big rain producer
+    const float new_moisture = tile.soil_moisture() + DRY_STORM_MOISTURE_ADD;
+    SPELL_REPORT("Raised soil moisture from " << tile.soil_moisture() << " to " << new_moisture);
+    tile.set_soil_moisture(new_moisture);
   }
 
-  if (destructiveness > TORNADO_DESTRUCTIVENESS_THRESHOLD) {
-    unsigned tornado_level =
-      tstorm_spawn_helper(destructiveness, TORNADO_DESTRUCTIVENESS_THRESHOLD);
-    Require(tornado_level > 0, "Problem in helper");
-
-    triggered.push_back(std::make_pair(Tornado::NAME, tornado_level));
+  if (tornado_spawn_level > 0) {
+    triggered.push_back(std::make_pair(Tornado::NAME, tornado_spawn_level));
   }
 
   // TODO: Need a better system for this (computing affected area)
   affected_tiles.push_back(&tile);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Snow::verify_apply() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  // Must be cast on a land tile
+  WorldTile& tile = m_engine.world().get_tile(m_location);
+  LandTile* land_tile = dynamic_cast<LandTile*>(&tile);
+  RequireUser(land_tile != nullptr,
+              "Snow can only be cast on land tiles");
+
+  // Must be cold
+  RequireUser(tile.atmosphere().temperature() <= MAX_TEMP,
+              "It is not cold enough on this tile for it to snow, maximum temp for this spell is " << MAX_TEMP);
+
+  verify_no_repeat_cast();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Snow::apply_to_world(WorldTile& tile,
+                          std::vector<WorldTile*>& affected_tiles,
+                          std::vector<std::pair<std::string, unsigned>>& triggered) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  const float destructiveness = compute_destructiveness(tile, false);
+  const unsigned snowfall = m_snowfall_func(destructiveness);
+  const unsigned new_snowpack = tile.snowpack() + snowfall;
+  SPELL_REPORT("With " << snowfall << " inches of snowfall, snowpack raised to " << new_snowpack);
+  tile.set_snowpack(new_snowpack);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Avalanche::verify_apply() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  // Must be cast on a hill or mountain tile
+  WorldTile& tile = m_engine.world().get_tile(m_location);
+  HillsTile* hills_tile = dynamic_cast<HillsTile*>(&tile);
+  MountainTile* mtn_tile = dynamic_cast<MountainTile*>(&tile);
+  RequireUser(hills_tile != nullptr || mtn_tile != nullptr,
+              "Avalanche can only be cast on hill or mountain tiles");
+
+  // Must have snow
+  RequireUser(tile.snowpack() > 0, "There is no snow on this tile");
+
+  verify_no_repeat_cast();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Avalanche::apply_to_world(WorldTile& tile,
+                          std::vector<WorldTile*>& affected_tiles,
+                          std::vector<std::pair<std::string, unsigned>>& triggered) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  // No extra effects on world.
+  affected_tiles.push_back(&tile);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Flood::verify_apply() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  // Must be cast on a land tile
+  WorldTile& tile = m_engine.world().get_tile(m_location);
+  LandTile* land_tile = dynamic_cast<LandTile*>(&tile);
+  RequireUser(land_tile != nullptr,
+              "Flood can only be cast on land tiles");
+
+  // Must have snow
+  RequireUser(tile.atmosphere().temperature() > MIN_TEMP,
+              "Too cold to flood, temp must be avove " << MIN_TEMP);
+
+  verify_no_repeat_cast();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Flood::apply_to_world(WorldTile& tile,
+                          std::vector<WorldTile*>& affected_tiles,
+                          std::vector<std::pair<std::string, unsigned>>& triggered) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  World& world = m_engine.world();
+
+  factor_vector_t const& factors = m_spec.m_destructiveness_spec;
+  float destructiveness_without_land_factors = 1.0;
+  for (auto factor : factors) {
+    if (factor.first != "moisture" && factor.first != "elevation") {
+      const float factor_multiplier = factor.second(tile);
+      destructiveness_without_land_factors *= factor_multiplier;
+    }
+  }
+
+  const float rainfall = m_rainfall_func(destructiveness_without_land_factors);
+  const float average_precip = tile.climate().precip(world.time().season());
+  const float orig_moisture = tile.soil_moisture();
+  const float added_moisture = rainfall / average_precip;
+  const float new_moisture = orig_moisture + added_moisture;
+  tile.set_soil_moisture(new_moisture);
+
+  SPELL_REPORT("With " << rainfall << " inches of rainfall, soil moisture raised to " << new_moisture);
 }
 
 }

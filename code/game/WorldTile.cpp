@@ -44,7 +44,8 @@ WorldTile::WorldTile(Location location, Yield yield, Climate& climate, Geology& 
     m_climate(climate),
     m_geology(geology),
     m_atmosphere(climate),
-    m_worked(false)
+    m_worked(false),
+    m_casted_spells()
 {}
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -64,6 +65,7 @@ void WorldTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
   m_geology.cycle_turn();
   m_atmosphere.cycle_turn(anomalies, location, season);
   m_worked = false;
+  m_casted_spells.clear();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -72,6 +74,21 @@ void WorldTile::work()
 {
   Require(!m_worked, "Tile already being worked");
   m_worked = true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void WorldTile::cast(const std::string& spell)
+///////////////////////////////////////////////////////////////////////////////
+{
+  Require(!contains(m_casted_spells, spell), "Duplicate: " << spell);
+  m_casted_spells.push_back(spell);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+bool WorldTile::already_casted(const std::string& spell) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  return contains(m_casted_spells, spell);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

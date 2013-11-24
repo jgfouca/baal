@@ -216,7 +216,7 @@ bool is_valid(Location location)
 ///////////////////////////////////////////////////////////////////////////////
 template <class T, class Container>
 inline
-bool contains(const T& t, const Container& container)
+bool contains(const Container& container, const T& t)
 ///////////////////////////////////////////////////////////////////////////////
 {
   return container.find(t) != container.end();
@@ -225,7 +225,7 @@ bool contains(const T& t, const Container& container)
 ///////////////////////////////////////////////////////////////////////////////
 template <class T>
 inline
-bool contains(const T& t, const std::vector<T>& container)
+bool contains(const std::vector<T>& container, const T& t)
 ///////////////////////////////////////////////////////////////////////////////
 {
   return std::find(std::begin(container), std::end(container), t) !=

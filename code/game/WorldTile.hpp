@@ -81,25 +81,53 @@ class WorldTile
 
   virtual bool supports_city() const { return false; }
 
+  void cast(const std::string& spell);
+
   // Land-related interface
+
+  virtual float soil_moisture() const {
+    Require(false, "Should never be called");
+    return 0.0;
+  }
+
+  virtual void set_soil_moisture(float moisture) {
+    Require(false, "Should never be called");
+  }
 
   virtual unsigned infra_level() const { return 0; }
 
   virtual City* city() const { return nullptr; }
 
-  virtual void damage(float dmg) {}
+  virtual void damage(float dmg) {
+    Require(false, "Should never be called");
+  }
 
   // Ocean-related interface
 
-  virtual unsigned depth() const { return 0; }
+  virtual unsigned depth() const {
+    Require(false, "Should never be called");
+    return 0;
+  }
 
   // Mountain-related interface
 
-  virtual unsigned elevation() const { return 0; }
+  virtual unsigned elevation() const {
+    Require(false, "Should never be called");
+    return 0;
+  }
 
-  virtual unsigned snowpack() const { return 0; }
+  virtual unsigned snowpack() const {
+    Require(false, "Should never be called");
+    return 0;
+  }
+
+  virtual void set_snowpack(unsigned snowpack) {
+    Require(false, "Should never be called");
+  }
 
   // Getters
+
+  bool already_casted(const std::string& spell) const;
 
   bool worked() const { return m_worked; }
 
@@ -108,6 +136,8 @@ class WorldTile
   const Atmosphere& atmosphere() const { return m_atmosphere; }
 
   const Geology& geology() const { return m_geology; }
+
+  const Climate& climate() const { return m_climate; }
 
   Atmosphere& atmosphere() { return m_atmosphere; }
 
@@ -123,6 +153,7 @@ class WorldTile
   Geology&   m_geology;
   Atmosphere m_atmosphere;
   bool       m_worked;
+  vecstr_t   m_casted_spells;
 };
 
 /**
@@ -145,21 +176,12 @@ class OceanTile : public WorldTile
 
   int surface_temp() const { return m_surface_temp; }
 
+  void set_surface_temp(int new_temp) { m_surface_temp = new_temp; }
+
  protected:
 
   unsigned m_depth;
   int m_surface_temp; // in farenheit
-
- private:
-
-  // Friend interface
-
-  void set_surface_temp(int new_temp) { m_surface_temp = new_temp; }
-
-  // Friends
-
-  friend class Hot;
-  friend class Cold;
 };
 
 /**
@@ -236,6 +258,8 @@ class MountainTile : public LandTile
 
   virtual unsigned snowpack() const { return m_snowpack; }
 
+  virtual void set_snowpack(unsigned snowpack) { m_snowpack = snowpack; }
+
   virtual bool supports_city() const { return false; }
 
  protected:
@@ -243,16 +267,6 @@ class MountainTile : public LandTile
 
   unsigned m_elevation;
   unsigned m_snowpack; // in inches
-
- private:
-
-  // Friend interface
-
-  void set_snowpack(unsigned new_snowpack) { m_snowpack = new_snowpack; }
-
-  // Friends
-
-  friend class Hot;
 };
 
 /**
@@ -303,6 +317,8 @@ class FoodTile : public LandTile
   virtual Yield yield() const;
 
   float soil_moisture() const { return m_soil_moisture; }
+
+  void set_soil_moisture(float moisture) { m_soil_moisture = moisture; }
 
   virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
                           const Location& location,

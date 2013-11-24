@@ -27,8 +27,8 @@ float exp_growth(float base,
  */
 float poly_growth(float value,
                   float exp,
-                  float divisor = 1.0,
-                  float threshold = 0.0);
+                  float threshold = 0.0,
+                  float divisor = 1.0);
 
 /**
  * f(v, t, m) = (v-t)*m
@@ -41,7 +41,7 @@ float linear_growth(float value, float multiplier, float threshold = 0.0);
 float sqrt(float value,
            float threshold = 0.0);
 
-float fibonacci_div(float total, float base);
+unsigned fibonacci_div(float total, float base);
 
 }
 

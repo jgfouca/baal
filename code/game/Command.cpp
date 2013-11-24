@@ -217,7 +217,7 @@ void HelpCommand::apply() const
 
   // Case 1: argument is empty or refers to command
   if (m_arg == "" ||
-      contains(m_arg, CommandFactory::instance().commands())) {
+      contains(CommandFactory::instance().commands(), m_arg)) {
     if (m_arg == "") {
       out << "List of available commands:\n\n";
     }

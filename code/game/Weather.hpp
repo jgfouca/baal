@@ -45,7 +45,7 @@ struct Wind
     m_speed(speed), m_direction(direction)
   {}
 
-  Wind operator+(unsigned mph)
+  Wind operator+(unsigned mph) const
   {
     return Wind(m_speed + mph, m_direction);
   }

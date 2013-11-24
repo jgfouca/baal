@@ -50,14 +50,16 @@ float exp_growth(float base,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-float poly_growth(float value, float exp, float divisor, float threshold)
+float poly_growth(float value, float exp, float threshold, float divisor)
 ///////////////////////////////////////////////////////////////////////////////
 {
   float x = value - threshold;
-  Require(x >= 0.0,
-          "poly_growth not intended to be called for values below zero");
-
-  return std::pow(x, exp) / divisor;
+  if (x < 0.0) {
+    return 0.0;
+  }
+  else {
+    return std::pow(x, exp) / divisor;
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -78,7 +80,7 @@ float sqrt(float value, float threshold)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-float fibonacci_div(float total, float base)
+unsigned fibonacci_div(float total, float base)
 ///////////////////////////////////////////////////////////////////////////////
 {
   for (unsigned rv = 0; ; ++rv) {
