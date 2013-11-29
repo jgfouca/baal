@@ -74,7 +74,7 @@ TEST(InterfaceText, basic)
 
   auto& atmos = tile.atmosphere();
   interface.set_draw_mode(TEMPERATURE);
-  check.check_output(atmos, "30.000");
+  check.check_output(atmos, "10.000");
   interface.set_draw_mode(CIV);
 
   {

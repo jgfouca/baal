@@ -197,6 +197,10 @@ TEST(BaalCommon, smart_enum)
   }
 
   {
+    EXPECT_EQ(baal::size<TestEnum>(), 4);
+  }
+
+  {
     std::ostringstream out, out2;
     std::string expected("ONE TWO THREE FOUR ");
     for (TestEnum e : iterate<TestEnum>()) {
@@ -223,6 +227,21 @@ TEST(BaalCommon, smart_enum)
     EXPECT_EQ(first, ONE);
     EXPECT_EQ(last, FOUR);
   }
+}
+
+TEST(BaalCommon, location_iterator)
+{
+  using namespace baal;
+
+  static const unsigned ROW = 2;
+  static const unsigned COL = 2;
+
+  LocationIterator<ROW, COL> loc_itr;
+
+  EXPECT_EQ(*loc_itr++, Location(0, 0));
+  EXPECT_EQ(*loc_itr++, Location(0, 1));
+  EXPECT_EQ(*loc_itr++, Location(1, 0));
+  EXPECT_EQ(*loc_itr,   Location(1, 1));
 }
 
 }

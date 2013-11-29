@@ -38,21 +38,21 @@ std::shared_ptr<World> WorldFactoryFromFile::load()
     RequireUser(false, "Map file " << m_mapfilename << " is not a Baal map.");
   }
 
-  int map_width = get_int_from_parent("map_width");
-  int map_height = get_int_from_parent("map_height");
+  int map_width = get_data_from_parent<int>("map_width");
+  int map_height = get_data_from_parent<int>("map_height");
 
   std::shared_ptr<World> world =
     std::shared_ptr<World>(new World(map_width, map_height, m_engine));
   m_curr_node = m_curr_node->xmlChildrenNode;
   while (m_curr_node != nullptr) {
     if (!xmlStrcmp(m_curr_node->name, (const xmlChar *)"tile")) {
-      int row = get_int_from_parent("row");
-      int col = get_int_from_parent("col");
+      int row = get_data_from_parent<int>("row");
+      int col = get_data_from_parent<int>("col");
       world->m_tiles[row][col] = &parse_Tile(row, col);
     }
     else if (!xmlStrcmp(m_curr_node->name, (const xmlChar *)"city")) {
-      int row = get_int_from_parent("row");
-      int col = get_int_from_parent("col");
+      int row = get_data_from_parent<int>("row");
+      int col = get_data_from_parent<int>("col");
       char* name = get_element("name");
       LandTile* landtile = dynamic_cast<LandTile*>(world->m_tiles[row][col]);
       RequireUser(landtile != nullptr,
@@ -83,36 +83,6 @@ char* WorldFactoryFromFile::get_element(const char *elemname)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-int WorldFactoryFromFile::get_int_from_parent(const char *elemname)
-///////////////////////////////////////////////////////////////////////////////
-{
-  char *s = get_element(elemname);
-  int r;
-  std::istringstream(s) >> r;
-  return r;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-unsigned WorldFactoryFromFile::get_unsigned_from_parent(const char *elemname)
-///////////////////////////////////////////////////////////////////////////////
-{
-  char *s = get_element(elemname);
-  unsigned r;
-  std::istringstream(s) >> r;
-  return r;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-float WorldFactoryFromFile::get_float_from_parent(const char *elemname)
-///////////////////////////////////////////////////////////////////////////////
-{
-  char *s = get_element(elemname);
-  float r;
-  std::istringstream(s) >> r;
-  return r;
-}
-
-///////////////////////////////////////////////////////////////////////////////
 WorldTile& WorldFactoryFromFile::parse_Tile(int row, int col)
 ///////////////////////////////////////////////////////////////////////////////
 {
@@ -124,7 +94,7 @@ WorldTile& WorldFactoryFromFile::parse_Tile(int row, int col)
   Climate& climate = get_Climate_from_parent();
   Geology& geology = get_Geology_from_parent();
   if (!strcmp(type, "OceanTile")) {
-    unsigned depth = get_unsigned_from_parent("depth");
+    unsigned depth = get_data_from_parent<unsigned>("depth");
     return *new OceanTile(location, depth, climate, geology);
   }
   else if (!strcmp(type, "DesertTile")) {
@@ -134,7 +104,7 @@ WorldTile& WorldFactoryFromFile::parse_Tile(int row, int col)
     return *new LushTile(location, climate, geology);
   }
   else if (!strcmp(type, "MountainTile")) {
-    unsigned elevation = get_unsigned_from_parent("elevation");
+    unsigned elevation = get_data_from_parent<unsigned>("elevation");
     return *new MountainTile(location, elevation, climate, geology);
   }
   else if (!strcmp(type, "TundraTile")) {
@@ -160,61 +130,15 @@ Climate& WorldFactoryFromFile::get_Climate_from_parent()
   m_curr_node = m_curr_node->xmlChildrenNode;
   while (m_curr_node != nullptr) {
     if (!xmlStrcmp(m_curr_node->name, (const xmlChar *)"Climate")) {
-      int temperature = get_int_from_parent("temperature");
-      unsigned precip = get_unsigned_from_parent("precip");
-      Wind wind = get_Wind_from_parent();
+      std::vector<int> temperature = get_data_per_season_from_parent<int>("temperature");
+      std::vector<float> precip = get_data_per_season_from_parent<float>("precip");
+      std::vector<Wind> wind = get_data_per_season_from_parent<Wind>("wind");
       m_curr_node = parent;
       return *new Climate(temperature, precip, wind);
     }
     m_curr_node = m_curr_node->next;
   }
   Require(false, "Could not find Climate in a tile.");
-}
-
-///////////////////////////////////////////////////////////////////////////////
-Wind WorldFactoryFromFile::get_Wind_from_parent()
-///////////////////////////////////////////////////////////////////////////////
-{
-  // m_curr_node is Climate
-  // Wind(unsigned speed, Direction direction)
-  xmlNodePtr parent = m_curr_node;
-  m_curr_node = m_curr_node->xmlChildrenNode;
-
-  while (m_curr_node != nullptr) {
-    if (!xmlStrcmp(m_curr_node->name, (const xmlChar *)"Wind")) {
-      unsigned speed = get_unsigned_from_parent("speed");
-      Direction direction = get_Direction_from_parent();
-      Wind wind(speed, direction);
-      m_curr_node = parent;
-      return wind;
-    }
-    m_curr_node = m_curr_node->next;
-  }
-  RequireUser(false, "Could not find Wind.");
-}
-
-///////////////////////////////////////////////////////////////////////////////
-Direction WorldFactoryFromFile::get_Direction_from_parent()
-///////////////////////////////////////////////////////////////////////////////
-{
-  char *s = get_element("direction");
-  if (!strcmp(s,"N"))        { return N; }
-  else if (!strcmp(s,"NNE")) { return NNE; }
-  else if (!strcmp(s,"NE"))  { return NE; }
-  else if (!strcmp(s,"ENE")) { return ENE; }
-  else if (!strcmp(s,"E"))   { return E; }
-  else if (!strcmp(s,"ESE")) { return ESE; }
-  else if (!strcmp(s,"SE"))  { return SE; }
-  else if (!strcmp(s,"SSE")) { return SSE; }
-  else if (!strcmp(s,"S"))   { return S; }
-  else if (!strcmp(s,"SSW")) { return SSW; }
-  else if (!strcmp(s,"SW"))  { return SW; }
-  else if (!strcmp(s,"WSW")) { return WSW; }
-  else if (!strcmp(s,"W"))   { return W; }
-  else if (!strcmp(s,"WNW")) { return WNW; }
-  else if (!strcmp(s,"NW"))  { return NW; }
-  else if (!strcmp(s,"NNW")) { return NNW; }
-  else { Require(false, "Invalid direction specified, " << s); }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -233,11 +157,11 @@ Geology& WorldFactoryFromFile::get_Geology_from_parent()
         rv = new Inactive;
       }
       else if (!strcmp(geotype, "Subducting")) {
-        float plate_movement = get_float_from_parent("plate_movement");
+        float plate_movement = get_data_from_parent<float>("plate_movement");
         rv = new Subducting(plate_movement);
       }
       else if (!strcmp(geotype, "Transform")) {
-        float plate_movement = get_float_from_parent("plate_movement");
+        float plate_movement = get_data_from_parent<float>("plate_movement");
         rv = new Transform(plate_movement);
       }
       else {

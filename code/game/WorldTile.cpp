@@ -57,7 +57,7 @@ WorldTile::~WorldTile()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void WorldTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+void WorldTile::cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
                            const Location& location,
                            Season season)
 ///////////////////////////////////////////////////////////////////////////////
@@ -120,7 +120,7 @@ OceanTile::OceanTile(Location location, unsigned depth, Climate& climate, Geolog
 {}
 
 ///////////////////////////////////////////////////////////////////////////////
-void OceanTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+void OceanTile::cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
                            const Location& location,
                            Season season)
 ///////////////////////////////////////////////////////////////////////////////
@@ -184,7 +184,7 @@ void LandTile::recover()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void LandTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+void LandTile::cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
                           const Location& location,
                           Season season)
 ///////////////////////////////////////////////////////////////////////////////
@@ -245,7 +245,7 @@ void LandTile::remove_city()
 /*****************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void MountainTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+void MountainTile::cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
                               const Location& location,
                               Season season)
 ///////////////////////////////////////////////////////////////////////////////
@@ -323,7 +323,7 @@ Yield FoodTile::yield() const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void FoodTile::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+void FoodTile::cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
                                      const Location& location,
                                      Season season)
 ///////////////////////////////////////////////////////////////////////////////

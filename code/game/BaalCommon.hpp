@@ -41,13 +41,19 @@ iterate()
   return boost::counting_range(get_first<Enum>(), last);
 }
 
+template <typename Enum>
+int size()
+{
+  return boost::size(iterate<Enum>());
+}
+
 }
 
 #define SMART_ENUM(Name, ...)                                           \
   namespace baal {                                                      \
                                                                         \
   enum Name {                                                           \
-    Name##FIRST,                                                        \
+    Name##FIRST = -1,                                                   \
     __VA_ARGS__,                                                        \
     Name##LAST                                                          \
   };                                                                    \
@@ -89,9 +95,8 @@ iterate()
   inline const std::string& to_string(Name val)                         \
   {                                                                     \
     Require(val != Name##FIRST && val != Name##LAST, "Bad value " << val); \
-    static vecstr_t strs = split(#__VA_ARGS__, ", ");   \
-    int idx = static_cast<int>(val) - 1;                                \
-    return strs[idx];                                                   \
+    static vecstr_t strs = split(#__VA_ARGS__, ", ");                   \
+    return strs[val];                                                   \
   }                                                                     \
                                                                         \
   inline std::ostream& operator<<(std::ostream& out, Name val)          \
@@ -110,7 +115,15 @@ iterate()
     auto fitr = std::find(strs.begin(), strs.end(), up);                \
     RequireUser(fitr != strs.end(),                                     \
                 "String '" << str << "' not a valid" << #Name);         \
-    return static_cast<Name>(fitr-strs.begin() + 1);                    \
+    return static_cast<Name>(fitr-strs.begin());                        \
+  }                                                                     \
+                                                                        \
+  inline std::istream& operator>>(std::istream& in, Name& val)          \
+  {                                                                     \
+    std::string name;                                                   \
+    in >> name;                                                         \
+    val = from_string<Name>(name);                                      \
+    return in;                                                          \
   }                                                                     \
                                                                         \
   }                                                                     \
@@ -323,6 +336,47 @@ AdjacentLocationRange get_adjacent_location_range(Location center,
   return boost::make_iterator_range(AdjacentLocationIterator(center, engine),
                                     AdjacentLocationIterator(engine));
 }
+
+template <unsigned Row, unsigned Col>
+struct LocationIterator
+{
+  LocationIterator() : m_curr_row(0), m_curr_col(0) {}
+
+  Location operator*() const
+  {
+    return Location(m_curr_row, m_curr_col);
+  }
+
+  LocationIterator& operator++()
+  {
+    advance();
+    return *this;
+  }
+
+  LocationIterator operator++(int)
+  {
+    LocationIterator rv = *this;
+    advance();
+    return rv;
+  }
+
+  unsigned m_curr_row;
+  unsigned m_curr_col;
+
+ private:
+  void advance()
+  {
+    if (m_curr_col + 1 == Col) {
+      m_curr_col = 0;
+      ++m_curr_row;
+    }
+    else {
+      ++m_curr_col;
+    }
+    Require(m_curr_col < Col, m_curr_col);
+    Require(m_curr_row < Row, m_curr_row);
+  }
+};
 
 }
 

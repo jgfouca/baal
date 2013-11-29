@@ -8,70 +8,36 @@
 
 namespace baal {
 
-namespace {
+const unsigned Anomaly::MAX_INTENSITY;
 
-///////////////////////////////////////////////////////////////////////////////
-std::string direction_str(Direction direction)
-///////////////////////////////////////////////////////////////////////////////
-{
-  switch(direction) {
-  case N:   return "N";
-  case NNE: return "NNE";
-  case NE:  return "NE";
-  case ENE: return "ENE";
-  case E:   return "E";
-  case ESE: return "ESE";
-  case SE:  return "SE";
-  case SSE: return "SSE";
-  case S:   return "S";
-  case SSW: return "SSW";
-  case SW:  return "SW";
-  case WSW: return "WSW";
-  case W:   return "W";
-  case WNW: return "WNW";
-  case NW:  return "NW";
-  case NNW: return "NNW";
-  default:
-    Require(false, "Should never make it here");
-  }
-}
-
-} // empty namespace
-
-/*****************************************************************************/
 ///////////////////////////////////////////////////////////////////////////////
 xmlNodePtr Climate::to_xml()
 ///////////////////////////////////////////////////////////////////////////////
 {
   xmlNodePtr Climate_node = xmlNewNode(nullptr, BAD_CAST "Climate");
 
-  std::ostringstream m_temperature_oss, m_precip_oss;
-  m_temperature_oss << m_temperature;
-  m_precip_oss << m_precip;
+  std::ostringstream m_temperature_oss, m_precip_oss, m_wind_oss;
+  for (Season s : iterate<Season>()) {
+    m_temperature_oss << m_temperature[s] << " ";
+    m_precip_oss << m_precip[s] << " ";
+    m_wind_oss << m_wind[s] << " ";
+  }
+
   xmlNewChild(Climate_node, nullptr, BAD_CAST "m_temperature", BAD_CAST m_temperature_oss.str().c_str());
   xmlNewChild(Climate_node, nullptr, BAD_CAST "m_precip", BAD_CAST m_precip_oss.str().c_str());
-
-  xmlNodePtr Wind_node;
-  Wind_node = xmlNewNode(nullptr, BAD_CAST "Wind");
-  std::ostringstream m_speed_oss;
-  m_speed_oss << m_wind.m_speed;
-  xmlNewChild(Wind_node, nullptr, BAD_CAST "m_speed", BAD_CAST m_speed_oss.str().c_str());
-  xmlNewChild(Wind_node, nullptr, BAD_CAST "m_direction", BAD_CAST direction_str(m_wind.m_direction).c_str());
-
-  xmlAddChild(Climate_node, Wind_node);
+  xmlNewChild(Climate_node, nullptr, BAD_CAST "m_wind", BAD_CAST m_wind_oss.str().c_str());
 
   return Climate_node;
 }
 
-/*****************************************************************************/
-
 ///////////////////////////////////////////////////////////////////////////////
 Atmosphere::Atmosphere(const Climate& climate)
 ///////////////////////////////////////////////////////////////////////////////
-  : m_temperature(climate.temperature(get_last<Season>())),
-    m_precip(climate.precip(get_last<Season>())),
+  : m_temperature(climate.temperature(get_first<Season>())),
+    m_dewpoint(-1u),
+    m_precip(climate.precip(get_first<Season>())),
     m_pressure(NORMAL_PRESSURE),
-    m_wind(climate.wind(get_last<Season>())),
+    m_wind(climate.wind(get_first<Season>())),
     m_climate(climate)
 {
   m_dewpoint = compute_dewpoint();
@@ -97,7 +63,7 @@ bool Atmosphere::is_atmospheric(DrawMode mode)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void Atmosphere::cycle_turn(const std::vector<const Anomaly*>& anomalies,
+void Atmosphere::cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
                             const Location& location,
                             Season season)
 ///////////////////////////////////////////////////////////////////////////////
@@ -106,10 +72,7 @@ void Atmosphere::cycle_turn(const std::vector<const Anomaly*>& anomalies,
   float precip_modifier = 1.0;
   int temp_modifier = 0;
   int pressure_modifier = 0;
-  for (std::vector<const Anomaly*>::const_iterator itr = anomalies.begin();
-       itr != anomalies.end();
-       ++itr) {
-    const Anomaly* anomaly = *itr;
+  for (auto anomaly : anomalies) {
     precip_modifier *= anomaly->precip_effect(location);
     temp_modifier += anomaly->temp_effect(location);
     pressure_modifier += anomaly->pressure_effect(location);
@@ -131,24 +94,17 @@ xmlNodePtr Atmosphere::to_xml()
 {
   xmlNodePtr Atmosphere_node = xmlNewNode(nullptr, BAD_CAST "Atmosphere");
 
-  std::ostringstream m_temperature_oss, m_dewpoint_oss, m_precip_oss, m_pressure_oss;
+  std::ostringstream m_temperature_oss, m_dewpoint_oss, m_precip_oss, m_pressure_oss, m_wind_oss;
   m_temperature_oss << m_temperature;
   m_dewpoint_oss << m_dewpoint;
   m_precip_oss << m_precip;
   m_pressure_oss << m_pressure;
+  m_wind_oss << m_wind;
   xmlNewChild(Atmosphere_node, nullptr, BAD_CAST "m_temperature", BAD_CAST m_temperature_oss.str().c_str());
   xmlNewChild(Atmosphere_node, nullptr, BAD_CAST "m_dewpoint", BAD_CAST m_dewpoint_oss.str().c_str());
   xmlNewChild(Atmosphere_node, nullptr, BAD_CAST "m_precip", BAD_CAST m_precip_oss.str().c_str());
   xmlNewChild(Atmosphere_node, nullptr, BAD_CAST "m_pressure", BAD_CAST m_pressure_oss.str().c_str());
-
-  xmlNodePtr Wind_node;
-  Wind_node = xmlNewNode(nullptr, BAD_CAST "Wind");
-  std::ostringstream m_speed_oss;
-  m_speed_oss << m_wind.m_speed;
-  xmlNewChild(Wind_node, nullptr, BAD_CAST "m_speed", BAD_CAST m_speed_oss.str().c_str());
-  xmlNewChild(Wind_node, nullptr, BAD_CAST "m_direction", BAD_CAST direction_str(m_wind.m_direction).c_str());
-
-  xmlAddChild(Atmosphere_node, Wind_node);
+  xmlNewChild(Atmosphere_node, nullptr, BAD_CAST "m_wind", BAD_CAST m_wind_oss.str().c_str());
 
   return Atmosphere_node;
 }
@@ -157,48 +113,27 @@ xmlNodePtr Atmosphere::to_xml()
 
 ///////////////////////////////////////////////////////////////////////////////
 Anomaly::Anomaly(AnomalyCategory category,
-                 Type type,
-                 unsigned intensity,
+                 int intensity,
                  const Location& location,
                  unsigned world_area)
 ///////////////////////////////////////////////////////////////////////////////
   : m_category(category),
-    m_type(type),
     m_intensity(intensity),
     m_location(location),
     m_world_area(world_area)
 {}
 
 ///////////////////////////////////////////////////////////////////////////////
-const Anomaly* Anomaly::generate_anomaly(AnomalyCategory category,
-                                         const Location& location,
-                                         const World& world)
+std::shared_ptr<const Anomaly> Anomaly::generate_anomaly(AnomalyCategory category,
+                                                         const Location& location,
+                                                         const World& world)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // Generate random float 0.0 -> 100.0
-  float roll = (static_cast<float>(std::rand()) /
-                static_cast<float>(RAND_MAX)) * 100;
+  const int intensity = GENERATE_ANOMALY_INTENSITY_FUNC();
+  const unsigned area = world.height() * world.width();
 
-  unsigned area = world.height() * world.width();
-
-  // Translate roll into an anomaly
-  if (roll <= .10) {
-    return new Anomaly(category, BELOW, 3, location, area);
-  }
-  else if (roll <= 1.0) {
-    return new Anomaly(category, BELOW, 2, location, area);
-  }
-  else if (roll <= 3.0) {
-    return new Anomaly(category, BELOW, 1, location, area);
-  }
-  else if (roll >= 99.9) {
-    return new Anomaly(category, ABOVE, 3, location, area);
-  }
-  else if (roll >= 99.0) {
-    return new Anomaly(category, ABOVE, 2, location, area);
-  }
-  else if (roll >= 97.0) {
-    return new Anomaly(category, ABOVE, 1, location, area);
+  if (intensity != 0) {
+    return std::shared_ptr<const Anomaly>(new Anomaly(category, intensity, location, area));
   }
   else {
     return nullptr;
@@ -213,12 +148,11 @@ float Anomaly::precip_effect(const Location& location) const
   // determining an anomaly's effect on a location. For the moment, anomalies
   // only affect the immediate location.
 
-  if (m_category != PRECIP || m_location != location) {
+  if (m_category != PRECIP_ANOMALY || m_location != location) {
     return 1.0; // no effect
   }
   else {
-    int multiplier = (m_type == ABOVE) ? 1 : -1;
-    return 1.0 + (PRECIP_CHANGE_PER_LEVEL * multiplier * m_intensity);
+    return PRECIP_CHANGE_FUNC(m_intensity);
   }
 }
 
@@ -226,12 +160,11 @@ float Anomaly::precip_effect(const Location& location) const
 int Anomaly::temp_effect(const Location& location) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  if (m_category != TEMPERATURE || m_location != location) {
+  if (m_category != TEMPERATURE_ANOMALY || m_location != location) {
     return 0; // no effect
   }
   else {
-    int multiplier = (m_type == ABOVE) ? 1 : -1;
-    return TEMP_CHANGE_PER_LEVEL * multiplier * m_intensity;
+    return TEMPERATURE_CHANGE_FUNC(m_intensity);
   }
 }
 
@@ -239,54 +172,12 @@ int Anomaly::temp_effect(const Location& location) const
 int Anomaly::pressure_effect(const Location& location) const
 ///////////////////////////////////////////////////////////////////////////////
 {
-  if (m_category != PRESSURE || m_location != location) {
+  if (m_category != PRESSURE_ANOMALY || m_location != location) {
     return 0; // no effect
   }
   else {
-    int multiplier = (m_type == ABOVE) ? 1 : -1;
-    return PRESSURE_CHANGE_PER_LEVEL * multiplier * m_intensity;
+    return PRESSURE_CHANGE_FUNC(m_intensity);
   }
-}
-
-///////////////////////////////////////////////////////////////////////////////
-std::string Anomaly::type_to_str(Type type)
-///////////////////////////////////////////////////////////////////////////////
-{
-  switch (type) {
-  case ABOVE:
-    return "+";
-  case BELOW:
-    return "-";
-  default:
-    Require(false, "Unhandled anomaly type: " << type);
-  }
-}
-
-///////////////////////////////////////////////////////////////////////////////
-std::string Anomaly::category_to_str(AnomalyCategory category)
-///////////////////////////////////////////////////////////////////////////////
-{
-  switch (category) {
-  case TEMPERATURE:
-    return "temperature";
-  case PRECIP:
-    return "precip";
-  case PRESSURE:
-    return "pressure";
-  default:
-    Require(false, "Unhandled anomaly category: " << category);
-  }
-}
-
-///////////////////////////////////////////////////////////////////////////////
-Anomaly::AnomalyCategory& operator++(Anomaly::AnomalyCategory& category)
-///////////////////////////////////////////////////////////////////////////////
-{
-  Require(category != Anomaly::LAST, "Iterating off end of anomalies");
-
-  int i = static_cast<int>(category);
-  ++i;
-  return category = static_cast<Anomaly::AnomalyCategory>(i);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -296,16 +187,14 @@ xmlNodePtr Anomaly::to_xml() const
   xmlNodePtr Anomaly_node = xmlNewNode(nullptr, BAD_CAST "Anomaly");
 
   // AnomalyCategory m_category;
-  // Type            m_type;
   // unsigned        m_intensity;
   // Location        m_location;
   // unsigned        m_world_area;
 
-  xmlNewChild(Anomaly_node, nullptr, BAD_CAST "m_category", BAD_CAST category_to_str(m_category).c_str());
+  std::ostringstream m_category_oss, m_intensity_oss;
+  m_category_oss << m_category;
+  xmlNewChild(Anomaly_node, nullptr, BAD_CAST "m_category", BAD_CAST m_category_oss.str().c_str());
 
-  xmlNewChild(Anomaly_node, nullptr, BAD_CAST "m_type", BAD_CAST type_to_str(m_type).c_str());
-
-  std::ostringstream m_intensity_oss;
   m_intensity_oss << m_intensity;
   xmlNewChild(Anomaly_node, nullptr, BAD_CAST "m_intensity", BAD_CAST m_intensity_oss.str().c_str());
 
@@ -321,6 +210,24 @@ xmlNodePtr Anomaly::to_xml() const
   xmlNewChild(Anomaly_node, nullptr, BAD_CAST "m_world_area", BAD_CAST m_world_area_oss.str().c_str());
 
   return Anomaly_node;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+std::ostream& operator<<(std::ostream& out, Wind const& wind)
+///////////////////////////////////////////////////////////////////////////////
+{
+  out << std::setw(3) << std::left << wind.m_direction;
+  out << std::setw(3) << std::right << wind.m_speed;
+  return out;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+std::istream& operator>>(std::istream& in, Wind& wind)
+///////////////////////////////////////////////////////////////////////////////
+{
+  in >> std::setw(3) >> std::left >> wind.m_direction;
+  in >> std::setw(3) >> std::right >> wind.m_speed;
+  return in;
 }
 
 }

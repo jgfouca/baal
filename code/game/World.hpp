@@ -61,7 +61,7 @@ class World
 
   const Time& time() const { return m_time; }
 
-  const std::vector<const Anomaly*> anomalies() const
+  const std::vector<std::shared_ptr<const Anomaly>> anomalies() const
   { return m_recent_anomalies; }
 
   // Modification API
@@ -78,15 +78,12 @@ class World
 
  private:
 
-  // Internal methods
-  void clear_anomalies();
-
   // Members
   unsigned m_width;
   unsigned m_height;
   std::vector<std::vector<WorldTile*> > m_tiles;
   Time m_time;
-  std::vector<const Anomaly*> m_recent_anomalies;
+  std::vector<std::shared_ptr<const Anomaly>> m_recent_anomalies;
   std::vector<City*> m_cities;
   Engine& m_engine;
 

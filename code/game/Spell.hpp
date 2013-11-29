@@ -8,6 +8,7 @@
 #include "WorldTile.hpp"
 #include "City.hpp"
 #include "Engine.hpp"
+#include "Weather.hpp"
 
 #include <iosfwd>
 #include <vector>
@@ -622,7 +623,7 @@ class Tstorm : public Spell
   static constexpr unsigned BASE_COST = 100;
   static constexpr int TEMP_TIPPING_POINT = 85;
   static constexpr int WIND_TIPPING_POINT = 15;
-  static constexpr int PRESSURE_TIPPING_POINT = 990;
+  static constexpr int PRESSURE_TIPPING_POINT = Atmosphere::NORMAL_PRESSURE;
   static constexpr float DRY_STORM_MOISTURE_ADD = .1;
 
   static constexpr float WIND_DESTRUCTIVENESS_THRESHOLD = 10.0;
@@ -666,7 +667,7 @@ class Snow : public Spell
                     return spell_level * 4;
                   } },
                 {"pressure", [](WorldTile const& tile) -> float{
-                    return baal::exp_growth(1.05, 990 - tile.atmosphere().pressure());
+                    return baal::exp_growth(1.05, Atmosphere::NORMAL_PRESSURE - tile.atmosphere().pressure());
                   } },
                 {"temperature", [](WorldTile const& tile) -> float{
                     return baal::exp_growth(1.03, MAX_TEMP - tile.atmosphere().temperature(), 0, 15);
@@ -735,7 +736,7 @@ class Flood : public Spell
                     return baal::exp_growth(1.03, tile.atmosphere().dewpoint(), 55);
                   } },
                 {"pressure", [](WorldTile const& tile) -> float{
-                    return baal::exp_growth(1.03, tile.atmosphere().pressure(), 1000);
+                    return baal::exp_growth(1.03, tile.atmosphere().pressure(), Atmosphere::NORMAL_PRESSURE);
                   } },
                 {"moisture", [](WorldTile const& tile) -> float{
                     return baal::exp_growth(1.05, tile.soil_moisture() * 10, 10);

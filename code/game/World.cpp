@@ -29,8 +29,6 @@ World::~World()
       delete m_tiles[row][col];
     }
   }
-
-  clear_anomalies();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -54,20 +52,16 @@ void World::cycle_turn()
 {
   // Phase 1: Generate anomalies.
   // TODO: How to handle overlapping anomalies of same category?
-  clear_anomalies();
+  m_recent_anomalies.clear();
   for (unsigned row = 0; row < height(); ++row) {
     for (unsigned col = 0; col < width(); ++col) {
       Location location(row, col);
-      for (Anomaly::AnomalyCategory anom_itr = Anomaly::FIRST; ; ++anom_itr) {
-        const Anomaly* anomaly = Anomaly::generate_anomaly(anom_itr,
-                                                           location,
-                                                           *this);
+      for (AnomalyCategory category : iterate<AnomalyCategory>()) {
+        auto anomaly = Anomaly::generate_anomaly(category,
+                                                 location,
+                                                 *this);
         if (anomaly) {
           m_recent_anomalies.push_back(anomaly);
-        }
-
-        if (anom_itr == Anomaly::LAST) {
-          break;
         }
       }
     }
@@ -167,34 +161,15 @@ xmlNodePtr World::to_xml()
 
   xmlAddChild(World_node, m_time.to_xml());
 
-  for (std::vector<const Anomaly*>::iterator itr = m_recent_anomalies.begin();
-       itr != m_recent_anomalies.end();
-       ++itr) {
-    const Anomaly* anomaly = *itr;
+  for (auto anomaly : m_recent_anomalies) {
     xmlAddChild(World_node, anomaly->to_xml());
   }
 
-  for (std::vector<City*>::const_iterator itr = m_cities.begin();
-       itr != m_cities.end();
-       ++itr) {
-    City* city = *itr;
+  for (auto city : m_cities) {
     xmlAddChild(World_node, city->to_xml());
   }
 
   return World_node;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void World::clear_anomalies()
-///////////////////////////////////////////////////////////////////////////////
-{
-  for (std::vector<const Anomaly*>::iterator
-       itr = m_recent_anomalies.begin();
-       itr != m_recent_anomalies.end();
-       ++itr) {
-    delete (*itr);
-  }
-  m_recent_anomalies.clear();
 }
 
 }

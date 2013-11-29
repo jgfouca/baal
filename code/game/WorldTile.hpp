@@ -73,7 +73,7 @@ class WorldTile
 
   virtual Yield yield() const = 0;
 
-  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+  virtual void cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
                           const Location& location,
                           Season season);
 
@@ -168,7 +168,7 @@ class OceanTile : public WorldTile
 
   virtual Yield yield() const;
 
-  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+  virtual void cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
                           const Location& location,
                           Season season);
 
@@ -196,7 +196,7 @@ class LandTile: public WorldTile
 
   virtual Yield yield() const;
 
-  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+  virtual void cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
                           const Location& location,
                           Season season);
 
@@ -250,7 +250,7 @@ class MountainTile : public LandTile
       m_elevation(elevation)
   {}
 
-  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+  virtual void cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
                           const Location& location,
                           Season season);
 
@@ -320,7 +320,7 @@ class FoodTile : public LandTile
 
   void set_soil_moisture(float moisture) { m_soil_moisture = moisture; }
 
-  virtual void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+  virtual void cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
                           const Location& location,
                           Season season);
 

@@ -31,19 +31,28 @@ class WorldFactoryFromFile
 
   char* get_element(const char *elemname);
 
-  int get_int_from_parent(const char *elemname);
+  template <typename T>
+  T get_data_from_parent(const char *elemname)
+  {
+    char *s = get_element(elemname);
+    T data;
+    std::istringstream(s) >> data;
+    return data;
+  }
 
-  unsigned get_unsigned_from_parent(const char *elemname);
-
-  float get_float_from_parent(const char *elemname);
+  template <typename T>
+  std::vector<T> get_data_per_season_from_parent(const char* elemname)
+  {
+    char *s = get_element(elemname);
+    std::vector<T> data(4);
+    Require(size<Season>() == 4, "Invalid assumption in this code");
+    std::istringstream(s) >> data[0];// >> " " >> data[1] >> " " >> data[2] >> " " >> data[3];
+    return data;
+  }
 
   WorldTile& parse_Tile(int row, int col);
 
   Climate& get_Climate_from_parent();
-
-  Wind get_Wind_from_parent();
-
-  Direction get_Direction_from_parent();
 
   Geology& get_Geology_from_parent();
 

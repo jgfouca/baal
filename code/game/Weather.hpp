@@ -14,33 +14,39 @@
 // multiple classes here to avoid having a large number of header files for
 // very small classes.
 
+SMART_ENUM(Direction,
+           N,
+           NNE,
+           NE,
+           ENE,
+           E,
+           ESE,
+           SE,
+           SSE,
+           S,
+           SSW,
+           SW,
+           WSW,
+           W,
+           WNW,
+           NW,
+           NNW);
+
+SMART_ENUM(AnomalyCategory,
+           TEMPERATURE_ANOMALY,
+           PRECIP_ANOMALY,
+           PRESSURE_ANOMALY);
+
 namespace baal {
 
 class World;
 class Anomaly;
 
-enum Direction
-{
-  N,
-  NNE,
-  NE,
-  ENE,
-  E,
-  ESE,
-  SE,
-  SSE,
-  S,
-  SSW,
-  SW,
-  WSW,
-  W,
-  WNW,
-  NW,
-  NNW
-};
-
 struct Wind
 {
+  Wind() :
+    m_speed(-1u), m_direction(N) {}
+
   Wind(unsigned speed, Direction direction) :
     m_speed(speed), m_direction(direction)
   {}
@@ -50,6 +56,30 @@ struct Wind
     return Wind(m_speed + mph, m_direction);
   }
 
+  Wind operator+(Wind const& rhs) const
+  {
+    // TODO
+    Require(false, "not implemented");
+    return rhs;
+  }
+
+  template <typename T>
+  Wind& operator+=(T const& rhs)
+  {
+    Wind temp = *this + rhs;
+    *this = temp;
+    return *this;
+  }
+
+  bool operator==(Wind const& rhs) const
+  {
+    return m_speed == rhs.m_speed && m_direction == rhs.m_direction;
+  }
+
+  friend std::ostream& operator<<(std::ostream& out, Wind const& wind);
+
+  friend std::istream& operator>>(std::istream& in, Wind& wind);
+
   unsigned  m_speed; // mph
   Direction m_direction;
 };
@@ -58,29 +88,37 @@ struct Wind
  * Every tile has a climate. Averate temp, average precip, and
  * prevailing wind.
  *
- * TODO: This needs to be different from season to season.
+ * This is different from season to season.
  */
 class Climate
 {
  public:
-  Climate(int temperature, float precip, Wind wind)
+  Climate(std::vector<int> const& temperature,
+          std::vector<float> const& precip,
+          std::vector<Wind> const& wind)
     : m_temperature(temperature),
       m_precip(precip),
       m_wind(wind)
-  {}
+  {
+    const size_t num_seasons = baal::size<Season>();
 
-  int temperature(Season season) const { return m_temperature; }
+    Require(m_temperature.size() == num_seasons, "Wrong number of temperatures " << m_temperature.size());
+    Require(m_precip.size()      == num_seasons, "Wrong number of precip "       << m_precip.size());
+    Require(m_wind.size()        == num_seasons, "Wrong number of wind "         << m_wind.size());
+  }
 
-  float precip(Season season) const { return m_precip / 4; }
+  int temperature(Season season) const { return m_temperature[season]; }
 
-  Wind wind(Season season) const { return m_wind; }
+  float precip(Season season) const { return m_precip[season]; }
+
+  Wind wind(Season season) const { return m_wind[season]; }
 
   xmlNodePtr to_xml();
 
  private:
-  int   m_temperature; // in farenheit
-  float m_precip;    // in inches/year
-  Wind  m_wind;        // prevailing wind
+  std::vector<int>   m_temperature; // in farenheit
+  std::vector<float> m_precip;      // in inches/season
+  std::vector<Wind>  m_wind;        // prevailing wind
 };
 
 /**
@@ -105,11 +143,13 @@ class Atmosphere
   static bool is_atmospheric(DrawMode mode);
 
   // Based on season and anomalies, initialize self
-  void cycle_turn(const std::vector<const Anomaly*>& anomalies,
+  void cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
                   const Location& location,
                   Season season);
 
   xmlNodePtr to_xml();
+
+  static const unsigned NORMAL_PRESSURE = 1000;
 
  private:
   int compute_dewpoint() const;
@@ -134,8 +174,6 @@ class Atmosphere
   unsigned       m_pressure;    // in millibars
   Wind           m_wind;
   const Climate& m_climate;
-
-  static const unsigned NORMAL_PRESSURE = 1000;
 };
 
 /**
@@ -148,28 +186,14 @@ class Atmosphere
 class Anomaly
 {
  public:
-  enum Type
-  {
-    ABOVE,
-    BELOW
-  };
-
-  // Do not change FIRST or LAST values without changing FIRST/LAST
-  // constants in Anomaly. Do NOT assign custom values to enums.
-  enum AnomalyCategory
-  {
-    TEMPERATURE, // Coupled with Anomaly::FIRST
-    PRECIP,
-    PRESSURE     // Coupled with Anomaly::LAST
-  };
 
   /**
    * Generates an anomaly. Returns nullptr if the dice roll did not
    * merit the creation of an anomaly.
    */
-  static const Anomaly* generate_anomaly(AnomalyCategory category,
-                                         const Location& location,
-                                         const World& world);
+  static std::shared_ptr<const Anomaly> generate_anomaly(AnomalyCategory category,
+                                                         const Location& location,
+                                                         const World& world);
 
   /**
    * Return this anomaly's effect on a location as a % of
@@ -189,49 +213,76 @@ class Anomaly
    */
   int pressure_effect(const Location& location) const;
 
-  static std::string type_to_str(Type type);
-
-  static std::string category_to_str(AnomalyCategory category);
-
-  static const unsigned MIN_INTENSITY = 1;
-  static const unsigned MAX_INTENSITY = 3;
-
-  static const AnomalyCategory FIRST = TEMPERATURE;
-  static const AnomalyCategory LAST  = PRESSURE;
-
   xmlNodePtr to_xml() const;
-
-  static constexpr float PRECIP_CHANGE_PER_LEVEL = 0.25;
-  static constexpr int TEMP_CHANGE_PER_LEVEL = 7;
-  static constexpr int PRESSURE_CHANGE_PER_LEVEL = 15;
 
   // Getters
 
-  Type type() const { return m_type; }
-
   AnomalyCategory category() const { return m_category; }
 
-  unsigned intensity() const { return m_intensity; }
+  int intensity() const { return m_intensity; }
 
   Location location() const { return m_location; }
 
+  static const unsigned MAX_INTENSITY = 3; // anomalies are on a scale from +/- 1 -> MAX_INTENSITY
+
  private:
+  // Members
   Anomaly(AnomalyCategory category,
-          Type type,
-          unsigned intensity,
+          int intensity,
           const Location& location,
           unsigned world_area);
 
-  // Members
-
   AnomalyCategory m_category;
-  Type            m_type;
-  unsigned        m_intensity;
+  int             m_intensity;
   Location        m_location;
   unsigned        m_world_area;
-};
 
-Anomaly::AnomalyCategory& operator++(Anomaly::AnomalyCategory& category);
+  static float PRECIP_CHANGE_FUNC(int intensity)
+  {
+    // Returns a multiplier on average precip
+    // (max - 1 / max)^(-intensity)
+    return std::pow(float(MAX_INTENSITY - 1) / MAX_INTENSITY, -intensity);
+  }
+
+  static int TEMPERATURE_CHANGE_FUNC(int intensity)
+  { return 7 * intensity; }
+
+  static int PRESSURE_CHANGE_FUNC(int intensity)
+  { return 15 * intensity; }
+
+  static int GENERATE_ANOMALY_INTENSITY_FUNC()
+  {
+    // Generate random float 0.0 -> 100.0
+    float roll = (float(std::rand()) /
+                  float(RAND_MAX)) * 100.0;
+
+    const float negative_anom = MAX_INTENSITY / 100.0;
+    const float positive_anom = (100 - MAX_INTENSITY) / 100.0;
+    int intensity = 0;
+    int modifier  = 0;
+
+    // Normalize so that negative/positive rolls look the same, the only
+    // difference is the modifier
+    if (roll > positive_anom) {
+      roll -= positive_anom;
+      modifier = 1;
+    }
+    else {
+      modifier = -1;
+    }
+
+    // Compute intensity of anomaly. Each level of anomaly is a factor
+    // of two more unlikely than the previous level
+    while (roll < negative_anom && std::abs(intensity) < MAX_INTENSITY) {
+      intensity += modifier;
+      roll *= 2;
+    }
+
+    Require(std::abs(intensity) <= MAX_INTENSITY, "Bad value: " << intensity);
+
+    return intensity;
+  }
+};
 
 }
 

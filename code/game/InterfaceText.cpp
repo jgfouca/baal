@@ -433,9 +433,9 @@ void InterfaceText::draw(const Atmosphere& atmos)
 void InterfaceText::draw(const Anomaly& anomaly)
 ///////////////////////////////////////////////////////////////////////////////
 {
-  print(stream("Level: ") << Anomaly::type_to_str(anomaly.type())
+  print(stream("Level: ")
         << anomaly.intensity() << " "
-        << Anomaly::category_to_str(anomaly.category())
+        << anomaly.category()
         << " anomaly at location: " << anomaly.location());
 }
 
@@ -489,7 +489,7 @@ void InterfaceText::draw(const World& world)
   m_draw_mode = real_draw_mode;
 
   // Draw recent anomalies
-  for (const Anomaly* anomaly : world.anomalies()) {
+  for (auto anomaly : world.anomalies()) {
     draw(*anomaly);
     print("\n");
   }
