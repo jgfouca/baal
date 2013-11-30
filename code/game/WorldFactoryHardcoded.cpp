@@ -207,7 +207,7 @@ std::shared_ptr<World> WorldFactoryHardcoded::generate_world_1(Engine& engine)
                                                   MP(8, 10, 16, 8),
                                                   MW(Wind(10, SSE))),
                                      *new Transform(2.0));
-  world->place_city("Capital", Location(4, 2)); // city
+  world->place_city(Location(4, 2), "Capital"); // city
   world->m_tiles[4][3] = new OceanTile(*loc_itr++,
                                       1000,
                                        *new Climate(MT(75, 80, 85, 80),

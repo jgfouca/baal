@@ -32,25 +32,13 @@ World::~World()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-Location World::get_location(const WorldTile& tile) const
-///////////////////////////////////////////////////////////////////////////////
-{
-  for (unsigned row = 0; row < height(); ++row) {
-    for (unsigned col = 0; col < width(); ++col) {
-      if (m_tiles[row][col] == &tile) {
-        return Location(row, col);
-      }
-    }
-  }
-  Require(false, "Failed to find tile");
-  return Location();
-}
-
-///////////////////////////////////////////////////////////////////////////////
 void World::cycle_turn()
 ///////////////////////////////////////////////////////////////////////////////
 {
-  // Phase 1: Generate anomalies.
+  // Phase 1: Increment time
+  ++m_time;
+
+  // Phase 2: Generate anomalies.
   // TODO: How to handle overlapping anomalies of same category?
   m_recent_anomalies.clear();
   for (unsigned row = 0; row < height(); ++row) {
@@ -67,16 +55,12 @@ void World::cycle_turn()
     }
   }
 
-  // Phase 2 of World turn-cycle: Simulate the inter-turn (long-term) weather
+  // Phase 3 of World turn-cycle: Simulate the inter-turn (long-term) weather.
   // Every turn, the weather since the last turn will be randomly simulated.
   // There will be random abnormal areas, with the epicenter of the abnormality
   // having the most extreme deviations from the normal climate and peripheral
   // tiles having smaller deviations from normal.
   // Abnormalilty types are: drought, moist, cold, hot, high/low pressure
-  // Based on our model of time, we are at the beginning of the current
-  // season, so anomalies affect this season; that is why time is not
-  // incremented until later.
-  // Current conditions for the next turn will be derived from these anomalies.
   for (unsigned row = 0; row < height(); ++row) {
     for (unsigned col = 0; col < width(); ++col) {
       Location location(row, col);
@@ -85,28 +69,26 @@ void World::cycle_turn()
                                     m_time.season());
     }
   }
-
-  // Phase 3: Increment time
-  ++m_time;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void World::place_city(const std::string& name, const Location& location)
+void World::place_city(const Location& location, std::string const& arg_name)
 ///////////////////////////////////////////////////////////////////////////////
 {
+  std::string name;
+  if (arg_name == "") {
+    std::ostringstream out;
+    out << "City " << m_cities.size() + 1;
+    name = out.str();
+  }
+  else {
+    name = arg_name;
+  }
+
   City* new_city = new City(name, location, m_engine);
   WorldTile& tile = get_tile(location);
   dynamic_cast<LandTile&>(tile).place_city(*new_city);
   m_cities.push_back(new_city);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void World::place_city(const Location& location)
-///////////////////////////////////////////////////////////////////////////////
-{
-  std::ostringstream out;
-  out << "City " << m_cities.size() + 1;
-  place_city(out.str(), location);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

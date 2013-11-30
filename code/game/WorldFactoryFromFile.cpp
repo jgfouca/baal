@@ -58,7 +58,7 @@ std::shared_ptr<World> WorldFactoryFromFile::load()
       RequireUser(landtile != nullptr,
                   "Tried to place city at " << row << ", " << col <<
                   "; which is not a landtile");
-      world->place_city(name, Location(row, col));
+      world->place_city(Location(row, col), name);
     }
     m_curr_node = m_curr_node->next;
   }

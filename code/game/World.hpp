@@ -26,6 +26,9 @@ class World
 
   ~World();
 
+  World(const World&) = delete;
+  World& operator=(const World&) = delete;
+
   bool in_bounds(const Location& location) const {
     return location.row < m_height && location.col < m_width;
   }
@@ -50,9 +53,6 @@ class World
     return *(m_tiles[location.row][location.col]);
   }
 
-  // Very expensive, use sparingly
-  Location get_location(const WorldTile& tile) const;
-
   unsigned width() const { return m_width; }
 
   unsigned height() const { return m_height; }
@@ -68,9 +68,7 @@ class World
 
   void cycle_turn();
 
-  void place_city(const std::string& name, const Location& location);
-
-  void place_city(const Location& location);
+  void place_city(const Location& location, const std::string& name = "");
 
   void remove_city(City& city);
 

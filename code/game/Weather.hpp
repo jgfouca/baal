@@ -107,6 +107,11 @@ class Climate
     Require(m_wind.size()        == num_seasons, "Wrong number of wind "         << m_wind.size());
   }
 
+  ~Climate() = default;
+
+  Climate(const Climate&) = delete;
+  Climate& operator=(const Climate&) = delete;
+
   int temperature(Season season) const { return m_temperature[season]; }
 
   float precip(Season season) const { return m_precip[season]; }
@@ -129,6 +134,11 @@ class Atmosphere
 {
  public:
   Atmosphere(const Climate& climate);
+
+  ~Atmosphere() = default;
+
+  Atmosphere(const Atmosphere&) = delete;
+  Atmosphere& operator=(const Atmosphere&) = delete;
 
   int temperature() const { return m_temperature; }
 
@@ -194,6 +204,11 @@ class Anomaly
   static std::shared_ptr<const Anomaly> generate_anomaly(AnomalyCategory category,
                                                          const Location& location,
                                                          const World& world);
+
+  ~Anomaly() = default;
+
+  Anomaly(const Anomaly&) = delete;
+  Anomaly& operator=(const Anomaly&) = delete;
 
   /**
    * Return this anomaly's effect on a location as a % of
