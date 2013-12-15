@@ -71,7 +71,7 @@ class WorldTile
 
   // Basic tile interface
 
-  virtual Yield yield() const = 0;
+  virtual Yield yield() const { return m_base_yield; }
 
   virtual void cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
                           const Location& location,
@@ -88,6 +88,11 @@ class WorldTile
   virtual float soil_moisture() const {
     Require(false, "Should never be called");
     return 0.0;
+  }
+
+  virtual unsigned elevation() const {
+    Require(false, "Should never be called");
+    return 0;
   }
 
   virtual void set_soil_moisture(float moisture) {
@@ -110,11 +115,6 @@ class WorldTile
   }
 
   // Mountain-related interface
-
-  virtual unsigned elevation() const {
-    Require(false, "Should never be called");
-    return 0;
-  }
 
   virtual unsigned snowpack() const {
     Require(false, "Should never be called");
@@ -166,8 +166,6 @@ class OceanTile : public WorldTile
  public:
   OceanTile(Location location, unsigned depth, Climate& climate, Geology& geology);
 
-  virtual Yield yield() const;
-
   virtual void cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
                           const Location& location,
                           Season season);
@@ -182,6 +180,15 @@ class OceanTile : public WorldTile
 
   unsigned m_depth;
   int m_surface_temp; // in farenheit
+
+  // Just average, putting higher weight on ocean temp
+  static int new_surface_temp_func(int last_season_water_temp, int new_season_air_temp)
+  { return (last_season_water_temp * 4 + new_season_air_temp) / 5; }
+
+ private:
+
+  static constexpr float OCEAN_FOOD = 3.0;
+  static constexpr float OCEAN_PROD = 0.0;
 };
 
 /**
@@ -190,7 +197,7 @@ class OceanTile : public WorldTile
 class LandTile: public WorldTile
 {
  public:
-  LandTile(Location location, Yield yield, Climate& climate, Geology& geology);
+  LandTile(Location location, unsigned elevation, Yield yield, Climate& climate, Geology& geology);
 
   ~LandTile();
 
@@ -208,6 +215,12 @@ class LandTile: public WorldTile
 
   virtual bool supports_city() const { return true; }
 
+  virtual unsigned elevation() const { return m_elevation; }
+
+  virtual unsigned snowpack() const { return m_snowpack; }
+
+  virtual void set_snowpack(unsigned snowpack) { m_snowpack = snowpack; }
+
   void build_infra();
 
   static constexpr unsigned LAND_TILE_MAX_INFRA  = 5;
@@ -217,12 +230,51 @@ class LandTile: public WorldTile
 
   // Internal methods
 
-  void recover();
+  static float land_tile_recovery_func(float prior)
+  {
+    // 10% per turn
+    float new_dmg = prior + LAND_TILE_RECOVERY_RATE;
+    return new_dmg > 1.0 ? 1.0 : new_dmg;
+  }
+
+  static Yield compute_yield_func(Yield const& base_yield, unsigned infra_level, float tile_hp)
+  {
+    // TODO: Should high snowpack effect production yields?
+    return base_yield * (1 + infra_level) * tile_hp;
+  }
+
+  static float portion_of_precip_that_falls_as_snow_func(int season_avg_temp)
+  {
+    if (season_avg_temp < 30) {
+      return 1.0;
+    }
+    else if (season_avg_temp < 60) {
+      return float(60 - season_avg_temp) / 30;
+    }
+    else {
+      return 0.0;
+    }
+  }
+
+  static float portion_of_snowpack_that_melted(int season_avg_temp)
+  {
+    if (season_avg_temp < 15) {
+      return 0.0;
+    }
+    else if (season_avg_temp < 75) {
+      return float(season_avg_temp - 15) / 60;
+    }
+    else {
+      return 1.0;
+    }
+  }
 
   // Members
 
   float m_hp; // 0..1
   unsigned m_infra_level; // 0..MAX
+  unsigned m_elevation;
+  unsigned m_snowpack; // in inches
   City* m_city; // valid to have no (nullptr) city, so use ptr
 
   // Friends interface
@@ -240,77 +292,115 @@ class LandTile: public WorldTile
 };
 
 /**
- *
+ * Represents mountain tiles. Mountains don't add any new concepts. Cities
+ * can't be built on mountains.
  */
 class MountainTile : public LandTile
 {
  public:
   MountainTile(Location location, unsigned elevation, Climate& climate, Geology& geology)
-    : LandTile(location, Yield(0, 2), climate, geology),
-      m_elevation(elevation)
+    : LandTile(location, elevation, Yield(MOUNTAIN_FOOD, MOUNTAIN_PROD), climate, geology)
   {}
-
-  virtual void cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
-                          const Location& location,
-                          Season season);
-
-  virtual unsigned elevation() const { return m_elevation; }
-
-  virtual unsigned snowpack() const { return m_snowpack; }
-
-  virtual void set_snowpack(unsigned snowpack) { m_snowpack = snowpack; }
 
   virtual bool supports_city() const { return false; }
 
  protected:
   virtual void place_city(City& city);
 
-  unsigned m_elevation;
-  unsigned m_snowpack; // in inches
+ private:
+  static constexpr float MOUNTAIN_FOOD = 0.0;
+  static constexpr float MOUNTAIN_PROD = 2.0;
 };
 
+
 /**
- *
+ * Represents land tiles that have soil and retain
+ * moisture. Introduces the concept of soil moisture.
+
+ * This is an abstract tile type and should not be created directly.
  */
-class DesertTile : public LandTile
+class TileWithSoil : public LandTile
 {
  public:
-  DesertTile(Location location, Climate& climate, Geology& geology)
-    : LandTile(location, Yield(0, 0.5), climate, geology)
+  TileWithSoil(Location location, unsigned elevation, Yield yield, Climate& climate, Geology& geology)
+    : LandTile(location, elevation, yield, climate, geology),
+      m_soil_moisture(1.0)
   {}
+
+  virtual float soil_moisture() const { return m_soil_moisture; }
+
+  virtual void set_soil_moisture(float moisture) { m_soil_moisture = moisture; }
+
+  virtual void cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
+                          const Location& location,
+                          Season season);
+
+ private:
+  float m_soil_moisture;
+
+  static float precip_effect_on_moisture_func(float avg_precip, float precip)
+  { return precip / avg_precip; }
+
+  static float temp_effect_on_moisture_func(int avg_temp, int temp)
+  { return 1.0 + ( 0.01 * (avg_temp - temp) ); }
+
+  static float compute_moisture_func(float prior, float current_forcing)
+  { return ((current_forcing * 2) + prior) / 3; }
 };
 
 /**
- *
+ * Represents desert tiles. Deserts add no concepts, so this class is simple.
  */
-class TundraTile : public LandTile
+class DesertTile : public TileWithSoil
 {
  public:
-  TundraTile(Location location, Climate& climate, Geology& geology)
-    : LandTile(location, Yield(0, 0.5), climate, geology)
+  DesertTile(Location location, unsigned elevation, Climate& climate, Geology& geology)
+    : TileWithSoil(location, elevation, Yield(DESERT_FOOD, DESERT_PROD), climate, geology)
   {}
+
+ private:
+  static constexpr float DESERT_FOOD = 0.0;
+  static constexpr float DESERT_PROD = 0.5;
 };
 
 /**
- * TODO: Hill-tile lack of moisture make it awkward to handle
- * for many disasters. Resolve this issue.
+ * Represents tundra tiles. Tundra add no concepts, so this class is simple.
  */
-class HillsTile : public LandTile
+class TundraTile : public TileWithSoil
 {
  public:
-  HillsTile(Location location, Climate& climate, Geology& geology)
-    : LandTile(location, Yield(0, 1), climate, geology)
+  TundraTile(Location location, unsigned elevation, Climate& climate, Geology& geology)
+    : TileWithSoil(location, elevation, Yield(TUNDRA_FOOD, TUNDRA_PROD), climate, geology)
   {}
+
+ private:
+  static constexpr float TUNDRA_FOOD = 0.0;
+  static constexpr float TUNDRA_PROD = 0.5;
 };
 
 /**
- *
+ * Represents hill tiles. Hills add no concepts, so this class is simple.
  */
-class FoodTile : public LandTile
+class HillsTile : public TileWithSoil
 {
  public:
-  FoodTile(Location location, Yield yield, Climate& climate, Geology& geology)
-    : LandTile(location, yield, climate, geology),
+  HillsTile(Location location, unsigned elevation, Climate& climate, Geology& geology)
+    : TileWithSoil(location, elevation, Yield(HILLS_FOOD, HILLS_PROD), climate, geology)
+  {}
+
+private:
+  static constexpr float HILLS_FOOD = 0.0;
+  static constexpr float HILLS_PROD = 1.0;
+};
+
+/**
+ * Represents land tiles that yield food. This is an abstract tile type.
+ */
+class FoodTile : public TileWithSoil
+{
+ public:
+  FoodTile(Location location, unsigned elevation, Yield yield, Climate& climate, Geology& geology)
+    : TileWithSoil(location, elevation, yield, climate, geology),
       m_soil_moisture(1.0)
   {}
 
@@ -320,37 +410,71 @@ class FoodTile : public LandTile
 
   void set_soil_moisture(float moisture) { m_soil_moisture = moisture; }
 
-  virtual void cycle_turn(const std::vector<std::shared_ptr<const Anomaly>>& anomalies,
-                          const Location& location,
-                          Season season);
-
   static constexpr float FLOODING_THRESHOLD = 1.5;
-  static constexpr float TOTALLY_FLOODED = 2.75;
+  static constexpr float TOTALLY_FLOODED    = 2.75;
 
  protected:
   float m_soil_moisture;
+
+ private:
+
+  static float moisture_yield_effect_func(float moisture)
+  {
+    if (moisture < FLOODING_THRESHOLD) {
+      // Up to the flooding threshold, yields improve as moisture increases
+      return moisture;
+    }
+    else if (moisture < TOTALLY_FLOODED) {
+      // Yields drop quickly as soil becomes over-saturated
+      return FLOODING_THRESHOLD - (moisture - FLOODING_THRESHOLD);
+    }
+    else {
+      // Things are flooded and can't get any worse. Farmers are able to
+      // salvage some fixed portion of their crops.
+      return 0.25;
+    }
+  }
+
+  static float snowpack_yield_effect_func(unsigned snowpack)
+  {
+    if (snowpack > 100) {
+      return 0.0;
+    }
+    else {
+      return float(100 - snowpack) / 100.0;
+    }
+  }
 };
 
 /**
- *
+ * Represents plains tiles. Plains add no concepts, so this class is simple.
  */
 class PlainsTile : public FoodTile
 {
  public:
-  PlainsTile(Location location, Climate& climate, Geology& geology)
-    : FoodTile(location, Yield(1, 0), climate, geology)
+  PlainsTile(Location location, unsigned elevation, Climate& climate, Geology& geology)
+    : FoodTile(location, elevation, Yield(PLAINS_FOOD, PLAINS_PROD), climate, geology)
   {}
+
+private:
+  static constexpr float PLAINS_FOOD = 1.0;
+  static constexpr float PLAINS_PROD = 0.0;
 };
 
 /**
- *
+ * Represents lush tiles. Lush add no concepts, so this class is simple. Lush
+ * tiles are like plains tiles except they have higher food yields.
  */
 class LushTile : public FoodTile
 {
  public:
-  LushTile(Location location, Climate& climate, Geology& geology)
-    : FoodTile(location, Yield(2, 0), climate, geology)
+  LushTile(Location location, unsigned elevation, Climate& climate, Geology& geology)
+    : FoodTile(location, elevation, Yield(LUSH_FOOD, LUSH_PROD), climate, geology)
   {}
+
+private:
+  static constexpr float LUSH_FOOD = 2.0;
+  static constexpr float LUSH_PROD = 0.0;
 };
 
 }

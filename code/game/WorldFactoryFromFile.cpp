@@ -98,23 +98,28 @@ WorldTile& WorldFactoryFromFile::parse_Tile(int row, int col)
     return *new OceanTile(location, depth, climate, geology);
   }
   else if (!strcmp(type, "DesertTile")) {
-    return *new DesertTile(location, climate, geology);
+    unsigned elevation = get_data_from_parent<unsigned>("elevation");
+    return *new DesertTile(location, elevation, climate, geology);
   }
   else if (!strcmp(type, "LushTile")) {
-    return *new LushTile(location, climate, geology);
+    unsigned elevation = get_data_from_parent<unsigned>("elevation");
+    return *new LushTile(location, elevation, climate, geology);
   }
   else if (!strcmp(type, "MountainTile")) {
     unsigned elevation = get_data_from_parent<unsigned>("elevation");
     return *new MountainTile(location, elevation, climate, geology);
   }
   else if (!strcmp(type, "TundraTile")) {
-    return *new TundraTile(location, climate, geology);
+    unsigned elevation = get_data_from_parent<unsigned>("elevation");
+    return *new TundraTile(location, elevation, climate, geology);
   }
   else if (!strcmp(type, "PlainsTile")) {
-    return *new PlainsTile(location, climate, geology);
+    unsigned elevation = get_data_from_parent<unsigned>("elevation");
+    return *new PlainsTile(location, elevation, climate, geology);
   }
   else if (!strcmp(type, "HillsTile")) {
-    return *new HillsTile(location, climate, geology);
+    unsigned elevation = get_data_from_parent<unsigned>("elevation");
+    return *new HillsTile(location, elevation, climate, geology);
   }
   else {
     Require(false, "Unknown tile type \"" << type << "\".");
