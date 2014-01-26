@@ -163,6 +163,8 @@ struct Location
 
   bool operator!=(const Location& location) const;
 
+  unsigned distance(const Location& location) const;
+
   unsigned row;
   unsigned col;
 };
@@ -253,99 +255,48 @@ bool contains(const std::vector<T>& container, const T& t)
 
 ///////////////////////////////////////////////////////////////////////////////
 vecstr_t split(const std::string& str,
-                               const std::string& sep);
+               const std::string& sep);
 ///////////////////////////////////////////////////////////////////////////////
 
-//
-// AdjacentLocationIterator and associated free functions
-//
-
-class Engine;
-
-class AdjacentLocationIterator :
+///////////////////////////////////////////////////////////////////////////////
+struct LocationIterator :
     public std::iterator<std::forward_iterator_tag,
                          Location,
                          std::ptrdiff_t,
                          Location*,
                          Location>
+///////////////////////////////////////////////////////////////////////////////
 {
- public:
-  AdjacentLocationIterator(Location center, const Engine& engine) :
-    m_center(center),
-    m_current(),
-    m_engine(engine)
+  LocationIterator(unsigned start_row, unsigned start_col, unsigned max_row, unsigned max_col) :
+    m_start_col(start_col),
+    m_curr_row(start_row),
+    m_curr_col(start_col),
+    m_max_row(max_row),
+    m_max_col(max_col)
   {
-    advance();
+    Require(start_row <= max_row, start_row << ", " << max_row);
+    Require(start_col < max_col, start_col << ", " << max_col);
   }
 
-  // Construct end iterator
-  AdjacentLocationIterator(const Engine& engine) :
-    m_center(),
-    m_current(),
-    m_engine(engine)
+  LocationIterator(Location center, unsigned radius) :
+    LocationIterator( center.row < radius ? 0 : center.row - radius,
+                      center.col < radius ? 0 : center.col - radius,
+                      center.row + radius + 1,
+                      center.col + radius + 1)
   {}
 
-  AdjacentLocationIterator& operator++()
-  {
-    advance();
-    return *this;
-  }
-
-  AdjacentLocationIterator operator++(int)
-  {
-    AdjacentLocationIterator temp = *this;
-    ++*this;;
-    return temp;
-  }
-
-  bool operator==(const AdjacentLocationIterator& rhs) const
-  {
-    return m_center == rhs.m_center && m_current == rhs.m_current;
-  }
-
-  bool operator!=(const AdjacentLocationIterator& rhs) const
-  {
-    return !(*this == rhs);
-  }
-
-  Location operator*() const
-  {
-    return m_current;
-  }
-
-  Location* operator->()
-  {
-    return &this->m_current;
-  }
-
- private:
-  void advance();
-
-  Location m_center;
-  Location m_current;
-  const Engine& m_engine;
-};
-
-
-typedef boost::iterator_range<AdjacentLocationIterator> AdjacentLocationRange;
-
-inline
-AdjacentLocationRange get_adjacent_location_range(Location center,
-                                                  const Engine& engine)
-{
-  return boost::make_iterator_range(AdjacentLocationIterator(center, engine),
-                                    AdjacentLocationIterator(engine));
-}
-
-template <unsigned Row, unsigned Col>
-struct LocationIterator
-{
-  LocationIterator() : m_curr_row(0), m_curr_col(0) {}
+  LocationIterator(unsigned max_row, unsigned max_col) :
+    LocationIterator(0, 0, max_row, max_col)
+  {}
 
   Location operator*() const
   {
     return Location(m_curr_row, m_curr_col);
   }
+
+  // Location* operator->() const
+  // {
+  // }
 
   LocationIterator& operator++()
   {
@@ -360,21 +311,47 @@ struct LocationIterator
     return rv;
   }
 
+  // Given the current configuration, return the ending iterator
+  LocationIterator end() const
+  {
+    return LocationIterator(m_max_row, m_start_col, m_max_row, m_max_col);
+  }
+
+  bool operator==(LocationIterator const& rhs) const
+  {
+    return m_start_col == rhs.m_start_col &&
+           m_curr_row  == rhs.m_curr_row &&
+           m_curr_col  == rhs.m_curr_col &&
+           m_max_row   == rhs.m_max_row &&
+           m_max_col   == rhs.m_max_col;
+  }
+
+  bool operator!=(LocationIterator const& rhs) const
+  {
+    return !(*this == rhs);
+  }
+
+  unsigned m_start_col;
   unsigned m_curr_row;
   unsigned m_curr_col;
+  unsigned m_max_row;
+  unsigned m_max_col;
 
  private:
   void advance()
   {
-    if (m_curr_col + 1 == Col) {
-      m_curr_col = 0;
+    Require(m_curr_row < m_max_row, "Iterating past end");
+
+    if (m_curr_col + 1 == m_max_col) {
+      m_curr_col = m_start_col;
       ++m_curr_row;
     }
     else {
       ++m_curr_col;
     }
-    Require(m_curr_col < Col, m_curr_col);
-    Require(m_curr_row < Row, m_curr_row);
+
+    Require(m_curr_col < m_max_col, m_curr_col);
+    Require(m_curr_row <= m_max_row, m_curr_row);
   }
 };
 

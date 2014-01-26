@@ -1000,23 +1000,34 @@ class Tornado : public Spell
             BASE_COST,
             PREREQ,
             engine,
-                        SpellSpec {
+            SpellSpec {
               // destructiveness
               { {"spell power", [spell_level](WorldTile const& tile) -> float{
-                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                    return spell_level;
                   } },
-                {"city size", [](WorldTile const& tile) -> float{
-                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                {"wind", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(1.03, tile.atmosphere().wind().m_speed, WIND_TIPPING_POINT);
                   } },
-                {"famine", [](WorldTile const& tile) -> float{
-                    return tile.city()->famine() ? 0.0 : 1.0;
+                {"temperature", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(1.03, tile.atmosphere().temperature(), TEMP_TIPPING_POINT);
+                  } },
+                {"pressure", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(1.05, tile.atmosphere().pressure(), PRESSURE_TIPPING_POINT);
+                  } },
+                {"dewpoint", [](WorldTile const& tile) -> float{
+                    return 1.0; // TODO
                   } }
               },
                 // kill spec
-              { [](WorldTile const&, float destructiveness) -> float{ return destructiveness; },
+              { [](WorldTile const&, float destructiveness) -> float{
+                  return destructiveness / 5.0;
+                },
                 { {"tech level", [&engine](WorldTile const& tile) -> float {
-                    return engine.ai_player().tech_level();
-                    } } }
+                    return baal::sqrt(engine.ai_player().tech_level());
+                  } },
+                {"defense", [](WorldTile const& tile) -> float {
+                    return baal::sqrt(tile.city()->defense());
+                  } } }
               },
                 // infra dmg spec
               { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
@@ -1026,14 +1037,19 @@ class Tornado : public Spell
                 [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
   {}
 
-  virtual void verify_apply() const { /*TODO*/ }
+  virtual void verify_apply() const;
   virtual void apply_to_world(WorldTile& tile,
                               std::vector<WorldTile*>& affected_tiles,
-                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const;
 
   static constexpr unsigned BASE_COST = 200;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
+  static constexpr float DRY_STORM_MOISTURE_ADD = .1;
+
+  static constexpr int TEMP_TIPPING_POINT = 85;
+  static constexpr int WIND_TIPPING_POINT = 15;
+  static constexpr int PRESSURE_TIPPING_POINT = Atmosphere::NORMAL_PRESSURE;
 };
 
 /**

@@ -120,8 +120,7 @@ bool is_within_distance_of_any_city(Location location,
 {
   for (const City* city : engine.world().cities()) {
     Location city_loc = city->location();
-    if (std::abs(static_cast<int>(location.row - city_loc.row)) <= distance &&
-        std::abs(static_cast<int>(location.col - city_loc.col)) <= distance) {
+    if (location.distance(city_loc) <= distance) {
       return true;
     }
   }
@@ -131,7 +130,8 @@ bool is_within_distance_of_any_city(Location location,
 ///////////////////////////////////////////////////////////////////////////////
 template <typename Range, class Filter>
 std::pair<std::vector<WorldTile*>, std::vector<WorldTile*> >
-compute_nearby_food_and_prod_tiles(Range location_range,
+compute_nearby_food_and_prod_tiles(Location city_location,
+                                   Range location_range,
                                    const Engine& engine,
                                    Filter filter = AcceptAll())
 ///////////////////////////////////////////////////////////////////////////////
@@ -141,18 +141,20 @@ compute_nearby_food_and_prod_tiles(Range location_range,
 
   const World& world = engine.world();
   std::vector<WorldTile*> food_tiles, prod_tiles;
-  const unsigned num_tiles_surrounding_city = boost::distance(location_range);
+  const unsigned num_tiles_surrounding_city = boost::distance(location_range) - 1;
   food_tiles.reserve(num_tiles_surrounding_city);
   prod_tiles.reserve(num_tiles_surrounding_city);
 
   for (Location location : location_range) {
-    WorldTile& tile = const_cast<WorldTile&>(world.get_tile(location));
-    if (filter(tile)) {
-      if (tile.yield().m_food > 0) {
-        food_tiles.push_back(&tile);
-      }
-      else {
-        prod_tiles.push_back(&tile);
+    if (location != city_location) {
+      WorldTile& tile = const_cast<WorldTile&>(world.get_tile(location));
+      if (filter(tile)) {
+        if (tile.yield().m_food > 0) {
+          food_tiles.push_back(&tile);
+        }
+        else {
+          prod_tiles.push_back(&tile);
+        }
       }
     }
   }
@@ -171,7 +173,8 @@ float compute_city_loc_heuristic(Location location, const Engine& engine)
 {
   const int min_distance = 1;
   auto tile_pair = compute_nearby_food_and_prod_tiles(
-    get_adjacent_location_range(location, engine),
+    location,
+    engine.world().valid_nearby_tile_range(location),
     engine,
     FilterTooCloseToOtherCities(min_distance, engine));
   float available_food = 0.0, available_prod = 0.0;
@@ -208,7 +211,8 @@ CityImpl::examine_workable_tiles() const
 ///////////////////////////////////////////////////////////////////////////////
 {
   return compute_nearby_food_and_prod_tiles(
-    get_adjacent_location_range(m_location, m_engine),
+    m_location,
+    m_engine.world().valid_nearby_tile_range(m_location),
     m_engine,
     FilterAlreadyWorked());
 }

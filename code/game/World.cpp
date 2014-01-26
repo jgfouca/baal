@@ -108,6 +108,19 @@ void World::remove_city(City& city)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+World::ValidNearbyTileRange World::valid_nearby_tile_range(const Location& center, unsigned radius) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  LocationIterator start(center, radius);
+  LocationIterator end = start.end();
+
+  return boost::make_iterator_range(
+    ValidNearbyTileIterator( ValidFilter(*this), start, end ),
+    ValidNearbyTileIterator( ValidFilter(*this), end, end )
+  );
+}
+
+///////////////////////////////////////////////////////////////////////////////
 xmlNodePtr World::to_xml()
 ///////////////////////////////////////////////////////////////////////////////
 {

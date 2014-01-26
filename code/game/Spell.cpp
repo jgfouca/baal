@@ -666,4 +666,42 @@ void Flood::apply_to_world(WorldTile& tile,
   SPELL_REPORT("With " << rainfall << " inches of rainfall, soil moisture raised to " << new_moisture);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+void Tornado::verify_apply() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  // This spell can only be cast on plains and lush tiles (food tiles).
+
+  WorldTile& tile = m_engine.world().get_tile(m_location);
+  FoodTile* food_tile = dynamic_cast<FoodTile*>(&tile);
+  RequireUser(food_tile != nullptr,
+              "Tornado can only be cast on tiles with plant growth");
+
+  verify_no_repeat_cast();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Tornado::apply_to_world(WorldTile& tile,
+                             std::vector<WorldTile*>& affected_tiles,
+                             std::vector<std::pair<std::string, unsigned>>& triggered) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  World& world = m_engine.world();
+
+  for (Location location : world.valid_nearby_tile_range(tile.location())) {
+    affected_tiles.push_back(&world.get_tile(location));
+  }
+
+  for (WorldTile* affected_tile : affected_tiles) {
+    // Some minimal impact on soil moisture, but this tstorm was not
+    // a big rain producer
+    const float new_moisture = affected_tile->soil_moisture() + DRY_STORM_MOISTURE_ADD;
+    SPELL_REPORT("Raised soil moisture for tile " << affected_tile->location() << " from "
+                 << affected_tile->soil_moisture() << " to " << new_moisture);
+    affected_tile->set_soil_moisture(new_moisture);
+  }
+
+  affected_tiles.push_back(&tile);
+}
+
 }

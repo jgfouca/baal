@@ -52,7 +52,7 @@ std::shared_ptr<World> WorldFactoryHardcoded::generate_world_1(Engine& engine)
   static const unsigned ROW = 6;
   static const unsigned COL = 6;
 
-  LocationIterator<ROW, COL> loc_itr;
+  LocationIterator loc_itr(ROW, COL);
 
   auto world = std::shared_ptr<World>(new World(ROW, COL, engine));
 

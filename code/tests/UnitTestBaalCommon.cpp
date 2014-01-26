@@ -45,94 +45,6 @@ TEST(BaalCommon, LocationBasics)
   EXPECT_EQ(out.str(), std::string("2,3"));
 }
 
-bool check_adjacency(Location location,
-                     const std::vector<Location>& expected,
-                     const baal::Engine& engine)
-{
-  auto adj_range = baal::get_adjacent_location_range(location, engine);
-  if (static_cast<size_t>(boost::distance(adj_range)) != expected.size()) {
-    return false;
-  }
-  return std::equal(std::begin(expected),
-                    std::end(expected),
-                    boost::const_begin(adj_range));
-}
-
-TEST(BaalCommon, AdjacentLocationRange)
-{
-  auto engine = baal::create_engine();
-
-  {
-    // Out-of-range location
-    Location location(12, 12);
-    EXPECT_THROW(baal::get_adjacent_location_range(location, *engine),
-                 baal::ProgramError);
-  }
-
-  {
-    // Central location
-    Location location(3,3);
-    std::vector<Location> expected =
-      {
-        {2,2}, {2,3}, {2,4},
-
-        {3,2},        {3,4},
-
-        {4,2}, {4,3}, {4,4}
-      };
-    EXPECT_TRUE(check_adjacency(location, expected, *engine));
-  }
-
-  {
-    // Upper-left corner location
-    Location location(0,0);
-    std::vector<Location> expected =
-      {
-               {0,1},
-
-        {1,0}, {1,1}
-      };
-    EXPECT_TRUE(check_adjacency(location, expected, *engine));
-  }
-
-  {
-    // Upper-right corner location
-    Location location(0,5);
-    std::vector<Location> expected =
-      {
-        {0,4},
-
-        {1,4}, {1,5}
-      };
-    EXPECT_TRUE(check_adjacency(location, expected, *engine));
-  }
-
-  {
-    // Bottom-left corner location
-    Location location(5,0);
-    std::vector<Location> expected =
-      {
-        {4,0}, {4,1},
-
-               {5,1}
-      };
-    EXPECT_TRUE(check_adjacency(location, expected, *engine));
-  }
-
-  {
-    // Bottom-right corner location
-    Location location(5,5);
-    std::vector<Location> expected =
-      {
-        {4,4}, {4,5},
-
-        {5,4}
-      };
-    EXPECT_TRUE(check_adjacency(location, expected, *engine));
-  }
-
-}
-
 TEST(BaalCommon, split)
 {
   {
@@ -233,15 +145,53 @@ TEST(BaalCommon, location_iterator)
 {
   using namespace baal;
 
-  static const unsigned ROW = 2;
-  static const unsigned COL = 2;
+  {
+    static const unsigned ROW = 2;
+    static const unsigned COL = 2;
 
-  LocationIterator<ROW, COL> loc_itr;
+    LocationIterator loc_itr(ROW, COL);
 
-  EXPECT_EQ(*loc_itr++, Location(0, 0));
-  EXPECT_EQ(*loc_itr++, Location(0, 1));
-  EXPECT_EQ(*loc_itr++, Location(1, 0));
-  EXPECT_EQ(*loc_itr,   Location(1, 1));
+    EXPECT_EQ(std::distance(loc_itr, loc_itr.end()), 4u);
+
+    EXPECT_EQ(*loc_itr++, Location(0, 0));
+    EXPECT_EQ(*loc_itr++, Location(0, 1));
+    EXPECT_EQ(*loc_itr++, Location(1, 0));
+    EXPECT_EQ(*loc_itr,   Location(1, 1));
+  }
+
+  {
+    static const unsigned MIN_ROW = 2;
+    static const unsigned MIN_COL = 2;
+    static const unsigned MAX_ROW = 4;
+    static const unsigned MAX_COL = 4;
+
+    LocationIterator loc_itr(MIN_ROW, MIN_COL, MAX_ROW, MAX_COL);
+
+    EXPECT_EQ(std::distance(loc_itr, loc_itr.end()), 4u);
+
+    EXPECT_EQ(*loc_itr++, Location(2, 2));
+    EXPECT_EQ(*loc_itr++, Location(2, 3));
+    EXPECT_EQ(*loc_itr++, Location(3, 2));
+    EXPECT_EQ(*loc_itr,   Location(3, 3));
+  }
+
+  {
+    static const unsigned RADIUS = 1;
+
+    LocationIterator loc_itr(Location(1, 1), RADIUS);
+
+    EXPECT_EQ(std::distance(loc_itr, loc_itr.end()), 9u);
+
+    EXPECT_EQ(*loc_itr++, Location(0, 0));
+    EXPECT_EQ(*loc_itr++, Location(0, 1));
+    EXPECT_EQ(*loc_itr++, Location(0, 2));
+    EXPECT_EQ(*loc_itr++, Location(1, 0));
+    EXPECT_EQ(*loc_itr++, Location(1, 1));
+    EXPECT_EQ(*loc_itr++, Location(1, 2));
+    EXPECT_EQ(*loc_itr++, Location(2, 0));
+    EXPECT_EQ(*loc_itr++, Location(2, 1));
+    EXPECT_EQ(*loc_itr++, Location(2, 2));
+  }
 }
 
 }

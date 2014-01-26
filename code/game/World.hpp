@@ -10,6 +10,7 @@
 #include <vector>
 #include <iosfwd>
 #include <libxml/parser.h>
+#include <boost/iterator/filter_iterator.hpp>
 
 namespace baal {
 
@@ -21,7 +22,20 @@ class Engine;
  */
 class World
 {
+  struct ValidFilter
+  {
+    ValidFilter(World const& world) : m_world(world) {}
+
+    bool operator()(Location const& loc) const
+    { return m_world.in_bounds(loc); }
+
+    World const& m_world;
+  };
+
  public:
+  typedef boost::filter_iterator<ValidFilter, LocationIterator> ValidNearbyTileIterator;
+  typedef boost::iterator_range<ValidNearbyTileIterator> ValidNearbyTileRange;
+
   World(unsigned width, unsigned height, Engine& engine);
 
   ~World();
@@ -73,6 +87,8 @@ class World
   void remove_city(City& city);
 
   xmlNodePtr to_xml();
+
+  ValidNearbyTileRange valid_nearby_tile_range(const Location& center, unsigned radius = 1) const;
 
  private:
 
