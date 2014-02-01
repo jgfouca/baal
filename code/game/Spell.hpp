@@ -792,7 +792,8 @@ class Flood : public Spell
 
 /**
  * Causes abnormally dry weather. Hurts food production by reducing soil
- * moisture.
+ * moisture. Some people will die of dehydration. Mostly a support spell
+ * to set up other, more deadly spells.
  *
  * Enhanced by high temperatures, low dewpoints, high pressure.
  *
@@ -810,16 +811,22 @@ class Dry : public Spell
             BASE_COST,
             PREREQ,
             engine,
-                        SpellSpec {
+            SpellSpec {
               // destructiveness
               { {"spell power", [spell_level](WorldTile const& tile) -> float{
-                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                    return spell_level / 10.0;
                   } },
-                {"city size", [](WorldTile const& tile) -> float{
-                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                {"dewpoint", [](WorldTile const& tile) -> float{
+                    return 1.0;  // TODO
                   } },
-                {"famine", [](WorldTile const& tile) -> float{
-                    return tile.city()->famine() ? 0.0 : 1.0;
+                {"temperature", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(1.01, tile.atmosphere().temperature(), TEMP_TIPPING_POINT);
+                  } },
+                {"moisture", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(1.05, (1.0 - tile.soil_moisture()) * 10, 1);
+                  } },
+                {"pressure", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(1.0, tile.atmosphere().pressure(), PRESSURE_TIPPING_POINT);
                   } }
               },
                 // kill spec
@@ -833,17 +840,25 @@ class Dry : public Spell
                 // defense dmg spec
               { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
                 // tile dmg spec
-                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } ),
+    m_moisture_reduction_fraction_func( [](float destructiveness) -> float{
+        return baal::exp_growth(.9, destructiveness * 10);
+      })
   {}
 
-  virtual void verify_apply() const { /*TODO*/ }
+  virtual void verify_apply() const;
   virtual void apply_to_world(WorldTile& tile,
                               std::vector<WorldTile*>& affected_tiles,
-                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const;
 
   static constexpr unsigned BASE_COST = 200;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
+
+  static constexpr int TEMP_TIPPING_POINT = 75;
+  static constexpr unsigned PRESSURE_TIPPING_POINT = Atmosphere::NORMAL_PRESSURE;
+
+  std::function<float(float destructiveness)> m_moisture_reduction_fraction_func;;
 };
 
 /**
@@ -866,16 +881,22 @@ class Blizzard : public Spell
             BASE_COST,
             PREREQ,
             engine,
-                        SpellSpec {
+            SpellSpec {
               // destructiveness
               { {"spell power", [spell_level](WorldTile const& tile) -> float{
-                    return baal::poly_growth(spell_level, 0.0, 1.3) ;
+                    return spell_level * 8;
                   } },
-                {"city size", [](WorldTile const& tile) -> float{
-                    return baal::exp_growth(tile.city()->rank(), 0.0, 1.05) ;
+                {"pressure", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(1.05, Atmosphere::NORMAL_PRESSURE - tile.atmosphere().pressure());
                   } },
-                {"famine", [](WorldTile const& tile) -> float{
-                    return tile.city()->famine() ? 0.0 : 1.0;
+                {"temperature", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(1.03, MAX_TEMP - tile.atmosphere().temperature(), 0, 15);
+                  } },
+                {"wind", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(1.01, tile.atmosphere().wind().m_speed);
+                  } },
+                {"dewpoint", [](WorldTile const& tile) -> float{
+                    return baal::exp_growth(1.05, tile.atmosphere().dewpoint(), 20);
                   } }
               },
                 // kill spec
@@ -889,17 +910,23 @@ class Blizzard : public Spell
                 // defense dmg spec
               { [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; }, {} },
                 // tile dmg spec
-                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } )
+                [](WorldTile const&, float) -> float{ return DOES_NOT_APPLY; } } ),
+    m_snowfall_func( [](float destructiveness) -> unsigned{
+        return destructiveness * 4;
+      })
   {}
 
-  virtual void verify_apply() const { /*TODO*/ }
+  virtual void verify_apply() const;
   virtual void apply_to_world(WorldTile& tile,
                               std::vector<WorldTile*>& affected_tiles,
-                              std::vector<std::pair<std::string, unsigned>>& triggered) const {}
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const;
 
   static constexpr unsigned BASE_COST = 200;
+  static constexpr int MAX_TEMP = 35;
   static const SpellPrereq PREREQ;
   static const std::string NAME;
+
+  std::function<unsigned(float destructiveness)> m_snowfall_func;
 };
 
 /**

@@ -296,6 +296,7 @@ unsigned Spell::apply() const
   std::vector<std::pair<std::string, unsigned>> triggered;
   std::vector<WorldTile*> affected_tiles;
   apply_to_world(tile, affected_tiles, triggered);
+  Require( !affected_tiles.empty(), "No affected tiles?" );
 
   for (WorldTile* affected_tile : affected_tiles) {
     const float destructiveness = compute_destructiveness(*affected_tile, true /*report*/);
@@ -593,6 +594,8 @@ void Snow::apply_to_world(WorldTile& tile,
   const unsigned new_snowpack = tile.snowpack() + snowfall;
   SPELL_REPORT("With " << snowfall << " inches of snowfall, snowpack raised to " << new_snowpack);
   tile.set_snowpack(new_snowpack);
+
+  affected_tiles.push_back(&tile);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -663,7 +666,50 @@ void Flood::apply_to_world(WorldTile& tile,
   const float new_moisture = orig_moisture + added_moisture;
   tile.set_soil_moisture(new_moisture);
 
+  affected_tiles.push_back(&tile);
+
   SPELL_REPORT("With " << rainfall << " inches of rainfall, soil moisture raised to " << new_moisture);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Dry::verify_apply() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  // This spell can only be cast on tiles with soil moisture
+
+  WorldTile& tile = m_engine.world().get_tile(m_location);
+  TileWithSoil* soil_tile = dynamic_cast<TileWithSoil*>(&tile);
+  RequireUser(soil_tile != nullptr,
+              "Dry can only be cast on tiles with soil moisture");
+
+  verify_no_repeat_cast();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Dry::apply_to_world(WorldTile& tile,
+                         std::vector<WorldTile*>& affected_tiles,
+                         std::vector<std::pair<std::string, unsigned>>& triggered) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  factor_vector_t const& factors = m_spec.m_destructiveness_spec;
+  float destructiveness_without_land_factors = 1.0;
+  for (auto factor : factors) {
+    if (factor.first != "moisture") {
+      const float factor_multiplier = factor.second(tile);
+      destructiveness_without_land_factors *= factor_multiplier;
+    }
+  }
+
+  const float orig_moisture = tile.soil_moisture();
+  const float lost_moisture = m_moisture_reduction_fraction_func(destructiveness_without_land_factors);
+  const float new_moisture  = orig_moisture - lost_moisture;
+  tile.set_soil_moisture(new_moisture);
+
+  // TODO: reduce dewpoint?
+
+  SPELL_REPORT("Soil moisture reduced to " << new_moisture);
+
+  affected_tiles.push_back(&tile);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -689,19 +735,53 @@ void Tornado::apply_to_world(WorldTile& tile,
   World& world = m_engine.world();
 
   for (Location location : world.valid_nearby_tile_range(tile.location())) {
-    affected_tiles.push_back(&world.get_tile(location));
-  }
+    WorldTile& affected_tile = world.get_tile(location);
+    affected_tiles.push_back(&affected_tile);
 
-  for (WorldTile* affected_tile : affected_tiles) {
     // Some minimal impact on soil moisture, but this tstorm was not
     // a big rain producer
-    const float new_moisture = affected_tile->soil_moisture() + DRY_STORM_MOISTURE_ADD;
-    SPELL_REPORT("Raised soil moisture for tile " << affected_tile->location() << " from "
-                 << affected_tile->soil_moisture() << " to " << new_moisture);
-    affected_tile->set_soil_moisture(new_moisture);
+    const float new_moisture = affected_tile.soil_moisture() + DRY_STORM_MOISTURE_ADD;
+    SPELL_REPORT("Raised soil moisture for tile " << affected_tile.location() << " from "
+                 << affected_tile.soil_moisture() << " to " << new_moisture);
+    affected_tile.set_soil_moisture(new_moisture);
   }
+}
 
-  affected_tiles.push_back(&tile);
+///////////////////////////////////////////////////////////////////////////////
+void Blizzard::verify_apply() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  // Must be cast on a land tile
+  WorldTile& tile = m_engine.world().get_tile(m_location);
+  LandTile* land_tile = dynamic_cast<LandTile*>(&tile);
+  RequireUser(land_tile != nullptr,
+              "Blizzard can only be cast on land tiles");
+
+  // Must be cold
+  RequireUser(tile.atmosphere().temperature() <= MAX_TEMP,
+              "It is not cold enough on this tile for a blizzard, maximum temp for this spell is " << MAX_TEMP);
+
+  verify_no_repeat_cast();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Blizzard::apply_to_world(WorldTile& tile,
+                              std::vector<WorldTile*>& affected_tiles,
+                              std::vector<std::pair<std::string, unsigned>>& triggered) const
+///////////////////////////////////////////////////////////////////////////////
+{
+  World& world = m_engine.world();
+
+  for (Location location : world.valid_nearby_tile_range(tile.location())) {
+    WorldTile& affected_tile = world.get_tile(location);
+    affected_tiles.push_back(&affected_tile);
+
+    const float destructiveness = compute_destructiveness(affected_tile, false);
+    const unsigned snowfall = m_snowfall_func(destructiveness);
+    const unsigned new_snowpack = affected_tile.snowpack() + snowfall;
+    SPELL_REPORT("With " << snowfall << " inches of snowfall, snowpack raised to " << new_snowpack);
+    affected_tile.set_snowpack(new_snowpack);
+  }
 }
 
 }
