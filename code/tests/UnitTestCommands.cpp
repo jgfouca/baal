@@ -82,6 +82,9 @@ draw <draw-mode>
 hack <exp>
   Gives the player free arbitrary exp. This is a cheat put in for testing
   Aliases: x 
+move <direction>
+  Move the screen u[p]d[own]l[eft]r[ight]
+  Aliases: m 
 
 )";
 

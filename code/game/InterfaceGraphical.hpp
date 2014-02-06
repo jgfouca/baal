@@ -44,6 +44,9 @@ class InterfaceGraphical : public Interface
 
  private:
   Engine& m_engine;
+
+  static const unsigned TILE_DISPLAY_HEIGHT = 6;
+  static const unsigned TILE_DISPLAY_WIDTH  = 6;
 };
 
 }

@@ -27,9 +27,13 @@ class WorldTile;
 class Interface
 {
  public:
-  Interface()
+  Interface(unsigned tile_width, unsigned tile_height)
     : m_end_turns(0),
-      m_draw_mode(CIV) // default to civ
+      m_draw_mode(CIV), // default to civ
+      m_right_adjust(0),
+      m_down_adjust(0),
+      m_tile_width(tile_width),
+      m_tile_height(tile_height)
   {}
 
   virtual ~Interface() {}
@@ -59,9 +63,39 @@ class Interface
 
   virtual void ai_wins() = 0;
 
+  // Correctness checks on adjustments will be done by the MoveCommand
+
+  void adjust_left()
+  { --m_right_adjust; }
+
+  void adjust_right()
+  { ++m_right_adjust; }
+
+  void adjust_up()
+  { --m_down_adjust; }
+
+  void adjust_down()
+  { ++m_down_adjust; }
+
+  unsigned get_adjust_right() const
+  { return m_right_adjust; }
+
+  unsigned get_adjust_down() const
+  { return m_down_adjust; }
+
+  unsigned screen_tile_width() const
+  { return m_tile_width; }
+
+  unsigned screen_tile_height() const
+  { return m_tile_height; }
+
  protected:
   unsigned m_end_turns;
   DrawMode m_draw_mode;
+  unsigned m_right_adjust;
+  unsigned m_down_adjust;
+  unsigned m_tile_width;
+  unsigned m_tile_height;
 
  private:
   void set_draw_mode(DrawMode mode) { m_draw_mode = mode; }

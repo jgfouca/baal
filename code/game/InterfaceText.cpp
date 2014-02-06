@@ -27,13 +27,13 @@ namespace baal {
 ///////////////////////////////////////////////////////////////////////////////
 InterfaceText::InterfaceText(std::ostream& out,
                              std::istream& in,
-                             Engine& engine)
+                             Engine& engine) :
 ///////////////////////////////////////////////////////////////////////////////
- : Interface(),
-   m_ostream(out),
-   m_istream(in),
-   m_is_interactive(&m_ostream == &std::cout && &m_istream == &std::cin),
-   m_engine(engine)
+  Interface(TILE_DISPLAY_WIDTH, TILE_DISPLAY_HEIGHT),
+  m_ostream(out),
+  m_istream(in),
+  m_is_interactive(&m_ostream == &std::cout && &m_istream == &std::cin),
+  m_engine(engine)
 {
   Require( !(!m_is_interactive &&
              (&m_ostream == &std::cout || &m_istream == &std::cin)),
@@ -455,7 +455,7 @@ void InterfaceText::draw(const World& world)
   {
     unsigned ws_lead = TILE_TEXT_WIDTH / 2;
     unsigned col_width = TILE_TEXT_WIDTH - ws_lead + 1; // 1->sep
-    for (unsigned col = 0; col < world.width(); ++col) {
+    for (unsigned col = m_right_adjust; col < world.width(); ++col) {
       for (unsigned w = 0; w < ws_lead; ++w) {
         print(" ");
       }
@@ -465,8 +465,8 @@ void InterfaceText::draw(const World& world)
   }
 
   // Draw tiles
-  for (unsigned row = 0; row < world.height(); ++row) {
-    for (unsigned height = 0; height < TILE_TEXT_HEIGHT; ++height) {
+  for (unsigned row = m_down_adjust; row < world.height(); ++row) {
+    for (unsigned height = m_right_adjust; height < TILE_TEXT_HEIGHT; ++height) {
       // Middle of tile displays "overlay" info, for the rest of the tile,
       // just draw the land.
       if (height == TILE_TEXT_HEIGHT / 2) {
@@ -478,7 +478,7 @@ void InterfaceText::draw(const World& world)
         print("  ");
       }
 
-      for (unsigned col = 0; col < world.width(); ++col) {
+      for (unsigned col = m_right_adjust; col < world.width(); ++col) {
         draw(world.get_tile(Location(row, col)));
         print(" ");
       }

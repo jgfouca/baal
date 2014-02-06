@@ -45,7 +45,8 @@ class CommandFactory
                              SpellCommand,
                              LearnCommand,
                              DrawCommand,
-                             HackCommand> command_types;
+                             HackCommand,
+                             MoveCommand> command_types;
 
  private:
   // Private constructor since this is singleton class

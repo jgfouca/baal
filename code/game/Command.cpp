@@ -18,6 +18,7 @@
 #include <boost/mpl/assert.hpp>
 #include <boost/mpl/transform.hpp>
 #include <boost/mpl/placeholders.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <boost/type_traits/detail/wrap.hpp>
 
@@ -35,6 +36,7 @@ const std::string SpellCommand::NAME   = "cast";
 const std::string LearnCommand::NAME   = "learn";
 const std::string DrawCommand::NAME    = "draw";
 const std::string HackCommand::NAME    = "hack";
+const std::string MoveCommand::NAME    = "move";
 
 const vecstr_t HelpCommand::ALIASES    = {"h"};
 const vecstr_t SaveCommand::ALIASES    = {"s"};
@@ -44,6 +46,7 @@ const vecstr_t SpellCommand::ALIASES   = {"c"};
 const vecstr_t LearnCommand::ALIASES   = {"l"};
 const vecstr_t DrawCommand::ALIASES    = {"d"};
 const vecstr_t HackCommand::ALIASES    = {"x"};
+const vecstr_t MoveCommand::ALIASES    = {"m"};
 
 const std::string HelpCommand::HELP =
   "[item]\n"
@@ -71,6 +74,9 @@ const std::string DrawCommand::HELP =
 const std::string HackCommand::HELP =
   "<exp>\n"
   "  Gives the player free arbitrary exp. This is a cheat put in for testing";
+const std::string MoveCommand::HELP =
+  "<direction>\n"
+  "  Move the screen u[p]d[own]l[eft]r[ight]";
 
 namespace {
 
@@ -520,6 +526,76 @@ void HackCommand::apply() const
   else {
     player.gain_exp(player.next_level_cost() - player.exp());
   }
+}
+
+/*****************************************************************************/
+
+///////////////////////////////////////////////////////////////////////////////
+MoveCommand::MoveCommand(const vecstr_t& args, Engine& engine) :
+  Command(engine),
+  m_direction()
+///////////////////////////////////////////////////////////////////////////////
+{
+  BOOST_MPL_ASSERT(( is_in_command_factory<MoveCommand> ));
+  RequireUser(args.size() == 1,
+              "'" << MoveCommand::NAME << "' takes at one argument");
+
+  m_direction = args[0];
+  boost::to_lower(m_direction);
+
+  // Parse
+  static vecstr_t up_args = {"up", "u"};
+  static vecstr_t down_args = {"down", "d"};
+  static vecstr_t left_args = {"left", "l"};
+  static vecstr_t right_args = {"right", "r"};
+
+  if (contains(up_args, m_direction)) {
+    m_direction = "up";
+  }
+  else if (contains(down_args, m_direction)) {
+    m_direction = "down";
+  }
+  else if (contains(left_args, m_direction)) {
+    m_direction = "left";
+  }
+  else if (contains(right_args, m_direction)) {
+    m_direction = "right";
+  }
+  else {
+    RequireUser(false, "Argument '" << m_direction << "' is not a recognized direction");
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void MoveCommand::apply() const
+///////////////////////////////////////////////////////////////////////////////
+{
+  World const& world = m_engine.world();
+  Interface & interface = m_engine.interface();
+  const unsigned curr_right_adjust = interface.get_adjust_right();
+  const unsigned curr_down_adjust  = interface.get_adjust_down();
+  const unsigned right_capacity = world.width() - interface.screen_tile_width() - curr_right_adjust;
+  const unsigned down_capacity  = world.height() - interface.screen_tile_height() - curr_down_adjust;
+
+  if (m_direction == "up") {
+    RequireUser(curr_down_adjust > 0, "Already at top of map");
+    interface.adjust_up();
+  }
+  else if (m_direction == "down") {
+    RequireUser(down_capacity > 0, "Already at bottom of map");
+    interface.adjust_down();
+  }
+  else if (m_direction == "left") {
+    RequireUser(curr_right_adjust > 0, "Already at far left of map");
+    interface.adjust_left();
+  }
+  else {
+    Require(m_direction == "right", "Invalid: '" << m_direction << "'");
+    RequireUser(right_capacity > 0, "Already at far right of map");
+    interface.adjust_right();
+  }
+
+  m_engine.interface().draw(); // redraw
 }
 
 }

@@ -18,7 +18,7 @@ TEST(CommandFactory, test_initialization)
   const CommandFactory& cf = CommandFactory::instance();
 
   std::vector<std::string> expected_commands =
-    {"help", "save", "end", "quit", "cast", "learn", "draw", "hack"};
+    {"help", "save", "end", "quit", "cast", "learn", "draw", "hack", "move"};
   EXPECT_EQ(expected_commands, cf.commands());
 
   std::map<std::string, std::string> expected_aliases =
@@ -30,7 +30,8 @@ TEST(CommandFactory, test_initialization)
       {"c", "cast"},
       {"l", "learn"},
       {"d", "draw"},
-      {"x", "hack"}
+      {"x", "hack"},
+      {"m", "move"}
     };
   EXPECT_EQ(expected_aliases, cf.m_aliases);
 }

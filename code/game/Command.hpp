@@ -200,6 +200,26 @@ class HackCommand : public Command
   unsigned m_exp;
 };
 
+/**
+ * Allow user to move the screen when the world is too big to display
+ * all at once.
+ */
+class MoveCommand : public Command
+{
+ public:
+  MoveCommand(const vecstr_t& args, Engine& engine);
+
+  virtual void apply() const;
+
+  static const std::string NAME;
+
+  static const std::string HELP;
+
+  static const vecstr_t ALIASES;
+ private:
+  std::string m_direction;
+};
+
 }
 
 #endif
