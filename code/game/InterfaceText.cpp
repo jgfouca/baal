@@ -451,11 +451,14 @@ void InterfaceText::draw(const World& world)
   // Make room for row labels
   print("  ");
 
+  const unsigned col_tile_span = world.width() > TILE_DISPLAY_WIDTH ? TILE_DISPLAY_WIDTH : world.width();
+  const unsigned row_tile_span = world.height() > TILE_DISPLAY_HEIGHT ? TILE_DISPLAY_HEIGHT : world.height();
+
   // Draw column labels. Need to take 1 char space separator into account.
   {
     unsigned ws_lead = TILE_TEXT_WIDTH / 2;
     unsigned col_width = TILE_TEXT_WIDTH - ws_lead + 1; // 1->sep
-    for (unsigned col = m_right_adjust; col < world.width(); ++col) {
+    for (unsigned col = m_right_adjust; (col - m_right_adjust) < col_tile_span; ++col) {
       for (unsigned w = 0; w < ws_lead; ++w) {
         print(" ");
       }
@@ -465,20 +468,25 @@ void InterfaceText::draw(const World& world)
   }
 
   // Draw tiles
-  for (unsigned row = m_down_adjust; row < world.height(); ++row) {
-    for (unsigned height = m_right_adjust; height < TILE_TEXT_HEIGHT; ++height) {
+  const unsigned row_label_width = 3;
+  for (unsigned row = m_down_adjust, row_end = m_down_adjust + row_tile_span; row < row_end; ++row) {
+
+    // Each row takes multiple lines
+    for (unsigned height = 0; height < TILE_TEXT_HEIGHT; ++height) {
       // Middle of tile displays "overlay" info, for the rest of the tile,
       // just draw the land.
       if (height == TILE_TEXT_HEIGHT / 2) {
         m_draw_mode = real_draw_mode;
-        print(stream() << row << " ");  // row labels
+        print(stream() << std::left << std::setw(row_label_width) << std::setfill(' ') << row);  // row labels
       }
       else {
         m_draw_mode = LAND; // temporary override of draw mode
-        print("  ");
+        for (unsigned i = 0; i < row_label_width; ++i) {
+          print(" ");
+        }
       }
 
-      for (unsigned col = m_right_adjust; col < world.width(); ++col) {
+      for (unsigned col = m_right_adjust, col_end = m_right_adjust + col_tile_span; col < col_end; ++col) {
         draw(world.get_tile(Location(row, col)));
         print(" ");
       }

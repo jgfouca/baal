@@ -14,10 +14,12 @@ class WorldFactoryHardcoded
  public:
   static std::shared_ptr<World> create(const std::string& world_config, Engine& engine);
 
-  static const unsigned NUM_HARDCODED_WORLDS = 1;
+  static const unsigned NUM_HARDCODED_WORLDS = 2;
 
  private:
-  static std::shared_ptr<World> generate_world_1(Engine& engine);
+  static std::shared_ptr<World> generate_tiny_world(Engine& engine);
+
+  static std::shared_ptr<World> generate_scaled_up_tiny(Engine& engine);
 };
 
 }

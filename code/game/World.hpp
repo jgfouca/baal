@@ -63,7 +63,7 @@ class World
    */
   WorldTile& get_tile(const Location& location) {
     Assert(in_bounds(location), "Out of bounds");
-    Assert(m_tiles[location.row][location.col] != nullptr, "Null");
+    Assert(m_tiles[location.row][location.col] != nullptr, "Null at (" << location.row << ", " << location.col << ")");
     return *(m_tiles[location.row][location.col]);
   }
 

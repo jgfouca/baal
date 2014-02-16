@@ -105,7 +105,7 @@ class InterfaceText : public Interface
   static const unsigned TILE_TEXT_WIDTH = 5;
 
   static const unsigned TILE_DISPLAY_HEIGHT = 6;
-  static const unsigned TILE_DISPLAY_WIDTH  = 6;
+  static const unsigned TILE_DISPLAY_WIDTH  = 20;
 };
 
 }
